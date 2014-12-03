@@ -1,0 +1,23 @@
+Basic algorithm tests with single threaded CPU simulator, 1 game per expansion
+	MCTS won 200.0/200 vs Random @ 500ms
+	UCB won 200.0/200 vs Random @ 500ms
+	MCTS won 167.5/200 vs UCB @ 500ms
+
+Observed some games with very high turn counts (500-2000). These games were where one player had no moves, and the other was inevitably going to win once they filled the board, but opted to just keep moving pieces around rather than ending the game (because all moves resulted in wins).
+Considered solutions were: A. flagging and back-propagating win states when discovered, B. adding some term to the UCB formula to favour shorter games, and C. changing the Ataxx game definition to make the game end when one player cannot move on their turn.
+Investigating the tree in these circumstances showed that it was being developed equally, and therefore to a very shallow depth, because no moves were more promising for exploitation.
+This discovery ruled out the possiblity of option A, as often the win is 6-8 moves away, and the tree is only expanded to 3-4 moves (due to high branching factor).
+B. was discarded due to the difficulty in acquiring an estimated game length, as playouts are random, and the tree is not expanded deeply enough.
+
+Results:
+	MCTS won 177.5/200 vs UCB @ 500ms
+	Average game length: 76.335
+	Maximum game length: 153
+
+Investigating the maximum size for an array based list for Ataxx. Theoretically very high, empirically:
+	MCTS vs UCB: 176 (200 games)
+	Random vs Random: 224 (100000 games)
+	
+Picked 200 for list size in Ataxx. Since list is just for selecting random moves, adding a quirk feature that for overflows, a random element of the list is replaced.
+
+In Ataxx, MCTS beats UCB about 60% of the time, In Othello, it wins almost every time. Checked the tree depth and put some breakpoints, and found that MCTS only manages very wide and shallow trees on Ataxx, and that the win rate of all nodes is approximately 50%. This is probably because in Ataxx, there are a very large number of redundant or bad moves which can be made by either side making the overall game output essentially random. (For both games a single cpu thread is managing several hundred thousand playouts per second).
