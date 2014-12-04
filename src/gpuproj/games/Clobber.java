@@ -8,9 +8,7 @@ import gpuproj.game.SimpleBoard;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gpuproj.game.BitBoard.dilate;
-import static gpuproj.game.BitBoard.scoreWinner;
-import static gpuproj.game.BitBoard.shiftDir;
+import static gpuproj.game.BitBoard.*;
 
 public class Clobber extends BoardGame<SimpleBoard>
 {
@@ -39,7 +37,7 @@ public class Clobber extends BoardGame<SimpleBoard>
             long move = moveSet & -moveSet;
             long pieces = movementMask(move, ply);//pieces that can make this move
             while(pieces != 0) {
-                long piece = pieces & ~pieces;
+                long piece = pieces & -pieces;
 
                 SimpleBoard next = board.copy();
                 next.set(board.turn, ply & ~piece | move);
@@ -77,7 +75,7 @@ public class Clobber extends BoardGame<SimpleBoard>
                 long pieces = movementMask(move, ply);//pieces that can make this move
                 int randpiece = Portable.randInt(Long.bitCount(pieces));
                 for(int j = 0;; j++) {
-                    long piece = pieces & ~pieces;
+                    long piece = pieces & -pieces;
                     if (j == randpiece) {
                         board.set(board.turn, ply & ~piece | move);
                         board.set(board.turn^1, opp & ~move);

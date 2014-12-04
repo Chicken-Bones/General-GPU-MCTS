@@ -1,4 +1,4 @@
-Basic algorithm tests with single threaded CPU simulator, 1 game per expansion
+Basic algorithm tests with Ataxx single threaded CPU simulator, 1 game per expansion
 	MCTS won 200.0/200 vs Random @ 500ms
 	UCB won 200.0/200 vs Random @ 500ms
 	MCTS won 167.5/200 vs UCB @ 500ms
@@ -20,4 +20,12 @@ Investigating the maximum size for an array based list for Ataxx. Theoretically 
 	
 Picked 200 for list size in Ataxx. Since list is just for selecting random moves, adding a quirk feature that for overflows, a random element of the list is replaced.
 
-In Ataxx, MCTS beats UCB about 60% of the time, In Othello, it wins almost every time. Checked the tree depth and put some breakpoints, and found that MCTS only manages very wide and shallow trees on Ataxx, and that the win rate of all nodes is approximately 50%. This is probably because in Ataxx, there are a very large number of redundant or bad moves which can be made by either side making the overall game output essentially random. (For both games a single cpu thread is managing several hundred thousand playouts per second).
+In Ataxx, MCTS beats UCB about 60% of games, In Othello, it wins 90% of games. 
+Checked the tree depth and put some breakpoints, and found that MCTS only manages very wide and shallow trees on Ataxx, and that the win rate of all nodes is approximately 50%. This is probably because in Ataxx, there are a very large number of redundant or bad moves which can be made by either side making the overall game output essentially random.
+(For both games a single cpu thread is managing several hundred thousand playouts per second).
+
+MCTS vs UCB for various games, 200 playouts @ 500ms
+Ataxx: 122.5 (61.25%)
+Othello: 184.5 (92.25%)
+Clobber: 181.0 (90.5%)
+GoMoku:
