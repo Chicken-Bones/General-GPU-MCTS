@@ -10,7 +10,7 @@ import gpuproj.simulator.CPU1Simulator;
 public class Main
 {
     public static void main(String[] args) {
-        MCTSvsUCB(new Squavalath());
+        MCTSvsUCB(new GoMoku());
     }
 
     private static <B extends Board<B>> void MCTSvsUCB(BoardGame<B> game) {
