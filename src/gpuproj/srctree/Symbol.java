@@ -3,13 +3,12 @@ package gpuproj.srctree;
 /**
  * Parent for package/class/method/field
  */
-public abstract class Symbol
+public class Symbol
 {
-    public static final int PACKAGE_SYM = 1;
-    public static final int CLASS_SYM = 2;
-    public static final int FIELD_SYM = 4;
-    public static final int METHOD_SYM = 8;
-    public static final int TYPEPARAM = 0x10;
+    public static final int CLASS_SYM = 1;
+    public static final int FIELD_SYM = 2;
+    public static final int METHOD_SYM = 4;
+    public static final int TYPEPARAM = 8;
     public static final int TYPE_SYM = CLASS_SYM | TYPEPARAM;
 
     /**

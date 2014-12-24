@@ -15,4 +15,12 @@ public class TypeParam extends TypeSymbol
     public TypeSymbol concrete() {
         return upper.type.concrete();
     }
+
+    @Override
+    public String toString() {
+        if(!upper.toString().equals("java.lang.Object"))
+            return name+" extends "+upper;
+
+        return name;
+    }
 }

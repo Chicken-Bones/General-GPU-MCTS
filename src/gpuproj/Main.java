@@ -29,6 +29,10 @@ public class Main
     private static void decompClass() {
         TypeIndex.newInstance();
         TypeIndex.instance.sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
+
+
+
+
         Symbol sym = TypeIndex.instance.resolveSingle("gpuproj.games.Ataxx", Symbol.CLASS_SYM);
         new Object();
     }

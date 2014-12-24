@@ -5,16 +5,16 @@ import java.util.List;
 
 public class MethodSymbol extends Symbol
 {
-    public final String declaration;
+    public final Object source;
     public ClassSymbol owner;
     public int modifiers;
     public TypeRef returnType;
     public List<LocalSymbol> params = new LinkedList<>();
     public Block body;
 
-    public MethodSymbol(String fullname, String declaration) {
+    public MethodSymbol(String fullname, Object source) {
         super(fullname);
-        this.declaration = declaration;
+        this.source = source;
     }
 
     public static MethodSymbol fromStatement(String parent, String stmt) {

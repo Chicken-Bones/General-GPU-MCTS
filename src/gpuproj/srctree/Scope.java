@@ -37,8 +37,10 @@ public final class Scope
      * Uses a map to cache all symbols resolved in this scope
      */
     public Symbol resolve(String name, int type) {
-        Symbol res = cache.get(name);
-        if(res == null)
+        Symbol res;
+        if(cache.containsKey(name))
+            res = cache.get(name);
+        else
             cache.put(name, res = resolveFirst(name, type));
         return res;
     }

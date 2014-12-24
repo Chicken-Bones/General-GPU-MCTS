@@ -14,12 +14,6 @@ public class DirectorySourceProvider implements SourceProvider
     }
 
     @Override
-    public boolean packageExists(String path) {
-        File dir = new File(base, path);
-        return dir.exists() && dir.isDirectory();
-    }
-
-    @Override
     public String findClass(String path) {
         File file = new File(base, path);
         if(!file.exists()) return null;

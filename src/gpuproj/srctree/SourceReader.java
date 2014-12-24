@@ -67,15 +67,15 @@ public class SourceReader
         int start = pos;
         char c = source.charAt(pos);
         boolean hex = c == '0' && source.charAt(pos+1) == 'x';
-        while(Character.isLetterOrDigit(c = source.charAt(++pos))) {
+        while(pos < source.length() && Character.isLetterOrDigit(c = source.charAt(++pos)))
             if(!hex && (c == 'e' || c == 'E')) pos++;//accept the character after an exponent as valid
-        }
+
         return substring(start, pos);
     }
 
     private String readIdentifier() {
         int start = pos;
-        while(Character.isJavaIdentifierPart(source.charAt(++pos)));
+        while(++pos < source.length() && Character.isJavaIdentifierPart(source.charAt(pos)));
         return substring(start, pos);
     }
 
@@ -198,6 +198,7 @@ public class SourceReader
             } else
                 end = pos;
         }
+        list.add(substring(start, end));//last element
         return list;
     }
 
@@ -215,44 +216,41 @@ public class SourceReader
         }
     }
 
-    public TypeRef readTypeSymbol(Scope scope) {
-        TypeRef type = new TypeRef((ClassSymbol) scope.resolve(readElement(), Symbol.CLASS_SYM));
-        readTypeSymbols(scope, type.params);
+    public TypeRef readTypeRef(Scope scope) {
+        TypeRef type = new TypeRef((ReferenceSymbol) scope.resolve(readElement(), Symbol.CLASS_SYM));
+        readTypeRefs(scope, type.params);
         return type;
     }
 
-    public void readTypeSymbols(Scope scope, List<TypeRef> typeSymbols) {
-        if(source.charAt(seekCode()) != '<')
+    public void readTypeRefs(Scope scope, List<TypeRef> typeSymbols) {
+        if(end() || source.charAt(pos) != '<')
             return;
 
         String block = readElement();
         List<String> list = new SourceReader(block.substring(1, block.length()-1)).readList();
-        for(String s : list) {
-            SourceReader r = new SourceReader(s);
-            TypeRef type = new TypeRef((TypeSymbol) scope.resolve(r.readElement(), Symbol.TYPE_SYM));
-            r.readTypeSymbols(scope, type.params);
-        }
+        for(String s : list)
+            typeSymbols.add(new SourceReader(s).readTypeRef(scope));
     }
 
     /**
      * Assumed block of the form <T extends A>
      */
     public void readTypeParams(Scope scope, List<TypeParam> typeParams) {
-        seekCode();
-        if(source.charAt(0) != '<')
+        if(end() || source.charAt(pos) != '<')
             return;
 
         String block = readElement();
-        List<String> list = new SourceReader(block.substring(0, block.length()-1)).readList();
+        List<String> list = new SourceReader(block.substring(1, block.length()-1)).readList();
         for(String s : list) {
             SourceReader r = new SourceReader(s);
             TypeParam p = new TypeParam(r.readElement());
             if(!r.end()) {
                 String boundKey = r.readElement();
-                TypeRef bound = r.readTypeSymbol(scope);
+                TypeRef bound = r.readTypeRef(scope);
                 if(boundKey.equals("extends"))
                     p.upper = bound;
             }
+            typeParams.add(p);
         }
     }
 

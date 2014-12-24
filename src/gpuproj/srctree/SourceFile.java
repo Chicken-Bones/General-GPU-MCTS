@@ -44,8 +44,12 @@ public class SourceFile implements ScopeProvider
                 if(s != null) return s;
             }
             else if(SourceUtil.simpleName(imp.imp).equals(name))
-                return TypeIndex.instance.resolve(name, type);
+                return TypeIndex.instance.resolve(imp.imp, type);
         }
+
+        if((type & Symbol.CLASS_SYM) != 0)//in package
+            return TypeIndex.instance.resolve(SourceUtil.combineName(pkg, name), type);
+
         return null;
     }
 

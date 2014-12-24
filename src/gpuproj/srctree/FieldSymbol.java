@@ -2,14 +2,14 @@ package gpuproj.srctree;
 
 public class FieldSymbol extends Symbol
 {
-    public final String declaration;
+    public final Object source;
     public TypeRef type;
     public int modifiers;
     public Expression initialiser;
 
-    public FieldSymbol(String fullname, String declaration) {
+    public FieldSymbol(String fullname, Object source) {
         super(fullname);
-        this.declaration = declaration;
+        this.source = source;
     }
 
     public static FieldSymbol fromStatement(String parent, String stmt) {
