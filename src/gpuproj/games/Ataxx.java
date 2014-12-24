@@ -1,7 +1,9 @@
 package gpuproj.games;
 
+import gpuproj.game.AbstractSimpleBoard;
 import gpuproj.game.BoardGame;
 import gpuproj.Portable;
+import gpuproj.games.Ataxx.AtaxxBoard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +11,21 @@ import static gpuproj.game.BitBoard.*;
 
 public class Ataxx extends BoardGame<AtaxxBoard>
 {
+    public final class AtaxxBoard extends AbstractSimpleBoard<AtaxxBoard>
+    {
+        public static final long blocked = 0x0000240000240000L;
+
+        @Override
+        public AtaxxBoard copy() {
+            return new AtaxxBoard().set(this);
+        }
+
+        @Override
+        protected String format() {
+            return overlay(super.format(), format8(blocked, 'x'));
+        }
+    }
+
     private long movementMask(long pieces) {
         return dilate8(dilate8(pieces));
     }

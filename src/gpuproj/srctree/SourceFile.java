@@ -7,38 +7,49 @@ import java.util.List;
 
 public class SourceFile implements ScopeProvider
 {
-    public String pkg;
-    public List<String> imports = new LinkedList<>();
-    public List<String> wildcardImports = new LinkedList<>();
-    public List<String> staticImports = new LinkedList<>();
-    public List<String> staticWildcardImports = new LinkedList<>();
+    public static class Import
+    {
+        public final String imp;
+        public final boolean isStatic;
+        public final boolean wildcard;
+
+        public Import(String imp, boolean isStatic) {
+            if (imp.endsWith("*")) {
+                imp = imp.substring(0, imp.length() - 2);
+                wildcard = true;
+            } else
+                wildcard = false;
+            this.imp = imp;
+            this.isStatic = isStatic;
+        }
+
+        @Override
+        public String toString() {
+            return "import " + (isStatic ? "static " : "") + imp + (wildcard ? ".*" : "");
+        }
+    }
+
+    public final Scope scope = new Scope(this);
+    public String pkg = "";
+    public List<Import> imports = new LinkedList<>();
 
     @Override
-    protected Symbol resolveSingle(String name) {
-        for(String imp : imports) {
-            String last = SourceUtil.simpleName(imp);
-            if(last.equals("*")) {
-                String pkg = imp.substring(0, imp.length()-2);
-                if (TypeIndex.instance.getClassList(pkg).contains(name))
-                    return TypeIndex.instance.resolve(pkg+"."+name);
-            }
-            else if(last.equals(name)) {
-                return TypeIndex.instance.resolve(imp);
-            }
-        }
+    public Symbol resolveSingle(String name, int type) {
+        for(Import imp : imports) {
+            if((!imp.isStatic || (type & (Symbol.FIELD_SYM | Symbol.METHOD_SYM)) == 0) && (type & Symbol.CLASS_SYM) == 0)
+                continue;
 
-        for(String imp : staticImports) {
-            String last = SourceUtil.simpleName(imp);
-            String type = imp.substring(0, imp.length()-last.length()-1);
-            if(last.equals("*")) {
-                Object res = TypeIndex.instance.resolve(type).resolveInType(name);
-                if(res != null) return res;
+            if(imp.wildcard) {
+                Symbol s = TypeIndex.instance.resolve(SourceUtil.combineName(imp.imp, name), type);
+                if(s != null) return s;
             }
-            else if(last.equals(name)) {
-                return TypeIndex.instance.resolve(type).resolveInType(name);
-            }
+            else if(SourceUtil.simpleName(imp.imp).equals(name))
+                return TypeIndex.instance.resolve(name, type);
         }
+        return null;
+    }
 
-        return super.resolveFirst(name);
+    public void addImport(String imp, boolean isStatic) {
+        imports.add(new Import(imp, isStatic));
     }
 }

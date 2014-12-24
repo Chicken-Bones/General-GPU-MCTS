@@ -2,7 +2,7 @@ package gpuproj.srctree;
 
 public abstract class Expression
 {
-    public abstract String returnType();
+    public abstract TypeRef returnType();
 
     /**
      * @return Recursively evaluated valid source code for this expression

@@ -1,38 +1,26 @@
 package gpuproj.srctree;
 
-import java.util.Stack;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SourceReader
 {
-    private String source;
-    private int pos;
-    private Stack<Integer> marks = new Stack<>();
+    public final String source;
+    public int pos;
+    /**
+     * Flag used to determine if < is less than, or type parameter. Should be changed by the reader operator
+     */
+    public boolean declaration = true;
 
     public SourceReader(String source) {
         this.source = source;
     }
 
-    public void mark() {
-        marks.push(pos);
-    }
-
-    public void update() {
-        if(!marks.isEmpty()) marks.pop();
-        marks.push(pos);
-    }
-
-    public void reset() {
-        pos = marks.pop();
-    }
-
-    public void drop() {
-        marks.pop();
-    }
-
     /**
      * Skips comments and whitespace to find code. Increments pos to point to the next code relevant character (may leave it where it is)
+     * @return pos
      */
-    public void seekCode() {
+    public int seekCode() {
         while(pos < source.length()) {
             char c = source.charAt(pos);
             if (Character.isWhitespace(c))  {
@@ -43,11 +31,11 @@ public class SourceReader
             if(c == '/') {
                 char c2 = source.charAt(pos+1);
                 if(c2 == '/') {//line comment
-                    int idx = source.indexOf('\n', pos);
+                    int idx = indexOf('\n');
                     if(idx < 0) pos = source.length();
                     else pos = idx+1;
                 } else if(c2 == '*') {//block comment
-                    int idx = source.indexOf("*/", pos);
+                    int idx = indexOf("*/");
                     if (idx < 0) pos = source.length();
                     else pos = idx + 2;
                 }
@@ -56,6 +44,23 @@ public class SourceReader
 
             break;
         }
+        return pos;
+    }
+
+    public int indexOf(char c) {
+        return source.indexOf(c, pos);
+    }
+
+    public int indexOf(String s) {
+        return source.indexOf(s, pos);
+    }
+
+    public String substring(int start) {
+        return source.substring(start);
+    }
+
+    public String substring(int start, int end) {
+        return source.substring(start, end);
     }
 
     private String readLiteral() {
@@ -65,13 +70,13 @@ public class SourceReader
         while(Character.isLetterOrDigit(c = source.charAt(++pos))) {
             if(!hex && (c == 'e' || c == 'E')) pos++;//accept the character after an exponent as valid
         }
-        return source.substring(start, pos);
+        return substring(start, pos);
     }
 
     private String readIdentifier() {
         int start = pos;
         while(Character.isJavaIdentifierPart(source.charAt(++pos)));
-        return source.substring(start, pos);
+        return substring(start, pos);
     }
 
     /**
@@ -79,14 +84,14 @@ public class SourceReader
      */
     public String readTo(char delim, boolean include) {
         int start = pos;
-        pos = source.indexOf(';', pos)+1;
-        return source.substring(start, include ? pos : pos-1);
+        pos = indexOf(';')+1;
+        return substring(start, include ? pos : pos-1);
     }
 
     private String readSymbol() {
         int start = pos++;
-        while(SourceUtil.operator_symbols.contains(source.substring(start, pos+1))) pos++;//utilise the fact that all multi-char operators extend a valid operator
-        return source.substring(start, pos);
+        while(SourceUtil.operator_symbols.contains(substring(start, pos + 1))) pos++;//utilise the fact that all multi-char operators extend a valid operator
+        return substring(start, pos);
     }
 
     /**
@@ -120,7 +125,7 @@ public class SourceReader
             else if(c == open) level++;
             else if(c == close) level--;
         } while (level > 0);
-        return source.substring(start, pos);
+        return substring(start, pos);
     }
 
     /**
@@ -139,6 +144,8 @@ public class SourceReader
             return readPaired('[', ']');
         if(c == '{')
             return readPaired('{', '}');
+        if(declaration && c == '<')
+            return readPaired('<', '>');
         if(c == '@')//annotation
             return '@'+readIdentifier();
         return readSymbol();
@@ -148,20 +155,128 @@ public class SourceReader
      * Seeks to the start of code and returns everything until the next ';' or '{}' pair
      */
     public String readStatement() {
-        seekCode();
-        int start = pos;
+        int start = seekCode();
         char c;
         do {
             c = readElement().charAt(0);
         } while(c != '{' && c != ';');
-        return source.substring(start, pos);
+
+        if(c == ';' && start == pos-1)//redundant semicolon, or semicolon after block
+            return readStatement();
+
+        return substring(start, c == ';' ? pos - 1 : pos);
     }
 
     public boolean end() {
-        mark();
+        return seekCode() == source.length();
+    }
+
+    public boolean isAnnotation() {
+        return source.charAt(seekCode()) == '@' && pos+10 <= source.length() && !substring(pos, pos+10).equals("@interface");
+    }
+
+    public void readAnnotations(Scope scope, List<AnnotationSymbol> annotations) {
+        while(isAnnotation()) {
+            ClassSymbol sym = (ClassSymbol) scope.resolve(readElement().substring(1), Symbol.CLASS_SYM);
+            String params = source.charAt(seekCode()) == '(' ? readElement() : "()";
+            annotations.add(new AnnotationSymbol(sym, params));
+        }
+    }
+
+    /**
+     * Reads a comma separated list. Stops at the end of the source reader
+     */
+    public List<String> readList() {
+        List<String> list = new LinkedList<>();
+        int start = seekCode();
+        int end = start;
+        while(!end()) {
+            String w = readElement();
+            if(w.equals(",")) {
+                list.add(substring(start, end));
+                start = seekCode();
+            } else
+                end = pos;
+        }
+        return list;
+    }
+
+    public int readModifiers() {
+        int mark = seekCode();
+        int mods = 0;
+        while(true) {
+            int mod = SourceUtil.getModifier(readElement());
+            if(mod == 0) {
+                pos = mark;
+                return mods;
+            }
+            mods |= mod;
+            mark = pos;
+        }
+    }
+
+    public TypeRef readTypeSymbol(Scope scope) {
+        TypeRef type = new TypeRef((ClassSymbol) scope.resolve(readElement(), Symbol.CLASS_SYM));
+        readTypeSymbols(scope, type.params);
+        return type;
+    }
+
+    public void readTypeSymbols(Scope scope, List<TypeRef> typeSymbols) {
+        if(source.charAt(seekCode()) != '<')
+            return;
+
+        String block = readElement();
+        List<String> list = new SourceReader(block.substring(1, block.length()-1)).readList();
+        for(String s : list) {
+            SourceReader r = new SourceReader(s);
+            TypeRef type = new TypeRef((TypeSymbol) scope.resolve(r.readElement(), Symbol.TYPE_SYM));
+            r.readTypeSymbols(scope, type.params);
+        }
+    }
+
+    /**
+     * Assumed block of the form <T extends A>
+     */
+    public void readTypeParams(Scope scope, List<TypeParam> typeParams) {
         seekCode();
-        boolean end = pos == source.length();
-        reset();
-        return end;
+        if(source.charAt(0) != '<')
+            return;
+
+        String block = readElement();
+        List<String> list = new SourceReader(block.substring(0, block.length()-1)).readList();
+        for(String s : list) {
+            SourceReader r = new SourceReader(s);
+            TypeParam p = new TypeParam(r.readElement());
+            if(!r.end()) {
+                String boundKey = r.readElement();
+                TypeRef bound = r.readTypeSymbol(scope);
+                if(boundKey.equals("extends"))
+                    p.upper = bound;
+            }
+        }
+    }
+
+    public void skipAnnotations() {
+        while(isAnnotation()) {
+            readElement();
+            if(source.charAt(seekCode()) == '(')
+                readElement();
+        }
+    }
+
+    public void skipTypeParams() {
+        declaration = true;
+        if(source.charAt(seekCode()) == '<')
+            readElement();
+    }
+
+    public void seek(String... needles) {
+        int first = Integer.MAX_VALUE;
+        for(String needle : needles) {
+            int p = indexOf(needle);
+            if(p >= 0 && p < first) first = p;
+        }
+        if(first < Integer.MAX_VALUE)
+            pos = first;
     }
 }

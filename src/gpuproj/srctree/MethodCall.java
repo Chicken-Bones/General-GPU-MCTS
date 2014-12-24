@@ -7,11 +7,11 @@ import java.lang.reflect.Modifier;
  */
 public class MethodCall extends Expression
 {
-    public Method method;
+    public MethodSymbol method;
     public Expression[] params;
 
     @Override
-    public String returnType() {
+    public TypeRef returnType() {
         return method.returnType;
     }
 
@@ -20,10 +20,10 @@ public class MethodCall extends Expression
         StringBuilder sb = new StringBuilder();
         int p = 0;
         if(method.name.equals("<init>")) {
-            sb.append("new ").append(method.owner.simpleName());
+            sb.append("new ").append(method.owner.name);
         } else {
             if (Modifier.isStatic(method.modifiers))
-                sb.append(method.owner.simpleName());
+                sb.append(method.owner.name);
             else
                 sb.append(params[p++].print());
             if (sb.length() > 0)
@@ -36,11 +36,11 @@ public class MethodCall extends Expression
                 sb.append(", ");
 
             Expression exp = params[p];
-            if(SourceUtil.pointerLevel(method.paramTypes[p]) > SourceUtil.pointerLevel(exp.returnType())) {
+            /*if(SourceUtil.pointerLevel(method.params.get()paramTypes[p]) > SourceUtil.pointerLevel(exp.returnType())) {
                 sb.append('&');//take address for passing to methods requiring pointer args
                 if(exp.precedence() <= 3)//address of precedence
                     exp = new Parentheses(exp);
-            }
+            }*/
             sb.append(exp.print());
         }
 

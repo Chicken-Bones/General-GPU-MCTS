@@ -6,15 +6,13 @@ public class MemberAccess extends Expression
     String member;
 
     @Override
-    public String returnType() {
-        return TypeIndex.instance.resolveClass(field.returnType()).resolveField(member).type;
+    public TypeRef returnType() {
+        return ((ReferenceSymbol)field.returnType().type.concrete()).getField(member).type;
     }
 
     @Override
     public String print() {
-        return field.print() +
-                (SourceUtil.pointerLevel(field.returnType()) == 0 ? "." : "->") +
-                member;
+        return field.print() + "." + member;
     }
 
     @Override

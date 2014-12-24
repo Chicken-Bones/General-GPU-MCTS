@@ -8,6 +8,6 @@ public class PackageSymbol extends Symbol
 
     @Override
     public String toString() {
-        return "package "+name;
+        return "package "+fullname;
     }
 }

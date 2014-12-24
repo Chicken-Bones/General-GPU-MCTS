@@ -1,5 +1,6 @@
 package gpuproj.srctree;
 
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -17,8 +18,8 @@ public class SourceUtil
     }
 
     private static List<String> wider = Arrays.asList("char", "uchar", "short", "ushort", "int", "uint", "long", "ulong", "float", "double");
-    public static String promoteNumeric(String type1, String type2) {
-        return wider.get(Math.max(wider.indexOf(type1), wider.indexOf(type2)));
+    public static TypeSymbol promoteNumeric(TypeSymbol type1, TypeSymbol type2) {
+        return TypeIndex.instance.resolveType(wider.get(Math.max(wider.indexOf(type1.fullname), wider.indexOf(type2.fullname))));
     }
 
     public static int pointerLevel(String type) {
@@ -44,6 +45,10 @@ public class SourceUtil
         return dot < 0 ? "" : fullName.substring(0, dot);
     }
 
+    public static String combineName(String parent, String name) {
+        return parent.length() == 0 ? name : parent+'.'+name;
+    }
+
     /**
      * set of all operator symbols, excluding brackets
      */
@@ -59,4 +64,20 @@ public class SourceUtil
             "?", ":",
             "*=", "/=", "+=", "-=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "|="
     ));
+
+    public static int getModifier(String word) {
+        switch(word) {
+            case "public": return Modifier.PUBLIC;
+            case "protected": return Modifier.PROTECTED;
+            case "private": return Modifier.PRIVATE;
+            case "abstract": return Modifier.ABSTRACT;
+            case "static": return Modifier.STATIC;
+            case "final": return Modifier.FINAL;
+            case "transient": return Modifier.TRANSIENT;
+            case "volatile": return Modifier.VOLATILE;
+            case "synchronized": return Modifier.SYNCHRONIZED;
+            case "native": return Modifier.NATIVE;
+            default: return 0;
+        }
+    }
 }

@@ -28,4 +28,5 @@ MCTS vs UCB for various games, 200 playouts @ 500ms
 Ataxx: 122.5 (61.25%)
 Othello: 184.5 (92.25%)
 Clobber: 181.0 (90.5%)
-GoMoku:
+GoMoku: 137.5 (68.75%)
+Squavalath: 191.0 (95.5%)

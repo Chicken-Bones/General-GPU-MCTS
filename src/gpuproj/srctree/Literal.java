@@ -14,14 +14,14 @@ public class Literal extends Expression
     }
 
     @Override
-    public String returnType() {
+    public TypeRef returnType() {
         if(value.endsWith("f"))
-            return "float";
+            return new TypeRef(TypeIndex.FLOAT);
         if(value.contains(".") || value.contains("e") && !value.startsWith("0x"))
-            return "double";
+            return new TypeRef(TypeIndex.DOUBLE);
         if(value.endsWith("L"))
-            return "long";
-        return "int";
+            return new TypeRef(TypeIndex.LONG);
+        return new TypeRef(TypeIndex.INT);
     }
 
     @Override

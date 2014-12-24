@@ -1,13 +1,109 @@
 package gpuproj.games;
 
-import gpuproj.game.BoardGame;
-import gpuproj.game.MoveList;
+import gpuproj.StructLike;
+import gpuproj.game.*;
 import gpuproj.Portable;
+import gpuproj.games.Ataxx2.AtaxxBoard2;
 
 import java.util.List;
 
 public class Ataxx2 extends BoardGame<AtaxxBoard2>
 {
+    public static class AtaxxBoard2 extends Board<AtaxxBoard2>
+    {
+        /**
+         * Array of board pieces. 0 for empty, 1 for p1, 2 for p2, -1 for blocked
+         */
+        byte[][] board = new byte[8][8];
+        byte turn;
+
+        @Override
+        public int getTurn() {
+            return turn;
+        }
+
+        @Override
+        public AtaxxBoard2 set(AtaxxBoard2 b) {
+            for(int x = 0; x < 8; x++)
+                System.arraycopy(b.board[x], 0, board[x], 0, 8);
+            turn = b.turn;
+            return this;
+        }
+
+        @Override
+        public AtaxxBoard2 copy() {
+            return new AtaxxBoard2().set(this);
+        }
+
+        @Override
+        public String toString() {
+            return "Turn: "+(turn == 0 ? "White" : "Black") + '\n'+
+                    BitBoard.format(board, 1, 'w', 2, 'b', -1, 'x');
+        }
+    }
+
+    public class AtaxxMove2 implements Move<AtaxxBoard2>, StructLike<AtaxxMove2>
+    {
+        /**
+         * Coordinate of the piece being moved. (y<<3|x)
+         */
+        byte src;
+        /**
+         * Coordinate the destination. (y<<3|x)
+         */
+        byte dst;
+
+        public AtaxxMove2(int src, int dst) {
+            this.src = (byte) src;
+            this.dst = (byte) dst;
+        }
+
+        @Override
+        public AtaxxBoard2 apply(AtaxxBoard2 b) {
+            byte ply = (byte) (b.turn + 1);
+            byte opp = (byte) ((b.turn^1) + 1);
+
+            int dx = dst&7;
+            int dy = dst>>3;
+
+            b.board[dx][dy] = ply;
+            if(Math.abs((src&7) - (dst&7)) == 2 || Math.abs((src>>3) - (dst>>3)) == 2)//2 spaces between src and dest
+                b.board[src&7][src>>3] = 0;
+
+            for(int i = Math.max(0, dx-1); i <= Math.min(7, dx+1); i++)
+                for(int j = Math.max(0, dy-1); j <= Math.min(7, dy+1); j++)
+                    if(b.board[i][j] == opp)
+                        b.board[i][j] = ply;
+
+            b.turn ^= 1;
+            return b;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(!(obj instanceof AtaxxMove2)) return false;
+            AtaxxMove2 m = (AtaxxMove2) obj;
+            return src == m.src && dst == m.dst;
+        }
+
+        @Override
+        public AtaxxMove2 set(AtaxxMove2 m) {
+            src = m.src;
+            dst = m.dst;
+            return this;
+        }
+
+        @Override
+        public AtaxxMove2 copy() {
+            return new AtaxxMove2(src, dst);
+        }
+
+        @Override
+        public String toString() {
+            return ""+(src&7)+","+(src>>3)+" -> "+(dst&7)+","+(dst>>3);
+        }
+    }
+
     @Override
     public AtaxxBoard2 getStartingBoard() {
         AtaxxBoard2 board = new AtaxxBoard2();
@@ -22,7 +118,7 @@ public class Ataxx2 extends BoardGame<AtaxxBoard2>
         return board;
     }
 
-    private final MoveList<AtaxxMove2> moves = new MoveList<AtaxxMove2>(200, AtaxxMove2.class);
+    private final MoveList<AtaxxMove2> moves = new MoveList<>(200, AtaxxMove2.class);
 
     /**
      * Clears the move list, and adds all moves of b to it

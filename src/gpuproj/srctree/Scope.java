@@ -16,7 +16,7 @@ public final class Scope
 
     public final Scope parent;
     public final ScopeProvider provider;
-    private Map<String, Symbol> cache = new HashMap<>();
+    public Map<String, Symbol> cache = new HashMap<>();
 
     public Scope(Scope parent, ScopeProvider provider) {
         this.parent = parent;
@@ -41,5 +41,9 @@ public final class Scope
         if(res == null)
             cache.put(name, res = resolveFirst(name, type));
         return res;
+    }
+
+    public void cache(Symbol sym) {
+        cache.put(sym.fullname, sym);
     }
 }

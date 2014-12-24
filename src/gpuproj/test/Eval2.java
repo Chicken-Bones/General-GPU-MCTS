@@ -10,4 +10,10 @@ public abstract class Eval2
     }
 
     public abstract void method(Inner1 param);
+
+    public void test() {
+        int a = 0;
+        int b = 0;
+
+    }
 }

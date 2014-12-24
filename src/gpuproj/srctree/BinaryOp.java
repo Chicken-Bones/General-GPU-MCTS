@@ -16,7 +16,7 @@ public class BinaryOp extends Expression
     }
 
     @Override
-    public String returnType() {
+    public TypeRef returnType() {
         switch(op) {
             case "*":
             case "/":
@@ -26,11 +26,11 @@ public class BinaryOp extends Expression
             case "&":
             case "^":
             case "|":
-                return SourceUtil.promoteNumeric(op1.returnType(), op2.returnType());
+                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, op2.returnType().type));
             case ">>":
             case "<<":
             case ">>>":
-                return SourceUtil.promoteNumeric(op1.returnType(), "int");
+                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, TypeIndex.INT));
             case "<":
             case "<=":
             case ">":
@@ -39,7 +39,7 @@ public class BinaryOp extends Expression
             case "!=":
             case "&&":
             case "||":
-                return "int";
+                return new TypeRef(TypeIndex.INT);
             case "=":
             case "+=":
             case "-=":

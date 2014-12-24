@@ -9,7 +9,7 @@ public class Parentheses extends Expression
     }
 
     @Override
-    public String returnType() {
+    public TypeRef returnType() {
         return exp.returnType();
     }
 
