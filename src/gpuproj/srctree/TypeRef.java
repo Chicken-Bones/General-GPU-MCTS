@@ -24,15 +24,13 @@ public class TypeRef
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(type.fullname);
-        if(!params.isEmpty()) {
-            sb.append('<');
-            for(int i = 0; i < params.size(); i++) {
-                if(i > 0) sb.append(", ");
-                sb.append(params.get(i));
-            }
-            sb.append('>');
-        }
+        if(!params.isEmpty())
+            sb.append(SourceUtil.listString(params, '<', '>'));
 
         return sb.toString();
+    }
+
+    public String signature() {
+        return type.concrete().signature();
     }
 }

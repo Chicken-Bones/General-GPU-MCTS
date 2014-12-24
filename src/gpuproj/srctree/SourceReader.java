@@ -177,7 +177,7 @@ public class SourceReader
 
     public void readAnnotations(Scope scope, List<AnnotationSymbol> annotations) {
         while(isAnnotation()) {
-            ClassSymbol sym = (ClassSymbol) scope.resolve(readElement().substring(1), Symbol.CLASS_SYM);
+            ClassSymbol sym = (ClassSymbol) scope.resolve1(readElement().substring(1), Symbol.CLASS_SYM);
             String params = source.charAt(seekCode()) == '(' ? readElement() : "()";
             annotations.add(new AnnotationSymbol(sym, params));
         }
@@ -198,7 +198,9 @@ public class SourceReader
             } else
                 end = pos;
         }
-        list.add(substring(start, end));//last element
+        if(start != end)
+            list.add(substring(start, end));//last element
+
         return list;
     }
 
@@ -217,7 +219,7 @@ public class SourceReader
     }
 
     public TypeRef readTypeRef(Scope scope) {
-        TypeRef type = new TypeRef((ReferenceSymbol) scope.resolve(readElement(), Symbol.CLASS_SYM));
+        TypeRef type = new TypeRef((TypeSymbol) scope.resolve1(readElement(), Symbol.TYPE_SYM));
         readTypeRefs(scope, type.params);
         return type;
     }

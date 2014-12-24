@@ -11,15 +11,15 @@ import java.util.List;
  */
 public class TypeIndex implements ScopeProvider
 {
-    public static final PrimitiveSymbol BYTE = new PrimitiveSymbol("byte");
-    public static final PrimitiveSymbol SHORT = new PrimitiveSymbol("short");
-    public static final PrimitiveSymbol CHAR = new PrimitiveSymbol("char");
-    public static final PrimitiveSymbol INT = new PrimitiveSymbol("int");
-    public static final PrimitiveSymbol LONG = new PrimitiveSymbol("long");
-    public static final PrimitiveSymbol FLOAT = new PrimitiveSymbol("float");
-    public static final PrimitiveSymbol DOUBLE = new PrimitiveSymbol("double");
-    public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol("boolean");
-    public static final PrimitiveSymbol VOID = new PrimitiveSymbol("void");
+    public static final PrimitiveSymbol BYTE = new PrimitiveSymbol("byte", "B");
+    public static final PrimitiveSymbol SHORT = new PrimitiveSymbol("short", "S");
+    public static final PrimitiveSymbol CHAR = new PrimitiveSymbol("char", "C");
+    public static final PrimitiveSymbol INT = new PrimitiveSymbol("int", "I");
+    public static final PrimitiveSymbol LONG = new PrimitiveSymbol("long", "J");
+    public static final PrimitiveSymbol FLOAT = new PrimitiveSymbol("float", "F");
+    public static final PrimitiveSymbol DOUBLE = new PrimitiveSymbol("double", "D");
+    public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol("boolean", "Z");
+    public static final PrimitiveSymbol VOID = new PrimitiveSymbol("void", "V");
 
     public static TypeIndex instance;
 
@@ -80,30 +80,37 @@ public class TypeIndex implements ScopeProvider
     }
 
     @Override
-    public Symbol resolveSingle(String name, int type) {
+    public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & Symbol.CLASS_SYM) != 0) {
             ReferenceSymbol sym = findClass(name);
-            if(sym != null) return sym;
+            if(sym != null) {
+                list.add(sym);
+                return;
+            }
         }
 
         String parentName = SourceUtil.parentName(name);
         if(parentName.length() > 0) {
-            ReferenceSymbol sym = (ReferenceSymbol) scope.resolve(parentName, Symbol.CLASS_SYM);
-            if(sym != null) return sym.resolveSingle(SourceUtil.simpleName(name), type);
+            ReferenceSymbol sym = (ReferenceSymbol) scope.resolve1(parentName, Symbol.CLASS_SYM);
+            if(sym != null) {
+                sym.resolveOnce(SourceUtil.simpleName(name), type, list);
+                return;
+            }
         }
 
-        return null;
+        if(!name.startsWith("java.lang"))
+            resolveOnce("java.lang."+name, type, list);
     }
 
     public TypeSymbol resolveType(String name) {
-        return (TypeSymbol)scope.resolve(name, Symbol.TYPE_SYM);
+        return (TypeSymbol)scope.resolve1(name, Symbol.TYPE_SYM);
     }
 
-    public Symbol resolve(String name, int type) {
+    public List<Symbol> resolve(String name, int type) {
         return scope.resolve(name, type);
     }
 
     public void register(Symbol sym) {
-        scope.cache.put(sym.fullname, sym);
+        scope.cache(sym);
     }
 }

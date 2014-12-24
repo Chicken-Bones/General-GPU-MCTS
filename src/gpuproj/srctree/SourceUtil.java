@@ -80,4 +80,15 @@ public class SourceUtil
             default: return 0;
         }
     }
+
+    public static String listString(List<?> list, char start, char end) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(start);
+        for(int i = 0; i < list.size(); i++) {
+            if(i > 0) sb.append(", ");
+            sb.append(list.get(i));
+        }
+        sb.append(end);
+        return sb.toString();
+    }
 }

@@ -34,23 +34,22 @@ public class SourceFile implements ScopeProvider
     public List<Import> imports = new LinkedList<>();
 
     @Override
-    public Symbol resolveSingle(String name, int type) {
+    public void resolveOnce(String name, int type, List<Symbol> list) {
         for(Import imp : imports) {
             if((!imp.isStatic || (type & (Symbol.FIELD_SYM | Symbol.METHOD_SYM)) == 0) && (type & Symbol.CLASS_SYM) == 0)
                 continue;
 
-            if(imp.wildcard) {
-                Symbol s = TypeIndex.instance.resolve(SourceUtil.combineName(imp.imp, name), type);
-                if(s != null) return s;
-            }
+            if(imp.wildcard)
+                list.addAll(TypeIndex.instance.resolve(SourceUtil.combineName(imp.imp, name), type));
             else if(SourceUtil.simpleName(imp.imp).equals(name))
-                return TypeIndex.instance.resolve(imp.imp, type);
+                list.addAll(TypeIndex.instance.resolve(imp.imp, type));
+
+            if(!list.isEmpty())
+                return;
         }
 
         if((type & Symbol.CLASS_SYM) != 0)//in package
-            return TypeIndex.instance.resolve(SourceUtil.combineName(pkg, name), type);
-
-        return null;
+            list.addAll(TypeIndex.instance.resolve(SourceUtil.combineName(pkg, name), type));
     }
 
     public void addImport(String imp, boolean isStatic) {

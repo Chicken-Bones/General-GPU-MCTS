@@ -23,4 +23,9 @@ public class TypeParam extends TypeSymbol
 
         return name;
     }
+
+    @Override
+    public String signature() {
+        return concrete().signature();
+    }
 }

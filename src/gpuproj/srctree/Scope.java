@@ -1,6 +1,8 @@
 package gpuproj.srctree;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public final class Scope
@@ -8,15 +10,14 @@ public final class Scope
     public interface ScopeProvider
     {
         /**
-         * Attempt to resolve a symbol using just this scope (not parents)
-         * @return A symbol if found, or null
+         * Add all symbols matching name and type to list
          */
-        public Symbol resolveSingle(String name, int type);
+        public void resolveOnce(String name, int type, List<Symbol> list);
     }
 
     public final Scope parent;
     public final ScopeProvider provider;
-    public Map<String, Symbol> cache = new HashMap<>();
+    public Map<String, List<Symbol>> cache = new HashMap<>();
 
     public Scope(Scope parent, ScopeProvider provider) {
         this.parent = parent;
@@ -27,25 +28,34 @@ public final class Scope
         this(TypeIndex.instance.scope, provider);
     }
 
-    private Symbol resolveFirst(String name, int type) {
-        Symbol sym = provider.resolveSingle(name, type);
-        return sym != null ? sym : parent != null ? parent.resolve(name, type) : null;
+    private void resolveOnce(String name, int types, List<Symbol> list) {
+        provider.resolveOnce(name, types, list);
+        if(list.isEmpty() && parent != null)
+            list.addAll(parent.resolve(name, types));
     }
 
     /**
      * Resolves name to a symbol within this scope matching type. Returns null if not found.
      * Uses a map to cache all symbols resolved in this scope
      */
-    public Symbol resolve(String name, int type) {
-        Symbol res;
-        if(cache.containsKey(name))
-            res = cache.get(name);
-        else
-            cache.put(name, res = resolveFirst(name, type));
-        return res;
+    public List<Symbol> resolve(String name, int types) {
+        List<Symbol> symbols = cache.get(name);
+        if(symbols == null) {
+            cache.put(name, symbols = new LinkedList<>());
+            resolveOnce(name, types, symbols);
+        }
+        return symbols;
     }
 
     public void cache(Symbol sym) {
-        cache.put(sym.fullname, sym);
+        List<Symbol> symbols = cache.get(sym.fullname);
+        if(symbols == null)
+            cache.put(sym.fullname, symbols = new LinkedList<>());
+        symbols.add(sym);
+    }
+
+    public Symbol resolve1(String name, int types) {
+        List<Symbol> list = resolve(name, types);
+        return list.isEmpty() ? null : list.get(0);
     }
 }

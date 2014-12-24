@@ -33,48 +33,59 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
         return this;
     }
 
-    public abstract void loadSymbols();
-    public abstract void loadSignatures();
+    public abstract ReferenceSymbol loadSymbols();
+    public abstract ReferenceSymbol loadSignatures();
 
     public FieldSymbol getField(String name) {
-        return (FieldSymbol) resolveSingle(name, FIELD_SYM);
+        LinkedList<Symbol> list = new LinkedList<>();
+        resolveOnce(name, FIELD_SYM, list);
+        return list.isEmpty() ? null : (FieldSymbol)list.getFirst();
+    }
+
+    public List<MethodSymbol> getMethods(String name) {
+        LinkedList<Symbol> list = new LinkedList<>();
+        resolveOnce(name, METHOD_SYM, list);
+        return (List<MethodSymbol>)(List)list;
     }
 
     @Override
-    public Symbol resolveSingle(String name, int type) {
-        if((type & FIELD_SYM) != 0) {
+    public void resolveOnce(String name, int type, List<Symbol> list) {
+        if((type & FIELD_SYM) != 0 && list.isEmpty()) {//fields are shadowed by subclasses
             for(FieldSymbol sym : fields)
                 if(sym.name.equals(name))
-                    return sym;
+                    list.add(sym);
         }
         if((type & METHOD_SYM) != 0) {
             for(MethodSymbol sym : methods)
                 if(sym.name.equals(name))
-                    return sym;
+                    list.add(sym);
         }
         if((type & CLASS_SYM) != 0) {
             for (ReferenceSymbol sym : innerClasses)
                 if (sym.name.equals(name))
-                    return sym;
+                    list.add(sym);
         }
         if((type & TYPEPARAM) != 0) {
             for(TypeParam p : typeParams)
                 if(p.name.equals(name))
-                    return p;
+                    list.add(p);
         }
-        if(parent != null) {
-            Symbol sym = parent.refType().resolveSingle(name, type);
-            if(sym != null) return sym;
-        }
-        for(TypeRef iface : interfaces) {
-            Symbol sym = iface.refType().resolveSingle(name, type);
-            if(sym != null) return sym;
-        }
-        return null;
+
+        if(parent != null)
+            parent.refType().resolveOnce(name, type, list);
+
+        for(TypeRef iface : interfaces)
+            iface.refType().resolveOnce(name, type, list);
+
     }
 
     @Override
     public TypeSymbol concrete() {
         return this;
+    }
+
+    @Override
+    public String signature() {
+        return 'L'+fullname.replace('.', '/')+';';
     }
 }

@@ -1,5 +1,7 @@
 package gpuproj.srctree;
 
+import java.lang.reflect.Modifier;
+
 public class FieldSymbol extends Symbol
 {
     public final Object source;
@@ -12,12 +14,11 @@ public class FieldSymbol extends Symbol
         this.source = source;
     }
 
-    public static FieldSymbol fromStatement(String parent, String stmt) {
-        SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        r.readModifiers();
-        r.readElement();//type
-        r.skipTypeParams();
-        return new FieldSymbol(SourceUtil.combineName(parent, r.readElement()), stmt);
+    @Override
+    public String toString() {
+        if(type != null)
+            return Modifier.toString(modifiers) + ' ' + type + ' ' + name;
+
+        return fullname;
     }
 }

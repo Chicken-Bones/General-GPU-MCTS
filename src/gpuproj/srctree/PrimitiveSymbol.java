@@ -5,12 +5,20 @@ package gpuproj.srctree;
  */
 public class PrimitiveSymbol extends TypeSymbol
 {
-    public PrimitiveSymbol(String fullname) {
+    public final String signature;
+
+    public PrimitiveSymbol(String fullname, String signature) {
         super(fullname);
+        this.signature = signature;
     }
 
     @Override
     public TypeSymbol concrete() {
         return this;
+    }
+
+    @Override
+    public String signature() {
+        return signature;
     }
 }
