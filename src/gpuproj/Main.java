@@ -33,7 +33,7 @@ public class Main
 
 
 
-        Symbol sym = TypeIndex.instance.resolveType("gpuproj.games.Ataxx");
+        Symbol sym = TypeIndex.instance.resolveType("gpuproj.games.Ataxx2");
         new Object();
     }
 }

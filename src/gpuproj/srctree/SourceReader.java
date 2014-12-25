@@ -282,6 +282,20 @@ public class SourceReader
         }
     }
 
+    public void skipType() {
+        String type = readElement();
+        if (type.charAt(0) == '?') {
+            readElement();//assume extends
+            skipType();
+            return;
+        }
+
+        while(!end() && source.charAt(pos) == '[')
+            readElement();
+
+        skipTypeParams();
+    }
+
     public void skipTypeParams() {
         declaration = true;
         if(source.charAt(seekCode()) == '<')

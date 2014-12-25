@@ -122,8 +122,7 @@ public class ClassSymbol extends ReferenceSymbol
         r.skipAnnotations();
         r.readModifiers();
         r.skipTypeParams();//method type aliases
-        r.readElement();//return type
-        r.skipTypeParams();//return type params
+        r.skipType();//return type
         //TODO detect constructors
         return new MethodSymbol(SourceUtil.combineName(fullname, r.readElement()), this, stmt);
     }
@@ -132,8 +131,7 @@ public class ClassSymbol extends ReferenceSymbol
         SourceReader r = new SourceReader(stmt);
         r.skipAnnotations();
         r.readModifiers();
-        r.readElement();//type
-        r.skipTypeParams();
+        r.skipType();//type
         return new FieldSymbol(SourceUtil.combineName(fullname, r.readElement()), stmt);
     }
 

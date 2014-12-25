@@ -42,7 +42,7 @@ public class Ataxx2 extends BoardGame<AtaxxBoard2>
         }
     }
 
-    public class AtaxxMove2 implements Move<AtaxxBoard2>, StructLike<AtaxxMove2>
+    public static class AtaxxMove2 implements Move<AtaxxBoard2>, StructLike<AtaxxMove2>
     {
         /**
          * Coordinate of the piece being moved. (y<<3|x)
