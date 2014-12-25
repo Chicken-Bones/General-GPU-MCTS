@@ -1,12 +1,25 @@
 package gpuproj.srctree;
 
-public class ArrayTypeSymbol extends TypeSymbol
+public class ArrayTypeSymbol extends ReferenceSymbol
 {
     public final TypeSymbol type;
 
     public ArrayTypeSymbol(TypeSymbol type) {
-        super(type.fullname+"[]");
+        super(type.fullname+"[]", TypeIndex.instance.scope, null);
         this.type = type;
+    }
+
+    @Override
+    public ReferenceSymbol loadSymbols() {
+        return this;
+    }
+
+    @Override
+    public ReferenceSymbol loadSignatures() {
+        FieldSymbol length = new FieldSymbol(SourceUtil.combineName(fullname, "length"), null);
+        length.type = new TypeRef(PrimitiveSymbol.INT);
+        fields.add(length);
+        return this;
     }
 
     @Override
