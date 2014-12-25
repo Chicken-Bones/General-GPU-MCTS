@@ -5,15 +5,25 @@ public class TypeParam extends TypeSymbol
     /**
      * alias extends upper
      */
-    public TypeRef upper = new TypeRef(TypeIndex.instance.resolveType("java.lang.Object"));
+    public final TypeRef upper;
 
-    public TypeParam(String fullname) {
-        super(fullname);
+    public TypeParam(String alias, TypeRef upper) {
+        super(alias);
+        this.upper = upper;
+    }
+
+    public TypeParam(String alias) {
+        this(alias, new TypeRef(TypeIndex.instance.resolveType("java.lang.Object")));
     }
 
     @Override
     public TypeSymbol concrete() {
         return upper.type.concrete();
+    }
+
+    @Override
+    public int getType() {
+        return Symbol.TYPE_PARAM;
     }
 
     @Override

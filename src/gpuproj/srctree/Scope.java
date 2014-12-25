@@ -15,9 +15,49 @@ public final class Scope
         public void resolveOnce(String name, int type, List<Symbol> list);
     }
 
+    public class SymbolCache
+    {
+        public List[] lists = new LinkedList[Symbol.TYPE_COUNT];
+
+        public List<Symbol> resolve(String name, int types) {
+            List<Symbol> single = null;
+            List<Symbol> combined = null;
+            for(int i = 0; i < Symbol.TYPE_COUNT; i++) {
+                if((types & 1<<i) == 0) continue;
+                List<Symbol> list = resolve_i(name, i);
+                if(single == null)
+                    single = list;
+                else {
+                    if(combined == null)
+                        combined = new LinkedList<>(single);
+                    combined.addAll(list);
+                }
+            }
+
+            return combined != null ? combined : single;
+        }
+
+        private List<Symbol> resolve_i(String name, int i) {
+            if(lists[i] == null)
+                resolveOnce(name, 1<<i, lists[i] = new LinkedList());
+
+            return lists[i];
+        }
+
+        public void add(Symbol sym) {
+            for(int i = 0; i < Symbol.TYPE_COUNT; i++) {
+                if(sym.getType() == 1<<i) {
+                    if(lists[i] == null)
+                        lists[i] = new LinkedList();
+                    lists[i].add(sym);
+                }
+            }
+        }
+    }
+
     public final Scope parent;
     public final ScopeProvider provider;
-    public Map<String, List<Symbol>> cache = new HashMap<>();
+    public Map<String, SymbolCache> cache = new HashMap<>();
 
     public Scope(Scope parent, ScopeProvider provider) {
         this.parent = parent;
@@ -35,22 +75,21 @@ public final class Scope
     }
 
     /**
-     * Resolves name to a symbol within this scope matching type. Returns null if not found.
+     * Resolves name to a symbol within this scope matching type.
      * Uses a map to cache all symbols resolved in this scope
      */
     public List<Symbol> resolve(String name, int types) {
-        List<Symbol> symbols = cache.get(name);
-        if(symbols == null) {
-            cache.put(name, symbols = new LinkedList<>());
-            resolveOnce(name, types, symbols);
-        }
-        return symbols;
+        SymbolCache symbols = cache.get(name);
+        if(symbols == null)
+            cache.put(name, symbols = new SymbolCache());
+
+        return symbols.resolve(name, types);
     }
 
     public void cache(Symbol sym) {
-        List<Symbol> symbols = cache.get(sym.fullname);
+        SymbolCache symbols = cache.get(sym.fullname);
         if(symbols == null)
-            cache.put(sym.fullname, symbols = new LinkedList<>());
+            cache.put(sym.fullname, symbols = new SymbolCache());
         symbols.add(sym);
     }
 

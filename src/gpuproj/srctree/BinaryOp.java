@@ -30,7 +30,7 @@ public class BinaryOp extends Expression
             case ">>":
             case "<<":
             case ">>>":
-                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, TypeIndex.INT));
+                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, PrimitiveSymbol.INT));
             case "<":
             case "<=":
             case ">":
@@ -39,7 +39,7 @@ public class BinaryOp extends Expression
             case "!=":
             case "&&":
             case "||":
-                return new TypeRef(TypeIndex.INT);
+                return new TypeRef(PrimitiveSymbol.INT);
             case "=":
             case "+=":
             case "-=":

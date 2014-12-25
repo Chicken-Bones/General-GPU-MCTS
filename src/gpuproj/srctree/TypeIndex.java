@@ -11,16 +11,6 @@ import java.util.List;
  */
 public class TypeIndex implements ScopeProvider
 {
-    public static final PrimitiveSymbol BYTE = new PrimitiveSymbol("byte", "B");
-    public static final PrimitiveSymbol SHORT = new PrimitiveSymbol("short", "S");
-    public static final PrimitiveSymbol CHAR = new PrimitiveSymbol("char", "C");
-    public static final PrimitiveSymbol INT = new PrimitiveSymbol("int", "I");
-    public static final PrimitiveSymbol LONG = new PrimitiveSymbol("long", "J");
-    public static final PrimitiveSymbol FLOAT = new PrimitiveSymbol("float", "F");
-    public static final PrimitiveSymbol DOUBLE = new PrimitiveSymbol("double", "D");
-    public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol("boolean", "Z");
-    public static final PrimitiveSymbol VOID = new PrimitiveSymbol("void", "V");
-
     public static TypeIndex instance;
 
     public static void newInstance() {
@@ -31,15 +21,8 @@ public class TypeIndex implements ScopeProvider
     public List<SourceProvider> sourceProviders = new LinkedList<>();
 
     private TypeIndex() {
-        scope.cache(BYTE);
-        scope.cache(SHORT);
-        scope.cache(CHAR);
-        scope.cache(INT);
-        scope.cache(LONG);
-        scope.cache(FLOAT);
-        scope.cache(DOUBLE);
-        scope.cache(BOOLEAN);
-        scope.cache(VOID);
+        for(PrimitiveSymbol p : PrimitiveSymbol.values)
+            scope.cache(p);
     }
 
     private ReferenceSymbol findClass(String name) {

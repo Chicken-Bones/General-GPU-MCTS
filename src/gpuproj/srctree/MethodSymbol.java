@@ -26,7 +26,7 @@ public class MethodSymbol extends Symbol implements ScopeProvider
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & TYPEPARAM) != 0) {
+        if((type & TYPE_PARAM) != 0) {
             for(TypeParam p : typeParams)
                 if(p.name.equals(name))
                     list.add(p);
@@ -34,14 +34,20 @@ public class MethodSymbol extends Symbol implements ScopeProvider
     }
 
     @Override
+    public int getType() {
+        return Symbol.METHOD_SYM;
+    }
+
+    @Override
     public String toString() {
         if(returnType != null) {
             StringBuilder sb = new StringBuilder();
-            sb.append(Modifier.toString(modifiers)).append(' ');
+            if(modifiers != 0)
+                sb.append(Modifier.toString(modifiers)).append(' ');
             if(!typeParams.isEmpty())
-                sb.append(SourceUtil.listString(typeParams, '<', '>')).append(' ');
+                sb.append("<").append(SourceUtil.listString(typeParams)).append("> ");
             sb.append(returnType).append(' ').append(name);
-            sb.append(SourceUtil.listString(params, '(', ')'));
+            sb.append('(').append(SourceUtil.listString(params)).append(')');
             return sb.toString();
         }
 

@@ -16,12 +16,12 @@ public class Literal extends Expression
     @Override
     public TypeRef returnType() {
         if(value.endsWith("f"))
-            return new TypeRef(TypeIndex.FLOAT);
+            return new TypeRef(PrimitiveSymbol.FLOAT);
         if(value.contains(".") || value.contains("e") && !value.startsWith("0x"))
-            return new TypeRef(TypeIndex.DOUBLE);
+            return new TypeRef(PrimitiveSymbol.DOUBLE);
         if(value.endsWith("L"))
-            return new TypeRef(TypeIndex.LONG);
-        return new TypeRef(TypeIndex.INT);
+            return new TypeRef(PrimitiveSymbol.LONG);
+        return new TypeRef(PrimitiveSymbol.INT);
     }
 
     @Override

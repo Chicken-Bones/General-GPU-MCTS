@@ -17,8 +17,13 @@ public class FieldSymbol extends Symbol
     @Override
     public String toString() {
         if(type != null)
-            return Modifier.toString(modifiers) + ' ' + type + ' ' + name;
+            return (modifiers != 0 ? Modifier.toString(modifiers) + ' ' : "") + type + ' ' + name;
 
         return fullname;
+    }
+
+    @Override
+    public int getType() {
+        return Symbol.FIELD_SYM;
     }
 }

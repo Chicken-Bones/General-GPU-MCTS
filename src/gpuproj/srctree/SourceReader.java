@@ -219,7 +219,21 @@ public class SourceReader
     }
 
     public TypeRef readTypeRef(Scope scope) {
-        TypeRef type = new TypeRef((TypeSymbol) scope.resolve1(readElement(), Symbol.TYPE_SYM));
+        TypeRef type;
+        if (source.charAt(seekCode()) == '?') {
+            readElement();//?
+            readElement();//assume extends
+            type = new TypeRef(new TypeParam("?", readTypeRef(scope)));
+        }
+        else {
+            type = new TypeRef((TypeSymbol) scope.resolve1(readElement(), Symbol.TYPE_SYM));
+        }
+
+        while(!end() && source.charAt(pos) == '[') {
+            readElement();
+            type = new TypeRef(new ArrayTypeSymbol(type.type));
+        }
+
         readTypeRefs(scope, type.params);
         return type;
     }
@@ -245,13 +259,17 @@ public class SourceReader
         List<String> list = new SourceReader(block.substring(1, block.length()-1)).readList();
         for(String s : list) {
             SourceReader r = new SourceReader(s);
-            TypeParam p = new TypeParam(r.readElement());
+            String alias = r.readElement();
+            TypeParam p = null;
             if(!r.end()) {
                 String boundKey = r.readElement();
                 TypeRef bound = r.readTypeRef(scope);
                 if(boundKey.equals("extends"))
-                    p.upper = bound;
+                    p = new TypeParam(alias, bound);
             }
+            if(p == null)
+                p = new TypeParam(alias);
+
             typeParams.add(p);
         }
     }

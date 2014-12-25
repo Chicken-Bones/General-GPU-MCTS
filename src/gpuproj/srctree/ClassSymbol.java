@@ -22,14 +22,15 @@ public class ClassSymbol extends ReferenceSymbol
         r.readTypeParams(scope, typeParams);
 
         String word = r.readElement();
-        if(word.equals("extends")) {
+        if(isInterface());//interfaces have no superclass
+        else if(word.equals("extends")) {
             parent = r.readTypeRef(scope);
             word = r.readElement();
         } else if(!fullname.equals("java.lang.Object")) {
             parent = new TypeRef((TypeSymbol) scope.resolve1("java.lang.Object", CLASS_SYM));
         }
 
-        if(word.equals("implements")) {
+        if(word.equals("implements") || word.equals("extends") && isInterface()) {
             int start = r.seekCode();
             int end = r.indexOf('{');
             List<String> list = new SourceReader(r.substring(start, end)).readList();

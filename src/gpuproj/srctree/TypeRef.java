@@ -25,7 +25,7 @@ public class TypeRef
         StringBuilder sb = new StringBuilder();
         sb.append(type.fullname);
         if(!params.isEmpty())
-            sb.append(SourceUtil.listString(params, '<', '>'));
+            sb.append('<').append(SourceUtil.listString(params)).append('>');
 
         return sb.toString();
     }

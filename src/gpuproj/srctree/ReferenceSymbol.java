@@ -2,6 +2,7 @@ package gpuproj.srctree;
 
 import gpuproj.srctree.Scope.ScopeProvider;
 
+import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -65,7 +66,7 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
                 if (sym.name.equals(name))
                     list.add(sym);
         }
-        if((type & TYPEPARAM) != 0) {
+        if((type & TYPE_PARAM) != 0) {
             for(TypeParam p : typeParams)
                 if(p.name.equals(name))
                     list.add(p);
@@ -85,7 +86,41 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
     }
 
     @Override
+    public int getType() {
+        return Symbol.CLASS_SYM;
+    }
+
+    @Override
     public String signature() {
         return 'L'+fullname.replace('.', '/')+';';
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if(modifiers != 0)
+            sb.append(Modifier.toString(modifiers)).append(' ');
+
+        if((modifiers & ENUM) != 0)
+            sb.append("enum ");
+        else if((modifiers & ANNOTATION) != 0)
+            sb.append("@interface ");
+        else if(!isInterface())
+            sb.append("class ");
+
+        sb.append(fullname);
+
+        if(!typeParams.isEmpty())
+            sb.append('<').append(SourceUtil.listString(typeParams)).append('>');
+        if(parent != null && !parent.type.fullname.equals("java.lang.Object"))
+            sb.append(" extends ").append(parent);
+        if(!interfaces.isEmpty())
+            sb.append(" implements ").append(SourceUtil.listString(interfaces));
+
+        return sb.toString();
+    }
+
+    public boolean isInterface() {
+        return (modifiers & Modifier.INTERFACE) != 0;
     }
 }
