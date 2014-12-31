@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvider
+public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements ScopeProvider
 {
     public static final int ANNOTATION = 0x00002000;
     public static final int ENUM = 0x00004000;
@@ -25,7 +25,7 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
         super(fullname);
         this.scope = new Scope(scope, this);
         this.source = source;
-        TypeIndex.instance.register(this);
+        TypeIndex.instance().register(this);
     }
 
     public ReferenceSymbol load() {
@@ -68,7 +68,7 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
         }
         if((type & TYPE_PARAM) != 0) {
             for(TypeParam p : typeParams)
-                if(p.name.equals(name))
+                if(p.alias.equals(name))
                     list.add(p);
         }
 
@@ -81,18 +81,8 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
     }
 
     @Override
-    public TypeSymbol concrete() {
-        return this;
-    }
-
-    @Override
     public int getType() {
         return Symbol.CLASS_SYM;
-    }
-
-    @Override
-    public String signature() {
-        return 'L'+fullname.replace('.', '/')+';';
     }
 
     @Override
@@ -112,7 +102,7 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
 
         if(!typeParams.isEmpty())
             sb.append('<').append(SourceUtil.listString(typeParams)).append('>');
-        if(parent != null && !parent.type.fullname.equals("java.lang.Object"))
+        if(parent != null && parent.type != TypeIndex.instance().OBJECT)
             sb.append(" extends ").append(parent);
         if(!interfaces.isEmpty())
             sb.append(" implements ").append(SourceUtil.listString(interfaces));
@@ -122,5 +112,10 @@ public abstract class ReferenceSymbol extends TypeSymbol implements ScopeProvide
 
     public boolean isInterface() {
         return (modifiers & Modifier.INTERFACE) != 0;
+    }
+
+    @Override
+    public List<FieldSymbol> getFields() {
+        return fields;
     }
 }

@@ -65,7 +65,7 @@ public final class Scope
     }
 
     public Scope(ScopeProvider provider) {
-        this(TypeIndex.instance.scope, provider);
+        this(TypeIndex.instance().scope, provider);
     }
 
     private void resolveOnce(String name, int types, List<Symbol> list) {
@@ -86,10 +86,10 @@ public final class Scope
         return symbols.resolve(name, types);
     }
 
-    public void cache(Symbol sym) {
-        SymbolCache symbols = cache.get(sym.fullname);
+    public void cache(Symbol sym, String name) {
+        SymbolCache symbols = cache.get(name);
         if(symbols == null)
-            cache.put(sym.fullname, symbols = new SymbolCache());
+            cache.put(name, symbols = new SymbolCache());
         symbols.add(sym);
     }
 

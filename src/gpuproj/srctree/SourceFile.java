@@ -40,16 +40,16 @@ public class SourceFile implements ScopeProvider
                 continue;
 
             if(imp.wildcard)
-                list.addAll(TypeIndex.instance.resolve(SourceUtil.combineName(imp.imp, name), type));
+                list.addAll(TypeIndex.instance().resolve(SourceUtil.combineName(imp.imp, name), type));
             else if(SourceUtil.simpleName(imp.imp).equals(name))
-                list.addAll(TypeIndex.instance.resolve(imp.imp, type));
+                list.addAll(TypeIndex.instance().resolve(imp.imp, type));
 
             if(!list.isEmpty())
                 return;
         }
 
         if((type & Symbol.CLASS_SYM) != 0)//in package
-            list.addAll(TypeIndex.instance.resolve(SourceUtil.combineName(pkg, name), type));
+            list.addAll(TypeIndex.instance().resolve(SourceUtil.combineName(pkg, name), type));
     }
 
     public void addImport(String imp, boolean isStatic) {

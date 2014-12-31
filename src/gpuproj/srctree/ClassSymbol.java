@@ -26,9 +26,8 @@ public class ClassSymbol extends ReferenceSymbol
         else if(word.equals("extends")) {
             parent = r.readTypeRef(scope);
             word = r.readElement();
-        } else if(!fullname.equals("java.lang.Object")) {
-            parent = new TypeRef((TypeSymbol) scope.resolve1("java.lang.Object", CLASS_SYM));
-        }
+        } else
+            parent = new TypeRef(TypeIndex.instance().OBJECT);
 
         if(word.equals("implements") || word.equals("extends") && isInterface()) {
             int start = r.seekCode();

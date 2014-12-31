@@ -2,7 +2,7 @@ package gpuproj.srctree;
 
 import java.lang.reflect.Modifier;
 
-public class FieldSymbol extends Symbol
+public class FieldSymbol extends GlobalSymbol
 {
     public final Object source;
     public TypeRef type;

@@ -74,15 +74,18 @@ public class RuntimeClassSymbol extends ReferenceSymbol
     }
 
     private static void loadTypeParams(Scope scope, TypeVariable<?>[] generics, List<TypeParam> params) {
-        for(TypeVariable<?> v : generics)
-            params.add(new TypeParam(v.getName(), loadTypeRef(scope, v.getBounds()[0])));
+        for(TypeVariable<?> v : generics) {
+            TypeParam p = new TypeParam(v.getName());
+            params.add(p);
+            p.upper = loadTypeRef(scope, v.getBounds()[0]);
+        }
     }
 
     private static TypeSymbol loadTypeSymbol(Scope scope, Type type) {
         if(type instanceof Class) {
             Class c = (Class) type;
             if(c.isArray())
-                return new ArrayTypeSymbol(loadTypeSymbol(scope, c.getComponentType()));
+                return new ConcreteArraySymbol((ConcreteTypeSymbol) loadTypeSymbol(scope, c.getComponentType()));
             if(c.isPrimitive())
                 return PrimitiveSymbol.nameMap.get(c.getName());
             return (TypeSymbol) scope.resolve1(((Class) type).getName(), Symbol.CLASS_SYM);
@@ -90,7 +93,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         if(type instanceof TypeVariable)
             return (TypeSymbol) scope.resolve1(((TypeVariable) type).getName(), Symbol.TYPE_PARAM);
         if(type instanceof GenericArrayType)
-            return new ArrayTypeSymbol(loadTypeSymbol(scope, ((GenericArrayType) type).getGenericComponentType()));
+            return new ParamaterisedArraySymbol(loadTypeSymbol(scope, ((GenericArrayType) type).getGenericComponentType()));
         if(type instanceof WildcardType)
             return new TypeParam("?", loadTypeRef(scope, ((WildcardType) type).getUpperBounds()[0]));
         if(type instanceof ParameterizedType)//don't care about paramaterised types here, typically generic array creation

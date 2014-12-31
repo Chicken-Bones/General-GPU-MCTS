@@ -1,18 +1,18 @@
 package gpuproj.srctree;
 
+import java.util.List;
+
 /**
  * Class, primitive, or generic parameter
  */
-public abstract class TypeSymbol extends Symbol
+public interface TypeSymbol extends Symbol
 {
-    public TypeSymbol(String fullname) {
-        super(fullname);
-    }
-
     /**
      * @return The a concrete type (reference, primitive, or array) that any valid instance of this symbol could be cast to
      */
-    public abstract TypeSymbol concrete();
+    public abstract ConcreteTypeSymbol concrete();
 
-    public abstract String signature();
+    public abstract String printName();
+
+    public abstract List<FieldSymbol> getFields();
 }

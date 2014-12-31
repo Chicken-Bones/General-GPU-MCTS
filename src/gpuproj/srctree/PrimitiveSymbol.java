@@ -1,14 +1,11 @@
 package gpuproj.srctree;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * one of byte, short, char, int, long, float, double, boolean, void
  */
-public class PrimitiveSymbol extends TypeSymbol
+public class PrimitiveSymbol extends ConcreteTypeSymbol
 {
     public static Map<String, PrimitiveSymbol> nameMap = new HashMap<>();
     public static Map<Character, PrimitiveSymbol> sigMap = new HashMap<>();
@@ -35,7 +32,7 @@ public class PrimitiveSymbol extends TypeSymbol
     }
 
     @Override
-    public TypeSymbol concrete() {
+    public ConcreteTypeSymbol concrete() {
         return this;
     }
 
@@ -45,7 +42,12 @@ public class PrimitiveSymbol extends TypeSymbol
     }
 
     @Override
-    public String signature() {
-        return String.valueOf(sig);
+    public List<FieldSymbol> getFields() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

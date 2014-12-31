@@ -7,7 +7,7 @@ public class MemberAccess extends Expression
 
     @Override
     public TypeRef returnType() {
-        return ((ReferenceSymbol)field.returnType().type.concrete()).getField(member).type;
+        return ((ReferenceSymbol)field.returnType().concrete()).getField(member).type;
     }
 
     @Override

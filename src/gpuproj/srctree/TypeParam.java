@@ -1,24 +1,32 @@
 package gpuproj.srctree;
 
-public class TypeParam extends TypeSymbol
+import java.util.List;
+
+public class TypeParam implements TypeSymbol
 {
+    public final String alias;
     /**
      * alias extends upper
      */
-    public final TypeRef upper;
+    public TypeRef upper;
 
     public TypeParam(String alias, TypeRef upper) {
-        super(alias);
+        this.alias = alias;
         this.upper = upper;
     }
 
     public TypeParam(String alias) {
-        this(alias, new TypeRef(TypeIndex.instance.resolveType("java.lang.Object")));
+        this(alias, new TypeRef(TypeIndex.instance().OBJECT));
     }
 
     @Override
-    public TypeSymbol concrete() {
-        return upper.type.concrete();
+    public ConcreteTypeSymbol concrete() {
+        return upper.concrete();
+    }
+
+    @Override
+    public List<FieldSymbol> getFields() {
+        return concrete().getFields();
     }
 
     @Override
@@ -28,14 +36,14 @@ public class TypeParam extends TypeSymbol
 
     @Override
     public String toString() {
-        if(!upper.toString().equals("java.lang.Object"))
-            return name+" extends "+upper;
+        if(upper.type != TypeIndex.instance().OBJECT)
+            return alias+" extends "+upper;
 
-        return name;
+        return alias;
     }
 
     @Override
-    public String signature() {
-        return concrete().signature();
+    public String printName() {
+        return alias;
     }
 }

@@ -231,7 +231,7 @@ public class SourceReader
 
         while(!end() && source.charAt(pos) == '[') {
             readElement();
-            type = new TypeRef(new ArrayTypeSymbol(type.type));
+            type = new TypeRef(type.type instanceof ConcreteTypeSymbol ? new ConcreteArraySymbol((ConcreteTypeSymbol) type.type) : new ParamaterisedArraySymbol(type.type));
         }
 
         readTypeRefs(scope, type.params);
@@ -259,18 +259,10 @@ public class SourceReader
         List<String> list = new SourceReader(block.substring(1, block.length()-1)).readList();
         for(String s : list) {
             SourceReader r = new SourceReader(s);
-            String alias = r.readElement();
-            TypeParam p = null;
-            if(!r.end()) {
-                String boundKey = r.readElement();
-                TypeRef bound = r.readTypeRef(scope);
-                if(boundKey.equals("extends"))
-                    p = new TypeParam(alias, bound);
-            }
-            if(p == null)
-                p = new TypeParam(alias);
-
+            TypeParam p = new TypeParam(r.readElement());
             typeParams.add(p);
+            if(!r.end() && r.readElement().equals("extends"))
+                p.upper = r.readTypeRef(scope);
         }
     }
 

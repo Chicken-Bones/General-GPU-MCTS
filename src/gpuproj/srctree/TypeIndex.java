@@ -11,18 +11,25 @@ import java.util.List;
  */
 public class TypeIndex implements ScopeProvider
 {
-    public static TypeIndex instance;
+    private static TypeIndex instance;
+
+    public static TypeIndex instance() {
+        return instance;
+    }
 
     public static void newInstance() {
-        instance = new TypeIndex();
+        new TypeIndex();
     }
 
     public final Scope scope = new Scope(null, this);
+    public final RuntimeClassSymbol OBJECT;
     public List<SourceProvider> sourceProviders = new LinkedList<>();
 
     private TypeIndex() {
+        instance = this;
+        OBJECT = new RuntimeClassSymbol(scope, Object.class);
         for(PrimitiveSymbol p : PrimitiveSymbol.values)
-            scope.cache(p);
+            register(p);
     }
 
     private ReferenceSymbol findClass(String name) {
@@ -85,15 +92,15 @@ public class TypeIndex implements ScopeProvider
             resolveOnce("java.lang."+name, type, list);
     }
 
-    public TypeSymbol resolveType(String name) {
-        return (TypeSymbol)scope.resolve1(name, Symbol.TYPE_SYM);
+    public ConcreteTypeSymbol resolveType(String name) {
+        return (ConcreteTypeSymbol)scope.resolve1(name, Symbol.CLASS_SYM);
     }
 
     public List<Symbol> resolve(String name, int type) {
         return scope.resolve(name, type);
     }
 
-    public void register(Symbol sym) {
-        scope.cache(sym);
+    public void register(GlobalSymbol sym) {
+        scope.cache(sym, sym.fullname);
     }
 }

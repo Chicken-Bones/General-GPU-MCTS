@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MethodSymbol extends Symbol implements ScopeProvider
+public class MethodSymbol extends GlobalSymbol implements ScopeProvider
 {
     public final Object source;
     public final ReferenceSymbol owner;
@@ -28,6 +28,11 @@ public class MethodSymbol extends Symbol implements ScopeProvider
     public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & TYPE_PARAM) != 0) {
             for(TypeParam p : typeParams)
+                if(p.alias.equals(name))
+                    list.add(p);
+        }
+        if((type & FIELD_SYM) != 0) {
+            for(LocalSymbol p : params)
                 if(p.name.equals(name))
                     list.add(p);
         }
@@ -54,7 +59,7 @@ public class MethodSymbol extends Symbol implements ScopeProvider
         return fullname;
     }
 
-    public String signature() {
+    /*public String signature() {
         if(returnType == null)//not fully initialised
             return "";
 
@@ -65,5 +70,5 @@ public class MethodSymbol extends Symbol implements ScopeProvider
         sb.append(')');
         sb.append(returnType.signature());
         return sb.toString();
-    }
+    }*/
 }

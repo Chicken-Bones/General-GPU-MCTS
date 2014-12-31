@@ -9,6 +9,7 @@ public class TypeRef
     public List<TypeRef> params = new LinkedList<>();
 
     public TypeRef(TypeSymbol type) {
+        assert type != null;
         this.type = type;
     }
 
@@ -23,14 +24,14 @@ public class TypeRef
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(type.fullname);
+        sb.append(type.printName());
         if(!params.isEmpty())
             sb.append('<').append(SourceUtil.listString(params)).append('>');
 
         return sb.toString();
     }
 
-    public String signature() {
-        return type.concrete().signature();
+    public ConcreteTypeSymbol concrete() {
+        return type.concrete();
     }
 }

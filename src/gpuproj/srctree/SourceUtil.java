@@ -19,7 +19,7 @@ public class SourceUtil
 
     private static List<String> wider = Arrays.asList("char", "uchar", "short", "ushort", "int", "uint", "long", "ulong", "float", "double");
     public static TypeSymbol promoteNumeric(TypeSymbol type1, TypeSymbol type2) {
-        return TypeIndex.instance.resolveType(wider.get(Math.max(wider.indexOf(type1.fullname), wider.indexOf(type2.fullname))));
+        return TypeIndex.instance().resolveType(wider.get(Math.max(wider.indexOf(type1.printName()), wider.indexOf(type2.printName()))));
     }
 
     public static int pointerLevel(String type) {
