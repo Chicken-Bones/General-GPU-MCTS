@@ -38,8 +38,14 @@ public final class Scope
         }
 
         private List<Symbol> resolve_i(String name, int i) {
-            if(lists[i] == null)
-                resolveOnce(name, 1<<i, lists[i] = new LinkedList());
+            if(lists[i] == null) {
+                List<Symbol> list = lists[i] = new LinkedList();
+                LinkedList<Symbol> temp = new LinkedList<>();
+                resolveOnce(name, 1 << i, temp);
+                for(Symbol sym : temp)
+                    if(!list.contains(sym))//remove duplicates
+                        list.add(sym);
+            }
 
             return lists[i];
         }
@@ -49,7 +55,8 @@ public final class Scope
                 if(sym.getType() == 1<<i) {
                     if(lists[i] == null)
                         lists[i] = new LinkedList();
-                    lists[i].add(sym);
+                    if(!lists[i].contains(sym))
+                        lists[i].add(sym);
                 }
             }
         }
@@ -95,6 +102,7 @@ public final class Scope
 
     public Symbol resolve1(String name, int types) {
         List<Symbol> list = resolve(name, types);
+        if(list.size() > 1) throw new IllegalStateException("Resolved more than one symbol for: "+name);
         return list.isEmpty() ? null : list.get(0);
     }
 }

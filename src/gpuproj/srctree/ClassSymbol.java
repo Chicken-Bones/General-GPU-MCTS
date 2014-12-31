@@ -13,6 +13,22 @@ public class ClassSymbol extends ReferenceSymbol
     }
 
     @Override
+    public ReferenceSymbol loadAnnotations() {
+        new SourceReader((String) source).readAnnotations(scope, annotations);
+
+        for (ReferenceSymbol inner : innerClasses)
+            inner.loadAnnotations();
+
+        for (FieldSymbol f : fields)
+            new SourceReader((String) f.source).readAnnotations(scope, f.annotations);
+
+        for (MethodSymbol m : methods)
+            new SourceReader((String) m.source).readAnnotations(scope, m.annotations);
+
+        return this;
+    }
+
+    @Override
     public ClassSymbol loadSignatures() {
         SourceReader r = new SourceReader((String) source);
         r.skipAnnotations();
@@ -55,10 +71,13 @@ public class ClassSymbol extends ReferenceSymbol
         r.skipAnnotations();
         m.modifiers = r.readModifiers();
         r.readTypeParams(scope, m.typeParams);
-        m.returnType = r.readTypeRef(m.scope);
+        if(m.name.equals("<init>"))
+            m.returnType = new TypeRef(PrimitiveSymbol.VOID);
+        else
+            m.returnType = r.readTypeRef(m.scope);
         r.readElement();//method name
         String s_params = r.readElement();
-        List<String> params = new SourceReader(s_params.substring(1, s_params.length()-1)).readList();
+        List<String> params = new SourceReader(SourceReader.expand(s_params)).readList();
         for(String s : params) {
             SourceReader r2 = new SourceReader(s);
             m.params.add(new LocalSymbol(r2.readTypeRef(m.scope), r2.readElement()));
@@ -97,9 +116,10 @@ public class ClassSymbol extends ReferenceSymbol
         //skip to body
         r.seek("{");
         String body = r.readElement();
-        r = new SourceReader(body.substring(1, body.length()-1));
+        r = new SourceReader(SourceReader.expand(body));
         while(!r.end()) {
             String stmt = r.readStatement();
+            if(stmt.isEmpty()) continue;
             switch (declarationType(stmt)) {
                 case CLASS_SYM:
                     innerClasses.add(fromStatement(fullname, scope, stmt).loadSymbols());
@@ -119,11 +139,13 @@ public class ClassSymbol extends ReferenceSymbol
     private MethodSymbol newMethod(String stmt) {
         SourceReader r = new SourceReader(stmt);
         r.skipAnnotations();
-        r.readModifiers();
-        r.skipTypeParams();//method type aliases
-        r.skipType();//return type
-        //TODO detect constructors
-        return new MethodSymbol(SourceUtil.combineName(fullname, r.readElement()), this, stmt);
+        r.seek("(");
+        while(Character.isWhitespace(r.charAt(--r.pos)));//rollback
+        while(Character.isJavaIdentifierPart(r.charAt(--r.pos)));
+        String name = r.readElement();
+        if(name.equals(this.name))
+            name = "<init>";
+        return new MethodSymbol(SourceUtil.combineName(fullname, name), this, stmt);
     }
 
     private FieldSymbol newField(String stmt) {
@@ -154,10 +176,8 @@ public class ClassSymbol extends ReferenceSymbol
 
     public static ClassSymbol fromStatement(String parent, Scope scope, String stmt) {
         SourceReader r = new SourceReader(stmt);
-        int i = r.indexOf("class");
-        if(i < 0) i = r.indexOf("interface");
-        r.pos = i;
-        r.readElement();
+        r.seek("interface", "class");
+        r.readElement();//skip interface/class
         return new ClassSymbol(SourceUtil.combineName(parent, r.readElement()), scope, stmt);
     }
 }

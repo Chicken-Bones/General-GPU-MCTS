@@ -1,5 +1,7 @@
 package gpuproj.srctree;
 
+import javax.lang.model.type.PrimitiveType;
+
 /**
  * Any 2 operand symbol expression, including assignment
  */
@@ -26,11 +28,11 @@ public class BinaryOp extends Expression
             case "&":
             case "^":
             case "|":
-                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, op2.returnType().type));
+                return new TypeRef(PrimitiveSymbol.widen((PrimitiveSymbol)op1.returnType().type, (PrimitiveSymbol)op2.returnType().type));
             case ">>":
             case "<<":
             case ">>>":
-                return new TypeRef(SourceUtil.promoteNumeric(op1.returnType().type, PrimitiveSymbol.INT));
+                return new TypeRef(PrimitiveSymbol.widen(PrimitiveSymbol.INT, (PrimitiveSymbol) op1.returnType().type));
             case "<":
             case "<=":
             case ">":
@@ -58,13 +60,19 @@ public class BinaryOp extends Expression
     }
 
     @Override
-    public String print() {
-        return op1.print()+" "+op+" "+op2.print();
+    public String toString() {
+        return op1+" "+op+" "+op2;
     }
 
     @Override
     public int precedence() {
+        return precedence(op);
+    }
+
+    public static int precedence(String op) {
         switch(op) {
+            case ".":
+                return 2;
             case "*":
             case "/":
             case "%":

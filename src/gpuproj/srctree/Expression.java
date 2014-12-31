@@ -1,13 +1,8 @@
 package gpuproj.srctree;
 
-public abstract class Expression
+public abstract class Expression extends Statement
 {
     public abstract TypeRef returnType();
-
-    /**
-     * @return Recursively evaluated valid source code for this expression
-     */
-    public abstract String print();
 
     /**
      * @return An integer representing the precedence of this expression, based on http://en.cppreference.com/w/cpp/language/operator_precedence

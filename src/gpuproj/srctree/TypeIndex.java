@@ -23,11 +23,13 @@ public class TypeIndex implements ScopeProvider
 
     public final Scope scope = new Scope(null, this);
     public final RuntimeClassSymbol OBJECT;
+    public final RuntimeClassSymbol STRING;
     public List<SourceProvider> sourceProviders = new LinkedList<>();
 
     private TypeIndex() {
         instance = this;
         OBJECT = new RuntimeClassSymbol(scope, Object.class);
+        STRING = new RuntimeClassSymbol(scope, String.class);
         for(PrimitiveSymbol p : PrimitiveSymbol.values)
             register(p);
     }
@@ -88,8 +90,11 @@ public class TypeIndex implements ScopeProvider
             }
         }
 
-        if(!name.startsWith("java.lang"))
-            resolveOnce("java.lang."+name, type, list);
+        if((type & Symbol.CLASS_SYM) != 0 && !name.startsWith("java.lang")) {
+            ConcreteTypeSymbol sym = resolveType("java.lang." + name);
+            if(sym != null)
+                list.add(sym);
+        }
     }
 
     public ConcreteTypeSymbol resolveType(String name) {

@@ -11,8 +11,8 @@ public class MemberAccess extends Expression
     }
 
     @Override
-    public String print() {
-        return field.print() + "." + member;
+    public String toString() {
+        return field + "." + member;
     }
 
     @Override

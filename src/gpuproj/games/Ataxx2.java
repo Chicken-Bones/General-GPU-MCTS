@@ -150,11 +150,11 @@ public class Ataxx2 extends BoardGame<AtaxxBoard2>
 
     @Override
     public int checkWinner(AtaxxBoard2 b) {
-        int ply = b.turn + 1;
+        int ply = b.turn + 1;//LocalSymbol, exp (plus(member access, literal(1))
 
         int white = 0;
         int black = 0;
-        for(int x = 0; x < 8; x++)
+        for(int x = 0; x < 8; x++)//for
             for(int y = 0; y < 8; y++) {
                 switch (b.board[x][y]) {//calculate number of pieces
                     case 1: white++; break;

@@ -15,6 +15,14 @@ public class Literal extends Expression
 
     @Override
     public TypeRef returnType() {
+        if(value.equals("null"))
+            return new TypeRef(TypeIndex.instance().OBJECT);
+        if(value.equals("true") || value.equals("false"))
+            return new TypeRef(PrimitiveSymbol.INT);
+        if(value.startsWith("'"))
+            return new TypeRef(PrimitiveSymbol.CHAR);
+        if(value.startsWith("\""))
+            return new TypeRef(TypeIndex.instance().STRING);
         if(value.endsWith("f"))
             return new TypeRef(PrimitiveSymbol.FLOAT);
         if(value.contains(".") || value.contains("e") && !value.startsWith("0x"))
@@ -25,7 +33,7 @@ public class Literal extends Expression
     }
 
     @Override
-    public String print() {
+    public String toString() {
         return value;
     }
 

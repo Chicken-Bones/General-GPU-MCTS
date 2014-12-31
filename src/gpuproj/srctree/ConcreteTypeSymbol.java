@@ -15,4 +15,9 @@ public abstract class ConcreteTypeSymbol extends GlobalSymbol implements TypeSym
     public String printName() {
         return fullname;
     }
+
+    /**
+     * @return this instanceof type
+     */
+    public abstract boolean isAssignableTo(ConcreteTypeSymbol type);
 }

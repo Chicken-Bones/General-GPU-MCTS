@@ -16,8 +16,8 @@ public class Cast extends Expression
     }
 
     @Override
-    public String print() {
-        return "("+type+")"+exp.print();
+    public String toString() {
+        return "("+type+")"+exp;
     }
 
     @Override

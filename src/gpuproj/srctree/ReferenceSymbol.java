@@ -10,6 +10,7 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
 {
     public static final int ANNOTATION = 0x00002000;
     public static final int ENUM = 0x00004000;
+    public static final int INHERITED_SYMS = Symbol.FIELD_SYM | Symbol.METHOD_SYM | Symbol.CLASS_SYM;
 
     public final Scope scope;
     public final Object source;
@@ -31,11 +32,13 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
     public ReferenceSymbol load() {
         loadSymbols();
         loadSignatures();
+        loadAnnotations();
         return this;
     }
 
     public abstract ReferenceSymbol loadSymbols();
     public abstract ReferenceSymbol loadSignatures();
+    public abstract ReferenceSymbol loadAnnotations();
 
     public FieldSymbol getField(String name) {
         LinkedList<Symbol> list = new LinkedList<>();
@@ -73,10 +76,10 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
         }
 
         if(parent != null)
-            parent.refType().resolveOnce(name, type, list);
+            parent.refType().resolveOnce(name, type & INHERITED_SYMS, list);
 
         for(TypeRef iface : interfaces)
-            iface.refType().resolveOnce(name, type, list);
+            iface.refType().resolveOnce(name, type & INHERITED_SYMS, list);
 
     }
 
@@ -117,5 +120,20 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
     @Override
     public List<FieldSymbol> getFields() {
         return fields;
+    }
+
+    @Override
+    public boolean isAssignableTo(ConcreteTypeSymbol type) {
+        if(type == this)
+            return true;
+
+        if(parent != null && parent.concrete().isAssignableTo(type))
+            return true;
+
+        for(TypeRef iface : interfaces)
+            if(iface.concrete().isAssignableTo(type))
+                return true;
+
+        return false;
     }
 }

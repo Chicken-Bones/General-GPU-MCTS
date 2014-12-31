@@ -1,5 +1,6 @@
 package gpuproj.srctree;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ public class TypeRef
     public List<TypeRef> params = new LinkedList<>();
 
     public TypeRef(TypeSymbol type) {
-        assert type != null;
+        if(type == null) throw new IllegalArgumentException("Null type");
         this.type = type;
     }
 
@@ -33,5 +34,13 @@ public class TypeRef
 
     public ConcreteTypeSymbol concrete() {
         return type.concrete();
+    }
+
+    public static List<TypeRef> resolveList(String... typeNames) {
+        List<TypeRef> types = new ArrayList<>(typeNames.length);
+        for(String name : typeNames)
+            types.add(new TypeRef(TypeIndex.instance().resolveType(name)));
+
+        return types;
     }
 }

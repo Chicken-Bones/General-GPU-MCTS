@@ -5,11 +5,10 @@ package gpuproj.srctree;
  */
 public class AnnotationSymbol
 {
-    public final ClassSymbol type;
-    public final String params;
+    public final ReferenceSymbol type;
+    //TODO params
 
-    public AnnotationSymbol(ClassSymbol type, String params) {
+    public AnnotationSymbol(ReferenceSymbol type) {
         this.type = type;
-        this.params = params;
     }
 }

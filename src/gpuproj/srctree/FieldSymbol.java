@@ -1,12 +1,15 @@
 package gpuproj.srctree;
 
 import java.lang.reflect.Modifier;
+import java.util.LinkedList;
+import java.util.List;
 
 public class FieldSymbol extends GlobalSymbol
 {
     public final Object source;
-    public TypeRef type;
+    public List<AnnotationSymbol> annotations = new LinkedList<>();
     public int modifiers;
+    public TypeRef type;
     public Expression initialiser;
 
     public FieldSymbol(String fullname, Object source) {

@@ -2,9 +2,9 @@ package gpuproj.srctree;
 
 public class LocalSymbol extends Statement implements Symbol
 {
-    public final TypeRef type;
-    public final String name;
-    public Expression initialiser;
+    public TypeRef type;
+    public String name;
+    public Expression init;
 
     public LocalSymbol(TypeRef type, String name) {
         this.type = type;
@@ -13,7 +13,12 @@ public class LocalSymbol extends Statement implements Symbol
 
     @Override
     public String toString() {
-        return type+" "+name;
+        StringBuilder sb = new StringBuilder();
+        sb.append(type).append(' ').append(name);
+        if(init != null)
+            sb.append(" = ").append(init);
+
+        return sb.toString();
     }
 
     @Override

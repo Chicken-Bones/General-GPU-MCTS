@@ -6,11 +6,10 @@ import gpuproj.games.*;
 import gpuproj.player.MCTSPlayer;
 import gpuproj.player.UCBPlayer;
 import gpuproj.simulator.CPU1Simulator;
-import gpuproj.srctree.DirectorySourceProvider;
-import gpuproj.srctree.Symbol;
-import gpuproj.srctree.TypeIndex;
+import gpuproj.srctree.*;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class Main
 {
@@ -31,9 +30,11 @@ public class Main
         TypeIndex.instance().sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
 
 
-
-
-        Symbol sym = TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
+        ClassSymbol game = (ClassSymbol) TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
+        ClassSymbol board = (ClassSymbol) game.parent.params.get(0).concrete();
+        MethodSymbol checkWinner = MethodSymbol.match(game.getMethods("checkWinner"), Arrays.asList(new TypeRef(board)));
+        checkWinner.loadBody();
+        checkWinner.body.toString();
         new Object();
     }
 }

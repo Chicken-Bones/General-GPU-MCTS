@@ -11,6 +11,7 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
     public final Object source;
     public final ReferenceSymbol owner;
     public final Scope scope;
+    public List<AnnotationSymbol> annotations = new LinkedList<>();
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef returnType;
@@ -31,7 +32,7 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
                 if(p.alias.equals(name))
                     list.add(p);
         }
-        if((type & FIELD_SYM) != 0) {
+        if((type & LOCAL_SYM) != 0) {
             for(LocalSymbol p : params)
                 if(p.name.equals(name))
                     list.add(p);
@@ -71,4 +72,31 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
         sb.append(returnType.signature());
         return sb.toString();
     }*/
+
+    public boolean matches(List<TypeRef> paramTypes) {
+        //TODO support vaargs
+        if(params.size() != paramTypes.size())
+            return false;
+
+        for(int i = 0; i < params.size(); i++)
+            if(!paramTypes.get(i).concrete().isAssignableTo(params.get(i).type.concrete()))
+                return false;
+
+        return true;
+    }
+
+    public static MethodSymbol match(List<MethodSymbol> methods, List<TypeRef> paramTypes) {
+        for(MethodSymbol m : methods)
+            if(m.matches(paramTypes))
+                return m;
+
+        return null;
+    }
+
+    public void loadBody() {
+        SourceReader r = new SourceReader((String) source);
+        r.skipAnnotations();
+        r.seek("{");
+        body = (Block) r.readStatement(scope, false);
+    }
 }

@@ -14,8 +14,8 @@ public class Parentheses extends Expression
     }
 
     @Override
-    public String print() {
-        return "("+exp.print()+")";
+    public String toString() {
+        return "("+exp+")";
     }
 
     @Override

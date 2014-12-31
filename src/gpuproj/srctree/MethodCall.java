@@ -16,7 +16,7 @@ public class MethodCall extends Expression
     }
 
     @Override
-    public String print() {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         int p = 0;
         if(method.name.equals("<init>")) {
@@ -25,7 +25,7 @@ public class MethodCall extends Expression
             if (Modifier.isStatic(method.modifiers))
                 sb.append(method.owner.name);
             else
-                sb.append(params[p++].print());
+                sb.append(params[p++]);
             if (sb.length() > 0)
                 sb.append('.');
         }
@@ -41,7 +41,7 @@ public class MethodCall extends Expression
                 if(exp.precedence() <= 3)//address of precedence
                     exp = new Parentheses(exp);
             }*/
-            sb.append(exp.print());
+            sb.append(exp);
         }
 
         sb.append(')');

@@ -30,4 +30,9 @@ public class ConcreteArraySymbol extends ConcreteTypeSymbol
     public String toString() {
         return printName();
     }
+
+    @Override
+    public boolean isAssignableTo(ConcreteTypeSymbol type) {
+        return type == this;
+    }
 }

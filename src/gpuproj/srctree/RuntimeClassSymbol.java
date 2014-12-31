@@ -6,7 +6,7 @@ import java.util.List;
 public class RuntimeClassSymbol extends ReferenceSymbol
 {
     public RuntimeClassSymbol(Scope scope, Class<?> c) {
-        super(c.getName(), scope, c);
+        super(c.getCanonicalName(), scope, c);
     }
 
     @Override
@@ -14,7 +14,8 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         Class<?> c = (Class<?>) source;
         modifiers = c.getModifiers();
         for(Class<?> inner : c.getDeclaredClasses())
-            innerClasses.add(new RuntimeClassSymbol(scope, inner).loadSymbols());
+            if(!inner.isAnonymousClass())
+                innerClasses.add(new RuntimeClassSymbol(scope, inner).loadSymbols());
         for(Field f : c.getDeclaredFields())
             fields.add(new FieldSymbol(SourceUtil.combineName(fullname, f.getName()), f));
         for(Constructor<?> m : c.getDeclaredConstructors())
@@ -49,6 +50,12 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         return this;
     }
 
+    @Override
+    public ReferenceSymbol loadAnnotations() {
+        //we don't care about compiled annotations at this time
+        return this;
+    }
+
     private void loadSignature(FieldSymbol fsym) {
         Field f = (Field) fsym.source;
         fsym.modifiers = f.getModifiers();
@@ -59,14 +66,17 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         if(msym.source instanceof Constructor) {
             Constructor c = (Constructor) msym.source;
             msym.modifiers = c.getModifiers();
-            loadTypeParams(scope, c.getTypeParameters(), msym.typeParams);
+            loadTypeParams(msym.scope, c.getTypeParameters(), msym.typeParams);
             msym.returnType = new TypeRef(PrimitiveSymbol.VOID);
-            for(Type t : c.getGenericParameterTypes())
+            for(Type t : c.getGenericParameterTypes()) {
+                if(t instanceof Class && ((Class)t).isAnonymousClass())
+                    continue;//generated out constructor reference param
                 msym.params.add(new LocalSymbol(loadTypeRef(msym.scope, t), "arg"+msym.params.size()));
+            }
         } else {
             Method m = (Method) msym.source;
             msym.modifiers = m.getModifiers();
-            loadTypeParams(scope, m.getTypeParameters(), msym.typeParams);
+            loadTypeParams(msym.scope, m.getTypeParameters(), msym.typeParams);
             msym.returnType = loadTypeRef(msym.scope, m.getGenericReturnType());
             for(Type t : m.getGenericParameterTypes())
                 msym.params.add(new LocalSymbol(loadTypeRef(msym.scope, t), "arg"+msym.params.size()));
@@ -88,7 +98,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
                 return new ConcreteArraySymbol((ConcreteTypeSymbol) loadTypeSymbol(scope, c.getComponentType()));
             if(c.isPrimitive())
                 return PrimitiveSymbol.nameMap.get(c.getName());
-            return (TypeSymbol) scope.resolve1(((Class) type).getName(), Symbol.CLASS_SYM);
+            return (TypeSymbol) scope.resolve1(((Class) type).getCanonicalName(), Symbol.CLASS_SYM);
         }
         if(type instanceof TypeVariable)
             return (TypeSymbol) scope.resolve1(((TypeVariable) type).getName(), Symbol.TYPE_PARAM);
