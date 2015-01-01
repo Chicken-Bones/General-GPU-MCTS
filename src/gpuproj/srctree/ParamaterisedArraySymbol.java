@@ -1,9 +1,6 @@
 package gpuproj.srctree;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class ParamaterisedArraySymbol implements TypeSymbol
+public class ParamaterisedArraySymbol implements ArraySymbol
 {
     public final TypeSymbol type;
     public final FieldSymbol length;
@@ -15,13 +12,8 @@ public class ParamaterisedArraySymbol implements TypeSymbol
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return TypeSymbol.TYPE_PARAM;
-    }
-
-    @Override
-    public List<FieldSymbol> getFields() {
-        return Arrays.asList(length);
     }
 
     @Override
@@ -37,5 +29,14 @@ public class ParamaterisedArraySymbol implements TypeSymbol
     @Override
     public String toString() {
         return printName();
+    }
+
+    @Override
+    public TypeSymbol componentType() {
+        return type;
+    }
+
+    public int dimension() {
+        return (type instanceof ArraySymbol ? ((ArraySymbol) type).dimension() : 0) + 1;
     }
 }

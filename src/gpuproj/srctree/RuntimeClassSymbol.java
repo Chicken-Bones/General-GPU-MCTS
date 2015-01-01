@@ -67,7 +67,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
             Constructor c = (Constructor) msym.source;
             msym.modifiers = c.getModifiers();
             loadTypeParams(msym.scope, c.getTypeParameters(), msym.typeParams);
-            msym.returnType = new TypeRef(PrimitiveSymbol.VOID);
+            msym.returnType = new TypeRef(this);
             for(Type t : c.getGenericParameterTypes()) {
                 if(t instanceof Class && ((Class)t).isAnonymousClass())
                     continue;//generated out constructor reference param

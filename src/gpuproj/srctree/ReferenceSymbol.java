@@ -84,7 +84,7 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.CLASS_SYM;
     }
 
@@ -115,11 +115,6 @@ public abstract class ReferenceSymbol extends ConcreteTypeSymbol implements Scop
 
     public boolean isInterface() {
         return (modifiers & Modifier.INTERFACE) != 0;
-    }
-
-    @Override
-    public List<FieldSymbol> getFields() {
-        return fields;
     }
 
     @Override

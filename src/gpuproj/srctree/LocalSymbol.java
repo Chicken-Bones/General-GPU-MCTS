@@ -1,6 +1,6 @@
 package gpuproj.srctree;
 
-public class LocalSymbol extends Statement implements Symbol
+public class LocalSymbol extends Statement implements Variable
 {
     public TypeRef type;
     public String name;
@@ -22,7 +22,17 @@ public class LocalSymbol extends Statement implements Symbol
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.LOCAL_SYM;
+    }
+
+    @Override
+    public TypeRef getType() {
+        return type;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

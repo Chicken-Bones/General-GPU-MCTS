@@ -15,7 +15,7 @@ public class LabelledStatement extends Statement implements Symbol, ScopeProvide
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.LABEL;
     }
 

@@ -40,7 +40,7 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.METHOD_SYM;
     }
 
@@ -73,19 +73,19 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
         return sb.toString();
     }*/
 
-    public boolean matches(List<TypeRef> paramTypes) {
+    public boolean matches(List paramTypes) {
         //TODO support vaargs
         if(params.size() != paramTypes.size())
             return false;
 
         for(int i = 0; i < params.size(); i++)
-            if(!paramTypes.get(i).concrete().isAssignableTo(params.get(i).type.concrete()))
+            if(!TypeRef.get(paramTypes.get(i)).concrete().isAssignableTo(params.get(i).type.concrete()))
                 return false;
 
         return true;
     }
 
-    public static MethodSymbol match(List<MethodSymbol> methods, List<TypeRef> paramTypes) {
+    public static MethodSymbol match(List<MethodSymbol> methods, List paramTypes) {
         for(MethodSymbol m : methods)
             if(m.matches(paramTypes))
                 return m;
@@ -98,5 +98,9 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
         r.skipAnnotations();
         r.seek("{");
         body = (Block) r.readStatement(scope, false);
+    }
+
+    public boolean isStatic() {
+        return (modifiers & Modifier.STATIC) != 0;
     }
 }

@@ -43,4 +43,21 @@ public class TypeRef
 
         return types;
     }
+
+    public TypeRef arrayType() {
+        return new TypeRef(((ArraySymbol)type).componentType());
+    }
+
+    public static TypeRef get(Object o) {
+        if(o instanceof TypeRef)
+            return (TypeRef) o;
+        if(o instanceof TypeSymbol)
+            return new TypeRef((TypeSymbol) o);
+        if(o instanceof Expression)
+            return ((Expression) o).returnType();
+        if(o instanceof String)
+            return new TypeRef(TypeIndex.instance().resolveType((String) o));
+
+        return null;
+    }
 }

@@ -4,7 +4,7 @@ import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FieldSymbol extends GlobalSymbol
+public class FieldSymbol extends GlobalSymbol implements Variable
 {
     public final Object source;
     public List<AnnotationSymbol> annotations = new LinkedList<>();
@@ -26,7 +26,21 @@ public class FieldSymbol extends GlobalSymbol
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.FIELD_SYM;
+    }
+
+    @Override
+    public TypeRef getType() {
+        return type;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public boolean isStatic() {
+        return (modifiers & Modifier.STATIC) != 0;
     }
 }

@@ -22,4 +22,9 @@ public class Parentheses extends Expression
     public int precedence() {
         return 1;
     }
+
+    @Override
+    public boolean lvalue() {
+        return exp.lvalue();
+    }
 }

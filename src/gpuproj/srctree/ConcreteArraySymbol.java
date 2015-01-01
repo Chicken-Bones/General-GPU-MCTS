@@ -1,9 +1,8 @@
 package gpuproj.srctree;
 
-import java.util.Arrays;
 import java.util.List;
 
-public class ConcreteArraySymbol extends ConcreteTypeSymbol
+public class ConcreteArraySymbol extends ConcreteTypeSymbol implements ArraySymbol
 {
     public final TypeSymbol type;
     public final FieldSymbol length;
@@ -17,13 +16,8 @@ public class ConcreteArraySymbol extends ConcreteTypeSymbol
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.CLASS_SYM;
-    }
-
-    @Override
-    public List<FieldSymbol> getFields() {
-        return Arrays.asList(length);
     }
 
     @Override
@@ -34,5 +28,27 @@ public class ConcreteArraySymbol extends ConcreteTypeSymbol
     @Override
     public boolean isAssignableTo(ConcreteTypeSymbol type) {
         return type == this;
+    }
+
+    @Override
+    public TypeSymbol componentType() {
+        return type;
+    }
+
+    public int dimension() {
+        return (type instanceof ArraySymbol ? ((ArraySymbol) type).dimension() : 0) + 1;
+    }
+
+    @Override
+    public FieldSymbol getField(String name) {
+        if(name.equals("length"))
+            return length;
+
+        return null;
+    }
+
+    @Override
+    public List<MethodSymbol> getMethods(String name) {
+        throw new UnsupportedOperationException();
     }
 }

@@ -9,4 +9,8 @@ public abstract class Expression extends Statement
      * If a higher precedence operation wants to use this as an argument, it must be bracketed
      */
     public abstract int precedence();
+
+    public boolean lvalue() {
+        return false;
+    }
 }

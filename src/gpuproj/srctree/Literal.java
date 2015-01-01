@@ -18,7 +18,7 @@ public class Literal extends Expression
         if(value.equals("null"))
             return new TypeRef(TypeIndex.instance().OBJECT);
         if(value.equals("true") || value.equals("false"))
-            return new TypeRef(PrimitiveSymbol.INT);
+            return new TypeRef(PrimitiveSymbol.BOOLEAN);
         if(value.startsWith("'"))
             return new TypeRef(PrimitiveSymbol.CHAR);
         if(value.startsWith("\""))

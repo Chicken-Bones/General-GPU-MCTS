@@ -1,7 +1,5 @@
 package gpuproj.srctree;
 
-import java.util.List;
-
 /**
  * Class, primitive, or generic parameter
  */
@@ -13,6 +11,4 @@ public interface TypeSymbol extends Symbol
     public abstract ConcreteTypeSymbol concrete();
 
     public abstract String printName();
-
-    public abstract List<FieldSymbol> getFields();
 }

@@ -43,13 +43,8 @@ public class PrimitiveSymbol extends ConcreteTypeSymbol
     }
 
     @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.CLASS_SYM;
-    }
-
-    @Override
-    public List<FieldSymbol> getFields() {
-        return Collections.emptyList();
     }
 
     @Override
@@ -67,5 +62,15 @@ public class PrimitiveSymbol extends ConcreteTypeSymbol
             p1 = p1.wider;
 
         return p1;
+    }
+
+    @Override
+    public FieldSymbol getField(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<MethodSymbol> getMethods(String name) {
+        throw new UnsupportedOperationException();
     }
 }

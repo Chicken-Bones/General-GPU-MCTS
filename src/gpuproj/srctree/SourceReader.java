@@ -1,5 +1,6 @@
 package gpuproj.srctree;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -71,8 +72,8 @@ public class SourceReader
         int start = pos;
         char c = charAt(pos);
         boolean hex = c == '0' && pos+1 < source.length() && charAt(pos+1) == 'x';
-        while(++pos < source.length() && Character.isLetterOrDigit(c = charAt(pos)))
-            if(!hex && (c == 'e' || c == 'E')) pos++;//accept the character after an exponent as valid
+        while(++pos < source.length() && (Character.isLetterOrDigit(c = charAt(pos)) || c == '.'))
+            if(!hex && (c == 'e' || c == 'E')) pos++;//accept the character after an exponent as valid (- or +)
 
         return substring(start, pos);
     }
@@ -81,15 +82,6 @@ public class SourceReader
         int start = pos;
         while(++pos < source.length() && Character.isJavaIdentifierPart(charAt(pos)));
         return substring(start, pos);
-    }
-
-    /**
-     * Does not seek
-     */
-    public String readTo(char delim, boolean include) {
-        int start = pos;
-        pos = indexOf(';')+1;
-        return substring(start, include ? pos : pos-1);
     }
 
     private String readSymbol() {
@@ -373,7 +365,7 @@ public class SourceReader
     }
 
     private Statement readSwitch(Scope scope, SourceReader r) {
-        SwitchStatement stmt = new SwitchStatement(scope, r.readExpression(scope));
+        SwitchStatement stmt = new SwitchStatement(scope, r.readParentheses(scope));
         SourceReader r2 = new SourceReader(expand(r.readElement()));
         while(!r2.end())
             stmt.body.statements.add(r2.readStatement(stmt.body.scope, true));
@@ -460,20 +452,20 @@ public class SourceReader
     private Statement readDo(Scope scope, SourceReader r) {
         DoStatement stmt = new DoStatement(scope, label);
         stmt.body = r.readStatement(stmt.scope, false);
-        r.readElement();//while
-        stmt.cond = r.readExpression(scope);
+        readElement();//while
+        stmt.cond = readParentheses(scope);
         return stmt;
     }
 
     private Statement readWhile(Scope scope, SourceReader r) {
         WhileStatement stmt = new WhileStatement(scope, label);
-        stmt.cond = r.readExpression(scope);
+        stmt.cond = r.readParentheses(scope);
         stmt.body = r.readStatement(stmt.scope, false);
         return stmt;
     }
 
     private Statement readIf(Scope scope, SourceReader r) {
-        IfStatement stmt = new IfStatement(r.readExpression(scope), r.readStatement(scope, false));
+        IfStatement stmt = new IfStatement(r.readParentheses(scope), r.readStatement(scope, false));
         int mark = pos;
         if(!end() && readElement().equals("else"))
             stmt.otherwise = readStatement(scope, false);
@@ -483,28 +475,156 @@ public class SourceReader
         return stmt;
     }
 
+    public Parentheses readParentheses(Scope scope) {
+        return new Parentheses(new SourceReader(expand(readElement())).readExpression(scope));
+    }
+
+    /**
+     * Recursively builds an expression with precedence <= 3
+     */
+    private Expression readExpression1(Scope scope) {
+        String elem = readElement();
+        if(elem.startsWith("("))
+            return readParensOrCast(scope, expand(elem));
+        if (elem.equals("new"))
+            return readNew(scope);
+        if(UnaryOp.symbols.contains(elem))
+            return new UnaryOp(elem, readExpression1(scope), false);
+        if(Character.isJavaIdentifierStart(elem.charAt(0)))
+            return readGeneralAccess(scope, elem);
+
+        return new Literal(elem);
+    }
+
+    private Expression readGeneralAccess(Scope scope, String elem) {
+        List<Symbol> symbols;
+        while((symbols = scope.resolve(elem, Symbol.VARIABLE | Symbol.METHOD_SYM)).isEmpty())
+            elem += readElement() + readElement();
+
+        if(!end() && charAt(pos) == '(') {//static method
+            for(Iterator<Symbol> it = symbols.iterator(); it.hasNext();) {
+                Symbol sym = it.next();
+                if(sym.symbolType() != Symbol.METHOD_SYM || !((MethodSymbol)sym).isStatic())
+                    it.remove();
+            }
+
+            List<Expression> params = readParameters(scope, readElement());
+            MethodSymbol method = MethodSymbol.match((List)symbols, params);
+            return continueExpression1(scope, new MethodCall(method, params));
+        }
+
+        return continueExpression1(scope, new VariableAccess((Variable) symbols.get(0)));
+    }
+
+    /**
+     * Attempts to continue an expression by futher reading of operators with precedence 2
+     * Array index, field access, method call or postfix increment
+     */
+    private Expression continueExpression1(Scope scope, Expression exp) {
+        if(end()) return exp;
+
+        char c = charAt(pos);
+        if(c == '[')
+            return readArrayIndex(scope, exp);
+
+        if(c == '.') {
+            pos++;
+            String name = readElement();
+            if(!end() && charAt(pos) == '(')
+                return readMethodCall(scope, exp, name);
+
+            return readFieldAccess(scope, exp, name);
+        }
+
+        if(pos+1 < source.length()) {
+            String op = substring(pos, pos+2);
+            if(UnaryOp.symbols.contains(op)) {
+                pos += 2;
+                return new UnaryOp(op, exp, true);
+            }
+        }
+
+        return exp;
+    }
+
+    private Expression readFieldAccess(Scope scope, Expression exp, String name) {
+        return continueExpression1(scope, new VariableAccess(exp.returnType().concrete().getField(name), exp));
+    }
+
+    private Expression readMethodCall(Scope scope, Expression exp, String name) {
+        List<MethodSymbol> methods = exp.returnType().concrete().getMethods(name);
+        List<Expression> params = readParameters(scope, readElement());
+        MethodSymbol method = MethodSymbol.match(methods, params);
+        params.add(0, exp);
+        return continueExpression1(scope, new MethodCall(method, params));
+    }
+
+    private List<Expression> readParameters(Scope scope, String s_params) {
+        List<Expression> list = new LinkedList<>();
+        for(String s : new SourceReader(expand(s_params)).readList())
+            list.add(new SourceReader(s).readExpression(scope));
+        return list;
+    }
+
+    private Expression readArrayIndex(Scope scope, Expression exp) {
+        return continueExpression1(scope, new ArrayAccess(exp, new SourceReader(expand(readElement())).readExpression(scope)));
+    }
+
+    private Expression readNew(Scope scope) {
+        TypeRef type = readTypeRef(scope);
+        char c = charAt(seekCode());
+        if(c == '[') {
+            /*List<Expression> dimensions = new LinkedList<>();
+            do {
+                if()
+            }
+            while(!end() && charAt(pos) == '[')*/
+            //array creation
+            //must have bounds, or initialiser
+            //cannot have both
+        }
+        return null;
+    }
+
+    private Expression readParensOrCast(Scope scope, String inner) {
+        if(!PrimitiveSymbol.nameMap.containsKey(inner) &&
+                (end() || SourceUtil.operator_symbols.contains(substring(pos, pos+1))))
+            continueExpression1(scope, new Parentheses(new SourceReader(inner).readExpression(scope)));
+
+        return new Cast(new SourceReader(inner).readTypeRef(scope), readExpression1(scope));
+    }
+
     public Expression readExpression(Scope scope) {
-        //declaration = true;
-        //after reading one element, change decl to false
-        seekCode();
-        final String s = charAt(pos) == '(' ? readElement() : substring(pos);
-        return new Expression()
-        {
-            @Override
-            public TypeRef returnType() {
-                return null;
-            }
+        Expression expr = readExpression1(scope);
+        while(!end()) {
+            String op = readElement();
+            if(op.equals("?"))
+                return readTernary(scope, expr);
 
-            @Override
-            public int precedence() {
-                return 0;
-            }
+            expr = readBinary(scope, op, expr);
+        }
+        return expr;
+    }
 
-            @Override
-            public String toString() {
-                return s;
-            }
-        };
+    private Expression readTernary(Scope scope, Expression cond) {
+        pos--;//go before the ?
+        String s_then = readPaired('?', ':');
+        Expression then = new SourceReader(expand(s_then)).readExpression(scope);
+        return new TernaryExpression(cond, then, readExpression(scope));
+    }
+
+    private Expression readBinary(Scope scope, String op, Expression op1) {
+        return append(op, op1, readExpression1(scope));
+    }
+
+    private Expression append(String op, Expression op1, Expression op2) {
+        if(BinaryOp.precedence(op) < op1.precedence()) {
+            BinaryOp b = (BinaryOp) op1;
+            b.op2 = append(op, b.op2, op2);
+            return b;
+        }
+
+        return new BinaryOp(op, op1, op2);
     }
 
     private Block readBlock(Scope scope, String s) {

@@ -1,6 +1,7 @@
 package gpuproj.srctree;
 
-import java.lang.reflect.Modifier;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Method and constructor (<init>) calls
@@ -8,7 +9,13 @@ import java.lang.reflect.Modifier;
 public class MethodCall extends Expression
 {
     public MethodSymbol method;
-    public Expression[] params;
+    //note first param for virtual methods is the instance
+    public List<Expression> params;
+
+    public MethodCall(MethodSymbol method, List<Expression> params) {
+        this.method = method;
+        this.params = params;
+    }
 
     @Override
     public TypeRef returnType() {
@@ -18,30 +25,27 @@ public class MethodCall extends Expression
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        int p = 0;
+        Iterator<Expression> it = params.iterator();
+
         if(method.name.equals("<init>")) {
             sb.append("new ").append(method.owner.name);
         } else {
-            if (Modifier.isStatic(method.modifiers))
+            if (method.isStatic())
                 sb.append(method.owner.name);
             else
-                sb.append(params[p++]);
+                sb.append(it.next());
             if (sb.length() > 0)
                 sb.append('.');
         }
         sb.append(method.name).append('(');
 
-        while(p < params.length) {
-            if(sb.charAt(sb.length()-1) != '(')
+        boolean first = true;
+        while(it.hasNext()) {
+            if(!first)
                 sb.append(", ");
 
-            Expression exp = params[p];
-            /*if(SourceUtil.pointerLevel(method.params.get()paramTypes[p]) > SourceUtil.pointerLevel(exp.returnType())) {
-                sb.append('&');//take address for passing to methods requiring pointer args
-                if(exp.precedence() <= 3)//address of precedence
-                    exp = new Parentheses(exp);
-            }*/
-            sb.append(exp);
+            sb.append(it.next());
+            first = false;
         }
 
         sb.append(')');

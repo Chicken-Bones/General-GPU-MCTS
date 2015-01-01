@@ -1,7 +1,5 @@
 package gpuproj.srctree;
 
-import java.util.List;
-
 public class TypeParam implements TypeSymbol
 {
     public final String alias;
@@ -25,12 +23,7 @@ public class TypeParam implements TypeSymbol
     }
 
     @Override
-    public List<FieldSymbol> getFields() {
-        return concrete().getFields();
-    }
-
-    @Override
-    public int getType() {
+    public int symbolType() {
         return Symbol.TYPE_PARAM;
     }
 

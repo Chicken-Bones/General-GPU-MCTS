@@ -52,7 +52,7 @@ public final class Scope
 
         public void add(Symbol sym) {
             for(int i = 0; i < Symbol.TYPE_COUNT; i++) {
-                if(sym.getType() == 1<<i) {
+                if(sym.symbolType() == 1<<i) {
                     if(lists[i] == null)
                         lists[i] = new LinkedList();
                     if(!lists[i].contains(sym))

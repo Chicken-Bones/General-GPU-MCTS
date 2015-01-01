@@ -72,7 +72,7 @@ public class ClassSymbol extends ReferenceSymbol
         m.modifiers = r.readModifiers();
         r.readTypeParams(scope, m.typeParams);
         if(m.name.equals("<init>"))
-            m.returnType = new TypeRef(PrimitiveSymbol.VOID);
+            m.returnType = new TypeRef(this);
         else
             m.returnType = r.readTypeRef(m.scope);
         r.readElement();//method name
