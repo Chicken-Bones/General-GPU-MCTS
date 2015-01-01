@@ -8,13 +8,22 @@ public class InitialiserList extends Expression
     public TypeSymbol type;
     public List<Expression> elements = new LinkedList<>();
 
+    public InitialiserList(TypeSymbol type) {
+        this.type = type;
+    }
+
     @Override
     public TypeRef returnType() {
-        return null;
+        return new TypeRef(type.array());
     }
 
     @Override
     public int precedence() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return '{'+SourceUtil.listString(elements)+'}';
     }
 }

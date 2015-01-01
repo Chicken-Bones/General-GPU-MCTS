@@ -16,10 +16,6 @@ public class VariableAccess extends Expression
         this.exp = exp;
     }
 
-    public VariableAccess(Variable var) {
-        this(var, null);
-    }
-
     @Override
     public TypeRef returnType() {
         return var.getType();
@@ -34,7 +30,7 @@ public class VariableAccess extends Expression
         if(field.isStatic())
             return field.fullname;
 
-        return exp + "." + field.name;
+        return exp + "." + field.getName();
     }
 
     @Override

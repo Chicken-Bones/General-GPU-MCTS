@@ -34,7 +34,7 @@ public class TypeIndex implements ScopeProvider
             register(p);
     }
 
-    private ReferenceSymbol findClass(String name) {
+    private ClassSymbol findClass(String name) {
         String path = name.replace('.', '/')+".java";
         for(SourceProvider p : sourceProviders) {
             String source = p.findClass(path);
@@ -49,7 +49,7 @@ public class TypeIndex implements ScopeProvider
         return null;
     }
 
-    private ReferenceSymbol loadSourceFile(String source) {
+    private ClassSymbol loadSourceFile(String source) {
         SourceReader r = new SourceReader(source);
         SourceFile f = new SourceFile();
         while(!r.end()) {
@@ -65,7 +65,7 @@ public class TypeIndex implements ScopeProvider
                     f.addImport(imp, mod == Modifier.STATIC);
                     break;
                 default:
-                    return ClassSymbol.fromStatement(f.pkg, f.scope, stmt).load();
+                    return SourceClassSymbol.fromStatement(f.pkg, f.scope, stmt).load();
             }
         }
         return null;
@@ -74,7 +74,7 @@ public class TypeIndex implements ScopeProvider
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & Symbol.CLASS_SYM) != 0) {
-            ReferenceSymbol sym = findClass(name);
+            ClassSymbol sym = findClass(name);
             if(sym != null) {
                 list.add(sym);
                 return;
@@ -83,7 +83,7 @@ public class TypeIndex implements ScopeProvider
 
         String parentName = SourceUtil.parentName(name);
         if(parentName.length() > 0) {
-            ReferenceSymbol sym = (ReferenceSymbol) scope.resolve1(parentName, Symbol.CLASS_SYM);
+            ClassSymbol sym = (ClassSymbol) scope.resolve1(parentName, Symbol.CLASS_SYM);
             if(sym != null) {
                 sym.resolveOnce(SourceUtil.simpleName(name), type, list);
                 return;
@@ -91,21 +91,21 @@ public class TypeIndex implements ScopeProvider
         }
 
         if((type & Symbol.CLASS_SYM) != 0 && !name.startsWith("java.lang")) {
-            ConcreteTypeSymbol sym = resolveType("java.lang." + name);
+            TypeSymbol sym = resolveType("java.lang." + name);
             if(sym != null)
                 list.add(sym);
         }
     }
 
-    public ConcreteTypeSymbol resolveType(String name) {
-        return (ConcreteTypeSymbol)scope.resolve1(name, Symbol.CLASS_SYM);
+    public TypeSymbol resolveType(String name) {
+        return (TypeSymbol) scope.resolve1(name, Symbol.CLASS_SYM);
     }
 
     public List<Symbol> resolve(String name, int type) {
         return scope.resolve(name, type);
     }
 
-    public void register(GlobalSymbol sym) {
-        scope.cache(sym, sym.fullname);
+    public void register(Symbol sym) {
+        scope.cache(sym, sym.globalName());
     }
 }

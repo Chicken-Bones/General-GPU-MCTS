@@ -6,21 +6,20 @@ import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MethodSymbol extends GlobalSymbol implements ScopeProvider
+public class MethodSymbol implements Symbol, ScopeProvider
 {
     public final Object source;
-    public final ReferenceSymbol owner;
     public final Scope scope;
     public List<AnnotationSymbol> annotations = new LinkedList<>();
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef returnType;
+    public String fullname;
     public List<LocalSymbol> params = new LinkedList<>();
     public Block body;
 
-    public MethodSymbol(String fullname, ReferenceSymbol owner, Object source) {
-        super(fullname);
-        this.owner = owner;
+    public MethodSymbol(String fullname, ClassSymbol owner, Object source) {
+        this.fullname = fullname;
         this.source = source;
         scope = new Scope(owner.scope, this);
     }
@@ -29,7 +28,7 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
     public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & TYPE_PARAM) != 0) {
             for(TypeParam p : typeParams)
-                if(p.alias.equals(name))
+                if(p.getName().equals(name))
                     list.add(p);
         }
         if((type & LOCAL_SYM) != 0) {
@@ -52,7 +51,7 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
                 sb.append(Modifier.toString(modifiers)).append(' ');
             if(!typeParams.isEmpty())
                 sb.append("<").append(SourceUtil.listString(typeParams)).append("> ");
-            sb.append(returnType).append(' ').append(name);
+            sb.append(returnType).append(' ').append(getName());
             sb.append('(').append(SourceUtil.listString(params)).append(')');
             return sb.toString();
         }
@@ -102,5 +101,18 @@ public class MethodSymbol extends GlobalSymbol implements ScopeProvider
 
     public boolean isStatic() {
         return (modifiers & Modifier.STATIC) != 0;
+    }
+
+    public String getName() {
+        return SourceUtil.simpleName(fullname);
+    }
+
+    @Override
+    public String globalName() {
+        return fullname;
+    }
+
+    public String ownerName() {
+        return SourceUtil.parentName(fullname);
     }
 }

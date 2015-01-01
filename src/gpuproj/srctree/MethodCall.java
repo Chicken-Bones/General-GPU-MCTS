@@ -27,17 +27,16 @@ public class MethodCall extends Expression
         StringBuilder sb = new StringBuilder();
         Iterator<Expression> it = params.iterator();
 
-        if(method.name.equals("<init>")) {
-            sb.append("new ").append(method.owner.name);
+        if(method.getName().equals("<init>")) {
+            sb.append("new ").append(method.ownerName());
         } else {
             if (method.isStatic())
-                sb.append(method.owner.name);
+                sb.append(method.ownerName());
             else
                 sb.append(it.next());
-            if (sb.length() > 0)
-                sb.append('.');
+            sb.append('.').append(method.getName());
         }
-        sb.append(method.name).append('(');
+        sb.append('(');
 
         boolean first = true;
         while(it.hasNext()) {

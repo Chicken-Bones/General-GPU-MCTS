@@ -12,7 +12,7 @@ public class ArrayAccess extends Expression
 
     @Override
     public TypeRef returnType() {
-        return (exp.returnType().arrayType());
+        return (exp.returnType().componentType());
     }
 
     @Override

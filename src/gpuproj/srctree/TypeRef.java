@@ -14,25 +14,33 @@ public class TypeRef
         this.type = type;
     }
 
-    /**
-     * Simple getter for type as a ReferenceSymbol
-     * @return type casted to ReferenceSymbol
-     */
     public ReferenceSymbol refType() {
         return (ReferenceSymbol)type;
+    }
+
+    public ClassSymbol classType() {
+        return (ClassSymbol) type;
+    }
+
+    public TypeRef componentType() {
+        return new TypeRef(((ArraySymbol)type).componentType());
+    }
+
+    public TypeRef arrayType() {
+        return new TypeRef(type.array());
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(type.printName());
+        sb.append(type.fullname);
         if(!params.isEmpty())
             sb.append('<').append(SourceUtil.listString(params)).append('>');
 
         return sb.toString();
     }
 
-    public ConcreteTypeSymbol concrete() {
+    public TypeSymbol concrete() {
         return type.concrete();
     }
 
@@ -42,10 +50,6 @@ public class TypeRef
             types.add(new TypeRef(TypeIndex.instance().resolveType(name)));
 
         return types;
-    }
-
-    public TypeRef arrayType() {
-        return new TypeRef(((ArraySymbol)type).componentType());
     }
 
     public static TypeRef get(Object o) {

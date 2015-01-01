@@ -1,12 +1,12 @@
 package gpuproj.srctree;
 
-public class TernaryExpression extends Expression
+public class TernaryOp extends Expression
 {
     public Expression cond;
     public Expression then;
     public Expression otherwise;
 
-    public TernaryExpression(Expression cond, Expression then, Expression otherwise) {
+    public TernaryOp(Expression cond, Expression then, Expression otherwise) {
         this.cond = cond;
         this.then = then;
         this.otherwise = otherwise;

@@ -1,16 +1,21 @@
 package gpuproj.srctree;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
-public class NewArrayExpression extends Expression
+public class NewArray extends Expression
 {
     public ArraySymbol type;
     /**
      * will be null for unspecified dimensions
      */
-    public List<Expression> dimensions = new LinkedList<>();
+    public List<Expression> dimensions;
     public InitialiserList init;
+
+    public NewArray(ArraySymbol type) {
+        this.type = type;
+        dimensions = new ArrayList<>(type.dimension());
+    }
 
     @Override
     public TypeRef returnType() {
@@ -22,7 +27,7 @@ public class NewArrayExpression extends Expression
         return 2;
     }
 
-    public ConcreteTypeSymbol componentType() {
+    public TypeSymbol componentType() {
         TypeSymbol component = type;
         while(component instanceof ArraySymbol)
             component = ((ArraySymbol) component).componentType();
@@ -33,7 +38,7 @@ public class NewArrayExpression extends Expression
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(componentType().printName());
+        sb.append("new ").append(componentType().fullname);
         for(Expression exp : dimensions) {
             sb.append('[');
             if(exp != null)

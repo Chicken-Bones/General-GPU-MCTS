@@ -1,15 +1,14 @@
 package gpuproj.srctree;
 
-public class TypeParam implements TypeSymbol
+public class TypeParam extends ReferenceSymbol
 {
-    public final String alias;
     /**
      * alias extends upper
      */
     public TypeRef upper;
 
     public TypeParam(String alias, TypeRef upper) {
-        this.alias = alias;
+        super(alias);
         this.upper = upper;
     }
 
@@ -18,8 +17,13 @@ public class TypeParam implements TypeSymbol
     }
 
     @Override
-    public ConcreteTypeSymbol concrete() {
-        return upper.concrete();
+    public boolean isConcrete() {
+        return false;
+    }
+
+    @Override
+    public ReferenceSymbol concrete() {
+        return (ReferenceSymbol) upper.concrete();
     }
 
     @Override
@@ -30,13 +34,8 @@ public class TypeParam implements TypeSymbol
     @Override
     public String toString() {
         if(upper.type != TypeIndex.instance().OBJECT)
-            return alias+" extends "+upper;
+            return fullname+" extends "+upper;
 
-        return alias;
-    }
-
-    @Override
-    public String printName() {
-        return alias;
+        return fullname;
     }
 }

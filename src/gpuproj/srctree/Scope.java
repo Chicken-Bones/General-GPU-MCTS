@@ -105,4 +105,8 @@ public final class Scope
         if(list.size() > 1) throw new IllegalStateException("Resolved more than one symbol for: "+name);
         return list.isEmpty() ? null : list.get(0);
     }
+
+    public ClassSymbol thisClass() {
+        return provider instanceof ClassSymbol ? (ClassSymbol) provider : parent.thisClass();
+    }
 }

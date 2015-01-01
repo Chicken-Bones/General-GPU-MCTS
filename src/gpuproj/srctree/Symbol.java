@@ -19,4 +19,9 @@ public interface Symbol
      * @return One of CLASS_SYM, FIELD_SYM, METHOD_SYM, TYPE_PARAM or LOCAL_SYM
      */
     public abstract int symbolType();
+
+    /**
+     * The unique name by which this symbol can be obtained from TypeIndex, or null if this is a parameterised class
+     */
+    public abstract String globalName();
 }

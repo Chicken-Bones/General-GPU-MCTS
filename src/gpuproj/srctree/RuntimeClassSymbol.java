@@ -3,7 +3,7 @@ package gpuproj.srctree;
 import java.lang.reflect.*;
 import java.util.List;
 
-public class RuntimeClassSymbol extends ReferenceSymbol
+public class RuntimeClassSymbol extends ClassSymbol
 {
     public RuntimeClassSymbol(Scope scope, Class<?> c) {
         super(c.getCanonicalName(), scope, c);
@@ -17,7 +17,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
             if(!inner.isAnonymousClass())
                 innerClasses.add(new RuntimeClassSymbol(scope, inner).loadSymbols());
         for(Field f : c.getDeclaredFields())
-            fields.add(new FieldSymbol(SourceUtil.combineName(fullname, f.getName()), f));
+            fields.add(new FieldSymbol(SourceUtil.combineName(fullname, f.getName()), this, f));
         for(Constructor<?> m : c.getDeclaredConstructors())
             methods.add(new MethodSymbol(SourceUtil.combineName(fullname, "<init>"), this, m));
         for(Method m : c.getDeclaredMethods())
@@ -38,7 +38,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         for(Type t : c.getGenericInterfaces())
             interfaces.add(loadTypeRef(scope, t));
 
-        for (ReferenceSymbol inner : innerClasses)
+        for (ClassSymbol inner : innerClasses)
             inner.loadSignatures();
 
         for (FieldSymbol f : fields)
@@ -51,7 +51,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
     }
 
     @Override
-    public ReferenceSymbol loadAnnotations() {
+    public ClassSymbol loadAnnotations() {
         //we don't care about compiled annotations at this time
         return this;
     }
@@ -95,7 +95,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         if(type instanceof Class) {
             Class c = (Class) type;
             if(c.isArray())
-                return new ConcreteArraySymbol((ConcreteTypeSymbol) loadTypeSymbol(scope, c.getComponentType()));
+                return loadTypeSymbol(scope, c.getComponentType()).array();
             if(c.isPrimitive())
                 return PrimitiveSymbol.nameMap.get(c.getName());
             return (TypeSymbol) scope.resolve1(((Class) type).getCanonicalName(), Symbol.CLASS_SYM);
@@ -103,7 +103,7 @@ public class RuntimeClassSymbol extends ReferenceSymbol
         if(type instanceof TypeVariable)
             return (TypeSymbol) scope.resolve1(((TypeVariable) type).getName(), Symbol.TYPE_PARAM);
         if(type instanceof GenericArrayType)
-            return new ParamaterisedArraySymbol(loadTypeSymbol(scope, ((GenericArrayType) type).getGenericComponentType()));
+            return loadTypeSymbol(scope, ((GenericArrayType) type).getGenericComponentType()).array();
         if(type instanceof WildcardType)
             return new TypeParam("?", loadTypeRef(scope, ((WildcardType) type).getUpperBounds()[0]));
         if(type instanceof ParameterizedType)//don't care about paramaterised types here, typically generic array creation

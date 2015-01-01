@@ -29,11 +29,14 @@ public class Main
         TypeIndex.instance().sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
 
 
-        ClassSymbol game = (ClassSymbol) TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
-        ClassSymbol board = (ClassSymbol) game.parent.params.get(0).concrete();
+        SourceClassSymbol game = (SourceClassSymbol) TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
+        SourceClassSymbol board = (SourceClassSymbol) game.parent.params.get(0).concrete();
         MethodSymbol checkWinner = MethodSymbol.match(game.getMethods("checkWinner"), Arrays.asList(board));
         checkWinner.loadBody();
-        checkWinner.body.toString();
+        MethodSymbol genMoves = game.getMethods("genMoves").get(0);
+        genMoves.loadBody();
+        FieldSymbol f_board = board.getField("board");
+        f_board.loadInitialiser();
         new Object();
     }
 }

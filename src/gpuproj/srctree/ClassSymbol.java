@@ -1,183 +1,140 @@
 package gpuproj.srctree;
 
+import gpuproj.srctree.Scope.ScopeProvider;
+
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ClassSymbol extends ReferenceSymbol
+public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvider
 {
-    public List<AnnotationSymbol> annotations = new LinkedList<>();
+    public static final int ANNOTATION = 0x00002000;
+    public static final int ENUM = 0x00004000;
+    public static final int INHERITED_SYMS = Symbol.FIELD_SYM | Symbol.METHOD_SYM | Symbol.CLASS_SYM;
 
-    public ClassSymbol(String fullname, Scope scope, String source) {
-        super(fullname, scope, source);
+    public final Scope scope;
+    public final Object source;
+    public int modifiers;
+    public List<TypeParam> typeParams = new LinkedList<>();
+    public TypeRef parent;
+    public List<TypeRef> interfaces = new LinkedList<>();
+    public List<ClassSymbol> innerClasses = new LinkedList<>();
+    public List<FieldSymbol> fields = new LinkedList<>();
+    public List<MethodSymbol> methods = new LinkedList<>();
+
+    public ClassSymbol(String fullname, Scope scope, Object source) {
+        super(fullname);
+        this.scope = new Scope(scope, this);
+        this.source = source;
+        TypeIndex.instance().register(this);
     }
 
-    @Override
-    public ReferenceSymbol loadAnnotations() {
-        new SourceReader((String) source).readAnnotations(scope, annotations);
-
-        for (ReferenceSymbol inner : innerClasses)
-            inner.loadAnnotations();
-
-        for (FieldSymbol f : fields)
-            new SourceReader((String) f.source).readAnnotations(scope, f.annotations);
-
-        for (MethodSymbol m : methods)
-            new SourceReader((String) m.source).readAnnotations(scope, m.annotations);
-
+    public ClassSymbol load() {
+        loadSymbols();
+        loadSignatures();
+        loadAnnotations();
         return this;
     }
 
+    public abstract ClassSymbol loadSymbols();
+    public abstract ClassSymbol loadSignatures();
+    public abstract ClassSymbol loadAnnotations();
+
     @Override
-    public ClassSymbol loadSignatures() {
-        SourceReader r = new SourceReader((String) source);
-        r.skipAnnotations();
-        r.seek("interface", "class");
-        r.readElement();//skip interface/class
-        r.readElement();//skip name
-        r.readTypeParams(scope, typeParams);
-
-        String word = r.readElement();
-        if(isInterface());//interfaces have no superclass
-        else if(word.equals("extends")) {
-            parent = r.readTypeRef(scope);
-            word = r.readElement();
-        } else
-            parent = new TypeRef(TypeIndex.instance().OBJECT);
-
-        if(word.equals("implements") || word.equals("extends") && isInterface()) {
-            int start = r.seekCode();
-            int end = r.indexOf('{');
-            List<String> list = new SourceReader(r.substring(start, end)).readList();
-            for(String s : list)
-                interfaces.add(new SourceReader(s).readTypeRef(scope));
-            r.pos = end;
-        }
-
-        for (ReferenceSymbol inner : innerClasses)
-            inner.loadSignatures();
-
-        for (FieldSymbol f : fields)
-            loadSignature(f);
-
-        for (MethodSymbol m : methods)
-            loadSignature(m);
-
-        return this;
-    }
-
-    private void loadSignature(MethodSymbol m) {
-        SourceReader r = new SourceReader((String) m.source);
-        r.skipAnnotations();
-        m.modifiers = r.readModifiers();
-        r.readTypeParams(scope, m.typeParams);
-        if(m.name.equals("<init>"))
-            m.returnType = new TypeRef(this);
-        else
-            m.returnType = r.readTypeRef(m.scope);
-        r.readElement();//method name
-        String s_params = r.readElement();
-        List<String> params = new SourceReader(SourceReader.expand(s_params)).readList();
-        for(String s : params) {
-            SourceReader r2 = new SourceReader(s);
-            m.params.add(new LocalSymbol(r2.readTypeRef(m.scope), r2.readElement()));
-        }
-    }
-
-    private void loadSignature(FieldSymbol f) {
-        SourceReader r = new SourceReader((String) f.source);
-        r.skipAnnotations();
-        f.modifiers = r.readModifiers();
-        f.type = r.readTypeRef(scope);
+    public boolean isConcrete() {
+        return true;
     }
 
     @Override
-    public ClassSymbol loadSymbols() {
-        SourceReader r = new SourceReader((String) source);
-        r.skipAnnotations();
-        modifiers = r.readModifiers();
+    public FieldSymbol getField(String name) {
+        LinkedList<Symbol> list = new LinkedList<>();
+        resolveOnce(name, FIELD_SYM, list);
+        return list.isEmpty() ? null : (FieldSymbol)list.getFirst();
+    }
 
-        switch(r.readElement()) {
-            case "@interface":
-                modifiers |= ANNOTATION;
-                break;
-            case "interface":
-                modifiers |= Modifier.INTERFACE;
-                break;
-            case "enum":
-                modifiers |= ENUM;
-                break;
-            case "class":
-                break;
-            default:
-                throw new IllegalStateException("Unknown class type");
+    @Override
+    public List<MethodSymbol> getMethods(String name) {
+        LinkedList<Symbol> list = new LinkedList<>();
+        resolveOnce(name, METHOD_SYM, list);
+        return (List<MethodSymbol>)(List)list;
+    }
+
+    @Override
+    public void resolveOnce(String name, int type, List<Symbol> list) {
+        if((type & FIELD_SYM) != 0 && list.isEmpty()) {//fields are shadowed by subclasses
+            for(FieldSymbol sym : fields)
+                if(sym.getName().equals(name))
+                    list.add(sym);
+        }
+        if((type & METHOD_SYM) != 0) {
+            for(MethodSymbol sym : methods)
+                if(sym.getName().equals(name))
+                    list.add(sym);
+        }
+        if((type & CLASS_SYM) != 0) {
+            for (ClassSymbol sym : innerClasses)
+                if (sym.getName().equals(name))
+                    list.add(sym);
+        }
+        if((type & TYPE_PARAM) != 0) {
+            for(TypeParam p : typeParams)
+                if(p.getName().equals(name))
+                    list.add(p);
         }
 
-        //skip to body
-        r.seek("{");
-        String body = r.readElement();
-        r = new SourceReader(SourceReader.expand(body));
-        while(!r.end()) {
-            String stmt = r.readStatement();
-            if(stmt.isEmpty()) continue;
-            switch (declarationType(stmt)) {
-                case CLASS_SYM:
-                    innerClasses.add(fromStatement(fullname, scope, stmt).loadSymbols());
-                    break;
-                case FIELD_SYM:
-                    fields.add(newField(stmt));
-                    break;
-                case METHOD_SYM:
-                    methods.add(newMethod(stmt));
-                    break;
-            }
-        }
+        if(parent != null)
+            parent.classType().resolveOnce(name, type & INHERITED_SYMS, list);
 
-        return this;
+        for(TypeRef iface : interfaces)
+            iface.classType().resolveOnce(name, type & INHERITED_SYMS, list);
     }
 
-    private MethodSymbol newMethod(String stmt) {
-        SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        r.seek("(");
-        while(Character.isWhitespace(r.charAt(--r.pos)));//rollback
-        while(Character.isJavaIdentifierPart(r.charAt(--r.pos)));
-        String name = r.readElement();
-        if(name.equals(this.name))
-            name = "<init>";
-        return new MethodSymbol(SourceUtil.combineName(fullname, name), this, stmt);
+    @Override
+    public int symbolType() {
+        return Symbol.CLASS_SYM;
     }
 
-    private FieldSymbol newField(String stmt) {
-        SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        r.readModifiers();
-        r.skipType();//type
-        return new FieldSymbol(SourceUtil.combineName(fullname, r.readElement()), stmt);
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if(modifiers != 0)
+            sb.append(Modifier.toString(modifiers)).append(' ');
+
+        if((modifiers & ENUM) != 0)
+            sb.append("enum ");
+        else if((modifiers & ANNOTATION) != 0)
+            sb.append("@interface ");
+        else if(!isInterface())
+            sb.append("class ");
+
+        sb.append(fullname);
+
+        if(!typeParams.isEmpty())
+            sb.append('<').append(SourceUtil.listString(typeParams)).append('>');
+        if(parent != null && parent.type != TypeIndex.instance().OBJECT)
+            sb.append(" extends ").append(parent);
+        if(!interfaces.isEmpty())
+            sb.append(" implements ").append(SourceUtil.listString(interfaces));
+
+        return sb.toString();
     }
 
-    private int declarationType(String stmt) {
-        SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        int equals = r.indexOf('=');
-        int brace = r.indexOf('{');
-        int bracket = r.indexOf('(');
-        int clazz = r.indexOf("class");
-
-        if(equals < 0) equals = Integer.MAX_VALUE;
-        if(brace < 0) brace = Integer.MAX_VALUE;
-        if(bracket < 0) bracket = Integer.MAX_VALUE;
-        if(clazz < 0) clazz = Integer.MAX_VALUE;
-
-        if(clazz < equals && clazz < bracket) return CLASS_SYM;
-        if(bracket < equals || brace < equals) return METHOD_SYM;
-        return FIELD_SYM;
+    public boolean isInterface() {
+        return (modifiers & Modifier.INTERFACE) != 0;
     }
 
-    public static ClassSymbol fromStatement(String parent, Scope scope, String stmt) {
-        SourceReader r = new SourceReader(stmt);
-        r.seek("interface", "class");
-        r.readElement();//skip interface/class
-        return new ClassSymbol(SourceUtil.combineName(parent, r.readElement()), scope, stmt);
+    @Override
+    public boolean isAssignableTo(TypeSymbol type) {
+        if(type == this)
+            return true;
+
+        if(parent != null && parent.type.isAssignableTo(type))
+            return true;
+
+        for(TypeRef iface : interfaces)
+            if(iface.type.isAssignableTo(type))
+                return true;
+
+        return false;
     }
 }

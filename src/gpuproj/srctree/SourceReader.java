@@ -176,7 +176,7 @@ public class SourceReader
 
     public void readAnnotations(Scope scope, List<AnnotationSymbol> annotations) {
         while(isAnnotation()) {
-            ReferenceSymbol sym = (ReferenceSymbol) scope.resolve1(readElement().substring(1), Symbol.CLASS_SYM);
+            ClassSymbol sym = (ClassSymbol) scope.resolve1(readElement().substring(1), Symbol.CLASS_SYM);
             String params = charAt(seekCode()) == '(' ? readElement() : "()";
             annotations.add(new AnnotationSymbol(sym));
         }
@@ -239,7 +239,7 @@ public class SourceReader
 
         while(!end() && charAt(pos) == '[') {
             readElement();
-            type = new TypeRef(type.type instanceof ConcreteTypeSymbol ? new ConcreteArraySymbol((ConcreteTypeSymbol) type.type) : new ParamaterisedArraySymbol(type.type));
+            type = type.arrayType();
         }
 
         readTypeRefs(scope, type.params);
@@ -483,9 +483,14 @@ public class SourceReader
      * Recursively builds an expression with precedence <= 3
      */
     private Expression readExpression1(Scope scope) {
-        String elem = readElement();
+        if(end())
+            return null;
+
+        String elem = readElement();//TODO this
         if(elem.startsWith("("))
             return readParensOrCast(scope, expand(elem));
+        if (elem.equals("this"))
+            return new This(scope.thisClass());
         if (elem.equals("new"))
             return readNew(scope);
         if(UnaryOp.symbols.contains(elem))
@@ -510,10 +515,18 @@ public class SourceReader
 
             List<Expression> params = readParameters(scope, readElement());
             MethodSymbol method = MethodSymbol.match((List)symbols, params);
+            if(!method.isStatic())
+                params.add(0, new This(scope.thisClass()));
+
             return continueExpression1(scope, new MethodCall(method, params));
         }
 
-        return continueExpression1(scope, new VariableAccess((Variable) symbols.get(0)));
+        Variable var = (Variable) symbols.get(0);
+        Expression exp = null;
+        if(var instanceof FieldSymbol && !((FieldSymbol) var).isStatic())
+            exp = new This(scope.thisClass());
+
+        return continueExpression1(scope, new VariableAccess(var, exp));
     }
 
     /**
@@ -548,11 +561,11 @@ public class SourceReader
     }
 
     private Expression readFieldAccess(Scope scope, Expression exp, String name) {
-        return continueExpression1(scope, new VariableAccess(exp.returnType().concrete().getField(name), exp));
+        return continueExpression1(scope, new VariableAccess(exp.returnType().refType().getField(name), exp));
     }
 
     private Expression readMethodCall(Scope scope, Expression exp, String name) {
-        List<MethodSymbol> methods = exp.returnType().concrete().getMethods(name);
+        List<MethodSymbol> methods = exp.returnType().refType().getMethods(name);
         List<Expression> params = readParameters(scope, readElement());
         MethodSymbol method = MethodSymbol.match(methods, params);
         params.add(0, exp);
@@ -571,19 +584,36 @@ public class SourceReader
     }
 
     private Expression readNew(Scope scope) {
+        int mark = pos;
         TypeRef type = readTypeRef(scope);
-        char c = charAt(seekCode());
-        if(c == '[') {
-            /*List<Expression> dimensions = new LinkedList<>();
-            do {
-                if()
-            }
-            while(!end() && charAt(pos) == '[')*/
-            //array creation
-            //must have bounds, or initialiser
-            //cannot have both
+        if(type.type instanceof ArraySymbol) {
+            NewArray expr = new NewArray((ArraySymbol) type.type);
+            pos = mark;
+            seek("[");
+            for(int i = 0; i < expr.type.dimension(); i++)
+                expr.dimensions.add(new SourceReader(expand(readElement())).readExpression(scope));
+
+            if(!end() && charAt(pos) == '{')
+                expr.init = readInitialiserList(scope, expr.type);
+
+            return expr;
         }
-        return null;
+
+        List<MethodSymbol> methods = type.refType().getMethods("<init>");
+        List<Expression> params = readParameters(scope, readElement());
+        return new MethodCall(MethodSymbol.match(methods, params), params);
+    }
+
+    private InitialiserList readInitialiserList(Scope scope, ArraySymbol type) {
+        InitialiserList init = new InitialiserList(type);
+        for(String s : new SourceReader(expand(readElement())).readList()) {
+            SourceReader r = new SourceReader(s);
+            if(r.charAt(r.seekCode()) == '{')
+                init.elements.add(r.readInitialiserList(scope, (ArraySymbol) type.componentType()));
+            else
+                init.elements.add(r.readExpression(scope));
+        }
+        return init;
     }
 
     private Expression readParensOrCast(Scope scope, String inner) {
@@ -610,7 +640,7 @@ public class SourceReader
         pos--;//go before the ?
         String s_then = readPaired('?', ':');
         Expression then = new SourceReader(expand(s_then)).readExpression(scope);
-        return new TernaryExpression(cond, then, readExpression(scope));
+        return new TernaryOp(cond, then, readExpression(scope));
     }
 
     private Expression readBinary(Scope scope, String op, Expression op1) {

@@ -35,4 +35,9 @@ public class LocalSymbol extends Statement implements Variable
     public String getName() {
         return name;
     }
+
+    @Override
+    public String globalName() {
+        return null;
+    }
 }

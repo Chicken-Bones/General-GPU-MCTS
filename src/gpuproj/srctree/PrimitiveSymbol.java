@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * one of byte, short, char, int, long, float, double, boolean, void
  */
-public class PrimitiveSymbol extends ConcreteTypeSymbol
+public class PrimitiveSymbol extends TypeSymbol
 {
     public static Map<String, PrimitiveSymbol> nameMap = new HashMap<>();
     public static Map<Character, PrimitiveSymbol> sigMap = new HashMap<>();
@@ -38,23 +38,38 @@ public class PrimitiveSymbol extends ConcreteTypeSymbol
     }
 
     @Override
-    public ConcreteTypeSymbol concrete() {
-        return this;
-    }
-
-    @Override
     public int symbolType() {
         return Symbol.CLASS_SYM;
     }
 
     @Override
     public String toString() {
-        return name;
+        return fullname;
     }
 
     @Override
-    public boolean isAssignableTo(ConcreteTypeSymbol type) {
+    public boolean isConcrete() {
+        return true;
+    }
+
+    @Override
+    public boolean isAssignableTo(TypeSymbol type) {
         return type == this || wider != null && wider.isAssignableTo(type);
+    }
+
+    @Override
+    public Expression defaultValue() {
+        switch(sig) {
+            case 'Z': return new Literal("false");
+            case 'C': return new Literal("0");
+            case 'D': return new Literal("0D");
+            case 'F': return new Literal("0F");
+            case 'J': return new Literal("0L");
+            case 'I': return new Literal("0");
+            case 'S': return new Literal("0");
+            case 'B': return new Literal("0");
+            default: return super.defaultValue();
+        }
     }
 
     public static PrimitiveSymbol widen(PrimitiveSymbol p1, PrimitiveSymbol p2) {
@@ -62,15 +77,5 @@ public class PrimitiveSymbol extends ConcreteTypeSymbol
             p1 = p1.wider;
 
         return p1;
-    }
-
-    @Override
-    public FieldSymbol getField(String name) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<MethodSymbol> getMethods(String name) {
-        throw new UnsupportedOperationException();
     }
 }

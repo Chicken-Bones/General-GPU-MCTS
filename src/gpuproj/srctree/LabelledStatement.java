@@ -20,6 +20,11 @@ public class LabelledStatement extends Statement implements Symbol, ScopeProvide
     }
 
     @Override
+    public String globalName() {
+        return null;
+    }
+
+    @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & Symbol.LABEL) != 0 && label != null && label.equals(name))
             list.add(this);
