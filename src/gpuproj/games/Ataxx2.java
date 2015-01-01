@@ -2,7 +2,7 @@ package gpuproj.games;
 
 import gpuproj.StructLike;
 import gpuproj.game.*;
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.games.Ataxx2.AtaxxBoard2;
 
 import java.util.List;

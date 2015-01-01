@@ -1,7 +1,5 @@
 package gpuproj.srctree;
 
-import javax.lang.model.type.PrimitiveType;
-
 /**
  * Any 2 operand symbol expression, including assignment
  */
@@ -20,10 +18,12 @@ public class BinaryOp extends Expression
     @Override
     public TypeRef returnType() {
         switch(op) {
+            case "+":
+                if(op1.returnType().concrete() == TypeIndex.instance().STRING || op2.returnType().concrete() == TypeIndex.instance().STRING)
+                    return new TypeRef(TypeIndex.instance().STRING);
             case "*":
             case "/":
             case "%":
-            case "+":
             case "-":
             case "&":
             case "^":

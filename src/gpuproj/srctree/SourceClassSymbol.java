@@ -1,13 +1,10 @@
 package gpuproj.srctree;
 
 import java.lang.reflect.Modifier;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SourceClassSymbol extends ClassSymbol
 {
-    public List<AnnotationSymbol> annotations = new LinkedList<>();
-
     public SourceClassSymbol(String fullname, Scope scope, String source) {
         super(fullname, scope, source);
     }
@@ -35,7 +32,7 @@ public class SourceClassSymbol extends ClassSymbol
         r.seek("interface", "class");
         r.readElement();//skip interface/class
         r.readElement();//skip name
-        r.readTypeParams(scope, typeParams);
+        r.readTypeParams(this);
 
         String word = r.readElement();
         if(isInterface());//interfaces have no superclass
@@ -70,7 +67,7 @@ public class SourceClassSymbol extends ClassSymbol
         SourceReader r = new SourceReader((String) m.source);
         r.skipAnnotations();
         m.modifiers = r.readModifiers();
-        r.readTypeParams(scope, m.typeParams);
+        r.readTypeParams(m);
         if(m.getName().equals("<init>"))
             m.returnType = new TypeRef(this);
         else
@@ -176,6 +173,7 @@ public class SourceClassSymbol extends ClassSymbol
 
     public static SourceClassSymbol fromStatement(String parent, Scope scope, String stmt) {
         SourceReader r = new SourceReader(stmt);
+        r.skipAnnotations();
         r.seek("interface", "class");
         r.readElement();//skip interface/class
         return new SourceClassSymbol(SourceUtil.combineName(parent, r.readElement()), scope, stmt);

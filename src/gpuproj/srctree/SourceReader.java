@@ -176,7 +176,7 @@ public class SourceReader
 
     public void readAnnotations(Scope scope, List<AnnotationSymbol> annotations) {
         while(isAnnotation()) {
-            ClassSymbol sym = (ClassSymbol) scope.resolve1(readElement().substring(1), Symbol.CLASS_SYM);
+            ClassSymbol sym = (ClassSymbol) scope.resolve1(readFullName().substring(1), Symbol.CLASS_SYM);
             String params = charAt(seekCode()) == '(' ? readElement() : "()";
             annotations.add(new AnnotationSymbol(sym));
         }
@@ -231,7 +231,7 @@ public class SourceReader
         if (charAt(seekCode()) == '?') {
             readElement();//?
             readElement();//assume extends
-            type = new TypeRef(new TypeParam("?", readTypeRef(scope)));
+            type = new TypeRef(new TypeParam("?", readTypeRef(scope), null));
         }
         else {
             type = new TypeRef((TypeSymbol) scope.resolve1(readFullName(), Symbol.TYPE_SYM));
@@ -261,7 +261,7 @@ public class SourceReader
     /**
      * Assumed block of the form <T extends A>
      */
-    public void readTypeParams(Scope scope, List<TypeParam> typeParams) {
+    public void readTypeParams(ParameterisableSymbol sym) {
         if(end() || charAt(pos) != '<')
             return;
 
@@ -270,10 +270,10 @@ public class SourceReader
         List<String> list = new SourceReader(expand(block)).readList();
         for(String s : list) {
             SourceReader r = new SourceReader(s);
-            TypeParam p = new TypeParam(r.readElement());
-            typeParams.add(p);
+            TypeParam p = new TypeParam(r.readElement(), sym);
+            sym.getTypeParams().add(p);
             if(!r.end() && r.readElement().equals("extends"))
-                p.upper = r.readTypeRef(scope);
+                p.upper = r.readTypeRef(sym.scope());
         }
         declaration = false;
     }
@@ -339,6 +339,7 @@ public class SourceReader
         SourceReader r = new SourceReader(s);
         String elem = r.readElement();
         if (elem.equals("return")) return new ReturnStatement(r.readExpression(scope));
+        if (elem.equals("throw")) return new ThrowStatement(r.readExpression(scope));
         if (elem.equals("if")) return readIf(scope, r);
         if (elem.equals("while")) return readWhile(scope, r);
         if (elem.equals("do")) return readDo(scope, r);
@@ -503,13 +504,32 @@ public class SourceReader
 
     private Expression readGeneralAccess(Scope scope, String elem) {
         List<Symbol> symbols;
-        while((symbols = scope.resolve(elem, Symbol.VARIABLE | Symbol.METHOD_SYM)).isEmpty())
+        while(true) {
+            symbols = scope.resolve(elem, Symbol.VARIABLE | Symbol.METHOD_SYM);
+            if(!symbols.isEmpty())
+                break;
+
+            ReferenceSymbol type = (ReferenceSymbol) scope.resolve1(elem, Symbol.CLASS_SYM);
             elem += readElement() + readElement();
+            if(type != null) {
+                symbols = new LinkedList<>();
+                String name = SourceUtil.simpleName(elem);
+
+                if(name.equals("class"))
+                    return new Literal(type.fullname+".class");
+
+                FieldSymbol field = type.getField(name);
+                if(field != null)
+                    symbols.add(field);
+                symbols.addAll(type.getMethods(name));
+                break;
+            }
+        }
 
         if(!end() && charAt(pos) == '(') {//static method
             for(Iterator<Symbol> it = symbols.iterator(); it.hasNext();) {
                 Symbol sym = it.next();
-                if(sym.symbolType() != Symbol.METHOD_SYM || !((MethodSymbol)sym).isStatic())
+                if(sym.symbolType() != Symbol.METHOD_SYM)
                     it.remove();
             }
 
@@ -521,7 +541,13 @@ public class SourceReader
             return continueExpression1(scope, new MethodCall(method, params));
         }
 
-        Variable var = (Variable) symbols.get(0);
+        Variable var = null;
+        for(Symbol sym : symbols)
+            if((sym.symbolType() & Symbol.VARIABLE) != 0) {
+                var = (Variable) sym;
+                break;
+            }
+
         Expression exp = null;
         if(var instanceof FieldSymbol && !((FieldSymbol) var).isStatic())
             exp = new This(scope.thisClass());
@@ -619,7 +645,7 @@ public class SourceReader
     private Expression readParensOrCast(Scope scope, String inner) {
         if(!PrimitiveSymbol.nameMap.containsKey(inner) &&
                 (end() || SourceUtil.operator_symbols.contains(substring(pos, pos+1))))
-            continueExpression1(scope, new Parentheses(new SourceReader(inner).readExpression(scope)));
+            return continueExpression1(scope, new Parentheses(new SourceReader(inner).readExpression(scope)));
 
         return new Cast(new SourceReader(inner).readTypeRef(scope), readExpression1(scope));
     }

@@ -19,7 +19,11 @@ public class MethodCall extends Expression
 
     @Override
     public TypeRef returnType() {
-        return method.returnType;
+        TypeRef t = method.returnType;
+        if(!method.isStatic())
+            t = t.specify(params.get(0).returnType());
+
+        return t;
     }
 
     @Override

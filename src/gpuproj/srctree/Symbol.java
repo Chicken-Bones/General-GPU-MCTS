@@ -5,7 +5,7 @@ package gpuproj.srctree;
  */
 public interface Symbol
 {
-    public static final int CLASS_SYM = 1; //ConcreteTypeSymbol
+    public static final int CLASS_SYM = 1; //TypeSymbol
     public static final int FIELD_SYM = 2; //FieldSymbol
     public static final int METHOD_SYM = 4; //MethodSymbol
     public static final int TYPE_PARAM = 8; //TypeParam

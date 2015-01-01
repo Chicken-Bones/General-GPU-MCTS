@@ -1,12 +1,10 @@
 package gpuproj.srctree;
 
-import gpuproj.srctree.Scope.ScopeProvider;
-
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvider
+public abstract class ClassSymbol extends ReferenceSymbol implements ParameterisableSymbol
 {
     public static final int ANNOTATION = 0x00002000;
     public static final int ENUM = 0x00004000;
@@ -14,6 +12,7 @@ public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvid
 
     public final Scope scope;
     public final Object source;
+    public List<AnnotationSymbol> annotations = new LinkedList<>();
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef parent;
@@ -60,6 +59,24 @@ public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvid
     }
 
     @Override
+    public List<TypeParam> getTypeParams() {
+        return typeParams;
+    }
+
+    @Override
+    public Scope scope() {
+        return scope;
+    }
+
+    private boolean shadowed(MethodSymbol method, List<Symbol> list) {
+        for(Symbol sym : list)
+            if(sym instanceof MethodSymbol && method.matches(((MethodSymbol) sym).params))
+                return true;
+
+        return false;
+    }
+
+    @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
         if((type & FIELD_SYM) != 0 && list.isEmpty()) {//fields are shadowed by subclasses
             for(FieldSymbol sym : fields)
@@ -67,8 +84,9 @@ public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvid
                     list.add(sym);
         }
         if((type & METHOD_SYM) != 0) {
+            boolean shadow = !list.isEmpty();
             for(MethodSymbol sym : methods)
-                if(sym.getName().equals(name))
+                if(sym.getName().equals(name) && (!shadow || !shadowed(sym, list)))
                     list.add(sym);
         }
         if((type & CLASS_SYM) != 0) {
@@ -136,5 +154,10 @@ public abstract class ClassSymbol extends ReferenceSymbol implements ScopeProvid
                 return true;
 
         return false;
+    }
+
+    @Override
+    public String signature() {
+        return 'L'+fullname.replace('.', '/')+';';
     }
 }

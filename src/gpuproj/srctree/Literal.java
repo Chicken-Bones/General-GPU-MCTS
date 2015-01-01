@@ -15,6 +15,12 @@ public class Literal extends Expression
 
     @Override
     public TypeRef returnType() {
+        if(value.endsWith(".class")) {
+            TypeRef ref = new TypeRef(TypeIndex.instance().CLASS);
+            ref.params.add(new TypeRef(TypeIndex.instance().resolveType(value.substring(0, value.length()-6))));
+            return ref;
+        }
+
         if(value.equals("null"))
             return new TypeRef(TypeIndex.instance().OBJECT);
         if(value.equals("true") || value.equals("false"))

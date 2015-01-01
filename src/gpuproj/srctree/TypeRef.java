@@ -44,14 +44,6 @@ public class TypeRef
         return type.concrete();
     }
 
-    public static List<TypeRef> resolveList(String... typeNames) {
-        List<TypeRef> types = new ArrayList<>(typeNames.length);
-        for(String name : typeNames)
-            types.add(new TypeRef(TypeIndex.instance().resolveType(name)));
-
-        return types;
-    }
-
     public static TypeRef get(Object o) {
         if(o instanceof TypeRef)
             return (TypeRef) o;
@@ -59,9 +51,28 @@ public class TypeRef
             return new TypeRef((TypeSymbol) o);
         if(o instanceof Expression)
             return ((Expression) o).returnType();
+        if(o instanceof Variable)
+            return ((Variable) o).getType();
         if(o instanceof String)
             return new TypeRef(TypeIndex.instance().resolveType((String) o));
 
         return null;
+    }
+
+    public String signature() {
+        return type.signature();
+    }
+
+    public TypeRef specify(TypeRef specifier) {
+        if(specifier.params.isEmpty())
+            return this;
+
+        if(type instanceof TypeParam) {
+            TypeParam param = (TypeParam) type;
+            if(param.owner == specifier.type)
+                return specifier.params.get(param.owner.getTypeParams().indexOf(param));
+        }
+
+        return this;
     }
 }

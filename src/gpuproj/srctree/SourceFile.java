@@ -52,6 +52,11 @@ public class SourceFile implements ScopeProvider
             list.addAll(TypeIndex.instance().resolve(SourceUtil.combineName(pkg, name), type));
     }
 
+    @Override
+    public Scope scope() {
+        return scope;
+    }
+
     public void addImport(String imp, boolean isStatic) {
         imports.add(new Import(imp, isStatic));
     }

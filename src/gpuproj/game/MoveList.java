@@ -1,7 +1,9 @@
 package gpuproj.game;
 
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.StructLike;
+import gpuproj.translator.OCLGlobal;
+import gpuproj.translator.OCLGlobalConverter;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -11,6 +13,7 @@ import java.util.*;
  * Backed by a constant fixed length array which is filled using the default constructor.
  * Only supports add and set operations which mutate the instance in the array
  */
+@OCLGlobal(OCLGlobalConverter.class)
 public class MoveList<T extends StructLike<T>>
 {
     private final Object[] arr;
@@ -66,7 +69,7 @@ public class MoveList<T extends StructLike<T>>
     }
 
     public List<T> toList() {
-        ArrayList<T> list = new ArrayList<T>(size);
+        ArrayList<T> list = new ArrayList<>(size);
         for(int i = 0; i < size; i++)
             list.add(((T)arr[i]).copy());
         return list;

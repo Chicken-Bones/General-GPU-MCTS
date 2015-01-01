@@ -2,7 +2,7 @@ package gpuproj.games;
 
 import gpuproj.game.BoardGame;
 import gpuproj.game.Move;
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.game.SimpleBoard;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class Othello extends BoardGame<SimpleBoard>
         return board;
     }
 
-    private ArrayList<SimpleBoard> moves = new ArrayList<SimpleBoard>();
+    private ArrayList<SimpleBoard> moves = new ArrayList<>();
     @Override
     public List<? extends Move<SimpleBoard>> expand(SimpleBoard board) {
         moves.clear();

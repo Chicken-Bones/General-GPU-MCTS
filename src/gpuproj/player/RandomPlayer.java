@@ -1,6 +1,6 @@
 package gpuproj.player;
 
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.game.Board;
 import gpuproj.game.BoardGame;
 import gpuproj.game.Move;

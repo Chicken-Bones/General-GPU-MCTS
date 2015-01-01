@@ -44,6 +44,11 @@ public class SourceUtil
         return parent.length() == 0 ? name : parent+'.'+name;
     }
 
+    public static String firstName(String fullName) {
+        int dot = fullName.indexOf('.');
+        return dot < 0 ? fullName : fullName.substring(0, dot);
+    }
+
     /**
      * set of all operator symbols, excluding brackets
      */
@@ -82,7 +87,7 @@ public class SourceUtil
     public static String listString(List<?> list, String sep) {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < list.size(); i++) {
-            if(i > 0) sb.append(", ");
+            if(i > 0) sb.append(sep);
             sb.append(list.get(i));
         }
         return sb.toString();

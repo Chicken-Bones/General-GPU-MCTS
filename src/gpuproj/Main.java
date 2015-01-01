@@ -6,6 +6,7 @@ import gpuproj.player.MCTSPlayer;
 import gpuproj.player.UCBPlayer;
 import gpuproj.simulator.CPU1Simulator;
 import gpuproj.srctree.*;
+import gpuproj.translator.RetentionSetEvaluator;
 
 import java.io.File;
 import java.util.Arrays;
@@ -32,11 +33,12 @@ public class Main
         SourceClassSymbol game = (SourceClassSymbol) TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
         SourceClassSymbol board = (SourceClassSymbol) game.parent.params.get(0).concrete();
         MethodSymbol checkWinner = MethodSymbol.match(game.getMethods("checkWinner"), Arrays.asList(board));
-        checkWinner.loadBody();
-        MethodSymbol genMoves = game.getMethods("genMoves").get(0);
-        genMoves.loadBody();
-        FieldSymbol f_board = board.getField("board");
-        f_board.loadInitialiser();
+        MethodSymbol playRandomMove = MethodSymbol.match(game.getMethods("playRandomMove"), Arrays.asList(board));
+        RetentionSetEvaluator eval = new RetentionSetEvaluator();
+        eval.add(board);
+        eval.add(checkWinner);
+        eval.add(playRandomMove);
+        eval.search();
         new Object();
     }
 }

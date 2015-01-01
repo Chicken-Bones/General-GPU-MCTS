@@ -30,6 +30,11 @@ public class LabelledStatement extends Statement implements Symbol, ScopeProvide
             list.add(this);
     }
 
+    @Override
+    public Scope scope() {
+        return scope;
+    }
+
     public void printLabel(StringBuilder sb) {
         if(label != null)
             sb.append(label).append(": ");

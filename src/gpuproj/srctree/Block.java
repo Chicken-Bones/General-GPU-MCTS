@@ -31,6 +31,11 @@ public class Block extends Statement implements ScopeProvider
         }
     }
 
+    @Override
+    public Scope scope() {
+        return scope;
+    }
+
     /**
      * Scans the statement list for LocalSymbols and LabelSymbols and caches them for scope resolution
      */

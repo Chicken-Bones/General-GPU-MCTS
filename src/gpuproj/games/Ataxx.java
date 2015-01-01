@@ -2,7 +2,7 @@ package gpuproj.games;
 
 import gpuproj.game.AbstractSimpleBoard;
 import gpuproj.game.BoardGame;
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.games.Ataxx.AtaxxBoard;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class Ataxx extends BoardGame<AtaxxBoard>
         return board;
     }
 
-    private ArrayList<AtaxxBoard> moves = new ArrayList<AtaxxBoard>();
+    private ArrayList<AtaxxBoard> moves = new ArrayList<>();
     @Override
     public List<AtaxxBoard> expand(AtaxxBoard board) {
         moves.clear();

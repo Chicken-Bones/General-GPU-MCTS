@@ -13,6 +13,11 @@ public final class Scope
          * Add all symbols matching name and type to list
          */
         public void resolveOnce(String name, int type, List<Symbol> list);
+
+        /**
+         * Paired scope instance
+         */
+        public Scope scope();
     }
 
     public class SymbolCache

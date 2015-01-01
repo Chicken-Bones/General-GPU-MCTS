@@ -1,4 +1,7 @@
-package gpuproj;
+package gpuproj.util;
+
+import gpuproj.translator.OCLStatic;
+import gpuproj.translator.OCLStaticConverter;
 
 import java.util.Random;
 
@@ -8,6 +11,8 @@ import java.util.Random;
 public class Portable
 {
     private static Random rand = new Random();
+
+    @OCLStatic(OCLStaticConverter.class)
     public static int randInt(int max) {
         return rand.nextInt(max);
     }

@@ -1,7 +1,6 @@
 package gpuproj.srctree;
 
 import java.lang.reflect.*;
-import java.util.List;
 
 public class RuntimeClassSymbol extends ClassSymbol
 {
@@ -29,7 +28,7 @@ public class RuntimeClassSymbol extends ClassSymbol
     @Override
     public RuntimeClassSymbol loadSignatures() {
         Class<?> c = (Class<?>) source;
-        loadTypeParams(scope, c.getTypeParameters(), typeParams);
+        loadTypeParams(this, c.getTypeParameters());
 
         Class<?> p = c.getSuperclass();
         if(p != null)
@@ -66,7 +65,7 @@ public class RuntimeClassSymbol extends ClassSymbol
         if(msym.source instanceof Constructor) {
             Constructor c = (Constructor) msym.source;
             msym.modifiers = c.getModifiers();
-            loadTypeParams(msym.scope, c.getTypeParameters(), msym.typeParams);
+            loadTypeParams(msym, c.getTypeParameters());
             msym.returnType = new TypeRef(this);
             for(Type t : c.getGenericParameterTypes()) {
                 if(t instanceof Class && ((Class)t).isAnonymousClass())
@@ -76,18 +75,18 @@ public class RuntimeClassSymbol extends ClassSymbol
         } else {
             Method m = (Method) msym.source;
             msym.modifiers = m.getModifiers();
-            loadTypeParams(msym.scope, m.getTypeParameters(), msym.typeParams);
+            loadTypeParams(msym, m.getTypeParameters());
             msym.returnType = loadTypeRef(msym.scope, m.getGenericReturnType());
             for(Type t : m.getGenericParameterTypes())
                 msym.params.add(new LocalSymbol(loadTypeRef(msym.scope, t), "arg"+msym.params.size()));
         }
     }
 
-    private static void loadTypeParams(Scope scope, TypeVariable<?>[] generics, List<TypeParam> params) {
+    private static void loadTypeParams(ParameterisableSymbol symbol, TypeVariable<?>[] generics) {
         for(TypeVariable<?> v : generics) {
-            TypeParam p = new TypeParam(v.getName());
-            params.add(p);
-            p.upper = loadTypeRef(scope, v.getBounds()[0]);
+            TypeParam p = new TypeParam(v.getName(), symbol);
+            symbol.getTypeParams().add(p);
+            p.upper = loadTypeRef(symbol.scope(), v.getBounds()[0]);
         }
     }
 
@@ -105,7 +104,7 @@ public class RuntimeClassSymbol extends ClassSymbol
         if(type instanceof GenericArrayType)
             return loadTypeSymbol(scope, ((GenericArrayType) type).getGenericComponentType()).array();
         if(type instanceof WildcardType)
-            return new TypeParam("?", loadTypeRef(scope, ((WildcardType) type).getUpperBounds()[0]));
+            return new TypeParam("?", loadTypeRef(scope, ((WildcardType) type).getUpperBounds()[0]), null);
         if(type instanceof ParameterizedType)//don't care about paramaterised types here, typically generic array creation
             return loadTypeSymbol(scope, ((ParameterizedType) type).getRawType());
 

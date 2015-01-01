@@ -1,12 +1,12 @@
 package gpuproj.srctree;
 
-import gpuproj.srctree.Scope.ScopeProvider;
-
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MethodSymbol implements Symbol, ScopeProvider
+public class MethodSymbol implements ParameterisableSymbol
 {
     public final Object source;
     public final Scope scope;
@@ -18,10 +18,24 @@ public class MethodSymbol implements Symbol, ScopeProvider
     public List<LocalSymbol> params = new LinkedList<>();
     public Block body;
 
-    public MethodSymbol(String fullname, ClassSymbol owner, Object source) {
+    public MethodSymbol(String fullname, Scope scope, Object source) {
         this.fullname = fullname;
         this.source = source;
-        scope = new Scope(owner.scope, this);
+        this.scope = new Scope(scope, this);
+    }
+
+    public MethodSymbol(String fullname, ClassSymbol owner, Object source) {
+        this(fullname, owner.scope, source);
+    }
+
+    @Override
+    public List<TypeParam> getTypeParams() {
+        return typeParams;
+    }
+
+    @Override
+    public Scope scope() {
+        return scope;
     }
 
     @Override
@@ -51,7 +65,7 @@ public class MethodSymbol implements Symbol, ScopeProvider
                 sb.append(Modifier.toString(modifiers)).append(' ');
             if(!typeParams.isEmpty())
                 sb.append("<").append(SourceUtil.listString(typeParams)).append("> ");
-            sb.append(returnType).append(' ').append(getName());
+            sb.append(returnType).append(' ').append(fullname);
             sb.append('(').append(SourceUtil.listString(params)).append(')');
             return sb.toString();
         }
@@ -59,7 +73,7 @@ public class MethodSymbol implements Symbol, ScopeProvider
         return fullname;
     }
 
-    /*public String signature() {
+    public String signature() {
         if(returnType == null)//not fully initialised
             return "";
 
@@ -70,7 +84,7 @@ public class MethodSymbol implements Symbol, ScopeProvider
         sb.append(')');
         sb.append(returnType.signature());
         return sb.toString();
-    }*/
+    }
 
     public boolean matches(List paramTypes) {
         //TODO support vaargs
@@ -84,15 +98,45 @@ public class MethodSymbol implements Symbol, ScopeProvider
         return true;
     }
 
+    /**
+     * @return true if this is more specific than method, (any arguments passed to this could be passed to method)
+     */
+    public boolean isMoreSpecific(MethodSymbol method) {
+        return method.matches(params);
+    }
+
     public static MethodSymbol match(List<MethodSymbol> methods, List paramTypes) {
+        List<MethodSymbol> matching = new LinkedList<>();
         for(MethodSymbol m : methods)
             if(m.matches(paramTypes))
-                return m;
+                matching.add(m);
 
-        return null;
+        if(matching.isEmpty())
+            return null;
+
+        if(matching.size() == 1)
+            return matching.get(0);
+
+        Collections.sort(matching, new Comparator<MethodSymbol>()
+        {
+            @Override
+            public int compare(MethodSymbol o1, MethodSymbol o2) {
+                if(o1.isMoreSpecific(o2))
+                    return -1;
+                if(o2.isMoreSpecific(o1))
+                    return 1;
+
+                return 0;
+            }
+        });
+
+        return matching.get(0);
     }
 
     public void loadBody() {
+        if(!(source instanceof String))
+            throw new IllegalArgumentException("Cannot load body for "+this+". Source not available");
+
         SourceReader r = new SourceReader((String) source);
         r.skipAnnotations();
         r.seek("{");
@@ -114,5 +158,9 @@ public class MethodSymbol implements Symbol, ScopeProvider
 
     public String ownerName() {
         return SourceUtil.parentName(fullname);
+    }
+
+    public ClassSymbol owner() {
+        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
     }
 }

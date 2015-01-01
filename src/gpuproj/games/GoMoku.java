@@ -1,6 +1,6 @@
 package gpuproj.games;
 
-import gpuproj.Portable;
+import gpuproj.util.Portable;
 import gpuproj.game.BoardGame;
 import gpuproj.game.Move;
 import gpuproj.game.SimpleBoard;
@@ -20,7 +20,7 @@ public class GoMoku extends BoardGame<SimpleBoard>
         return new SimpleBoard();
     }
 
-    private ArrayList<SimpleBoard> moves = new ArrayList<SimpleBoard>();
+    private ArrayList<SimpleBoard> moves = new ArrayList<>();
     @Override
     public List<? extends Move<SimpleBoard>> expand(SimpleBoard board) {
         moves.clear();

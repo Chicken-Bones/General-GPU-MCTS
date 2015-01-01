@@ -1,4 +1,4 @@
-package gpuproj.srctree;
+package gpuproj.translator;
 
 public @interface OCLStatic
 {

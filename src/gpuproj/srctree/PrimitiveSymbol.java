@@ -48,6 +48,11 @@ public class PrimitiveSymbol extends TypeSymbol
     }
 
     @Override
+    public String signature() {
+        return String.valueOf(sig);
+    }
+
+    @Override
     public boolean isConcrete() {
         return true;
     }

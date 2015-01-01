@@ -34,6 +34,11 @@ public class ArraySymbol extends ReferenceSymbol
         return isConcrete() ? this : type.concrete().array();
     }
 
+    @Override
+    public String signature() {
+        return '['+type.signature();
+    }
+
     public TypeSymbol componentType() {
         return type;
     }

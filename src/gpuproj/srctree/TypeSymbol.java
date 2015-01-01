@@ -47,4 +47,6 @@ public abstract class TypeSymbol implements Symbol
     public Expression defaultValue() {
         return new Literal("null");
     }
+
+    public abstract String signature();
 }
