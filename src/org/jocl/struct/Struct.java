@@ -35,8 +35,8 @@ import org.jocl.struct.StructAccess.*;
  * This class is the base class for all Java classes that should
  * represent a native 'struct'. A struct class may be created
  * by creating a public class that extends this Struct class,
- * and which contains public fields. All public non-volatile
- * fields will be considered as fields that correspond to the
+ * and which contains public accessors. All public non-volatile
+ * accessors will be considered as accessors that correspond to the
  * element of native struct. <br />
  * <br />
  * <u>Example:</u><br />
@@ -60,8 +60,8 @@ import org.jocl.struct.StructAccess.*;
  * } Particle;
  * </pre></code>
  * <br />
- * All fields of the derived class must either be primitive
- * fields, one of the OpenCL vector types defined in 
+ * All accessors of the derived class must either be primitive
+ * accessors, one of the OpenCL vector types defined in
  * {@link CLTypes}, other Structs or arrays of these
  * types (except for boolean arrays). Structs containing 
  * instances of themself are not supported and will cause 
@@ -158,7 +158,7 @@ public abstract class Struct extends Bufferable
     
     /**
      * Initialize all non-primitive (public and non-volatile) 
-     * fields of this instance. 
+     * accessors of this instance.
      */
     private void initFields()
     {

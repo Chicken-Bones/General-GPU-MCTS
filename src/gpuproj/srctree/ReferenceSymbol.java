@@ -4,6 +4,8 @@ import java.util.List;
 
 public abstract class ReferenceSymbol extends TypeSymbol
 {
+    private Class<?> runtimeClass;
+
     public ReferenceSymbol(String fullname) {
         super(fullname);
     }
@@ -24,5 +26,26 @@ public abstract class ReferenceSymbol extends TypeSymbol
             return concrete().getMethods(name);
 
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String runtimeName() {
+        if(!isConcrete())
+            return concrete().runtimeName();
+
+        throw new UnsupportedOperationException();
+    }
+
+    public Class<?> runtimeClass() {
+        try {
+            if(runtimeClass == null)
+                runtimeClass = isConcrete() ?
+                        getClass().getClassLoader().loadClass(runtimeName()) :
+                        concrete().runtimeClass();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        return runtimeClass;
     }
 }

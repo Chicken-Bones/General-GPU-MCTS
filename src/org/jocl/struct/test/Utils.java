@@ -17,7 +17,7 @@ public class Utils
     /**
      * Returns whether the given objects are 'deep equal'. The method
      * recursively checks the objects and all their public, non-volatile 
-     * fields (down to only primitive fields) for equality. 
+     * accessors (down to only primitive accessors) for equality.
      * 
      * @param object0 The first object
      * @param object1 The second object

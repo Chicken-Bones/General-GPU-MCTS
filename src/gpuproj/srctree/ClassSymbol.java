@@ -1,10 +1,11 @@
 package gpuproj.srctree;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class ClassSymbol extends ReferenceSymbol implements ParameterisableSymbol
+public abstract class ClassSymbol extends ReferenceSymbol implements ParameterisableSymbol, AnnotatedSymbol
 {
     public static final int ANNOTATION = 0x00002000;
     public static final int ENUM = 0x00004000;
@@ -12,7 +13,7 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
 
     public final Scope scope;
     public final Object source;
-    public List<AnnotationSymbol> annotations = new LinkedList<>();
+    public boolean inner;
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef parent;
@@ -31,17 +32,38 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
     public ClassSymbol load() {
         loadSymbols();
         loadSignatures();
-        loadAnnotations();
         return this;
     }
 
     public abstract ClassSymbol loadSymbols();
     public abstract ClassSymbol loadSignatures();
-    public abstract ClassSymbol loadAnnotations();
+
+    public ClassSymbol setInner() {
+        inner = true;
+        return this;
+    }
+
+    @Override
+    public Annotation getAnnotation(Class<? extends Annotation> type) {
+        return runtimeClass().getAnnotation(type);
+    }
 
     @Override
     public boolean isConcrete() {
         return true;
+    }
+
+    public String ownerName() {
+        return SourceUtil.parentName(fullname);
+    }
+
+    public ClassSymbol owner() {
+        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
+    }
+
+    @Override
+    public String runtimeName() {
+        return inner ? owner().runtimeName() + '$' + getName() : fullname;
     }
 
     @Override
@@ -78,7 +100,7 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & FIELD_SYM) != 0 && list.isEmpty()) {//fields are shadowed by subclasses
+        if((type & FIELD_SYM) != 0 && list.isEmpty()) {//accessors are shadowed by subclasses
             for(FieldSymbol sym : fields)
                 if(sym.getName().equals(name))
                     list.add(sym);

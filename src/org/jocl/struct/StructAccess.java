@@ -31,9 +31,9 @@ import org.jocl.struct.CLTypes.cl_vector_type;
 
 /**
  * Package-private class which summarizes helper methods and classes
- * for accessing fields of structs.
+ * for accessing accessors of structs.
  */
-class StructAccess
+public class StructAccess
 {
     /**
      * The map from the (Struct) class to the information about
@@ -133,7 +133,7 @@ class StructAccess
     
     /**
      * Computes the lowest common multiple (LCM) of the alignments of the
-     * given struct fields.
+     * given struct accessors.
      * 
      * @param structAccessors The struct accessors
      * @return The lowest common multiple of the alignments
@@ -158,9 +158,9 @@ class StructAccess
     
     /**
      * Computes the maximum alignment of any of the given 
-     * fields.
+     * accessors.
      * 
-     * @param structAccessors The accessors for the fields
+     * @param structAccessors The accessors for the accessors
      * @return The maximum alignment
      */
     private static int computeMaxAlignment(StructAccessor structAccessors[])
@@ -174,11 +174,11 @@ class StructAccess
     }
     
     /**
-     * Compute all fields of the given (Struct) class which will be
-     * considered, i.e. all public non-volatile fields.
+     * Compute all accessors of the given (Struct) class which will be
+     * considered, i.e. all public non-volatile accessors.
      * 
      * @param structClass The class
-     * @return The public non-volatile fields of the class.
+     * @return The public non-volatile accessors of the class.
      */
     private static Field[] computeStructFields(
         Class<? extends Struct> structClass)
@@ -241,12 +241,12 @@ class StructAccess
     
     
     /**
-     * Creates the struct accessors (see {@link StructAccessor}) for the 
-     * given fields. 
+     * Creates the struct accessors (see {@link StructAccessor}) for the
+     * given accessors.
      * 
-     * @param structFields The fields
-     * @return The struct accessors for the given fields.
-     * @throws CLException If one of the fields is
+     * @param structFields The accessors
+     * @return The struct accessors for the given accessors.
+     * @throws CLException If one of the accessors is
      * either an instance of this struct itself, or of a type that
      * is not supported. 
      */
@@ -357,7 +357,7 @@ class StructAccess
     }
     
     /**
-     * Compute the size of a struct with the given struct accessors. 
+     * Compute the size of a struct with the given struct accessors.
      * The final size of the struct will be a multiple of the largest
      * field alignment. 
      *  
@@ -374,7 +374,7 @@ class StructAccess
         }
         
         // If the struct is 'packed', then its size is simply
-        // the sum of all the sizes of its fields
+        // the sum of all the sizes of its accessors
         boolean isPacked = isPacked(structClass);
         if (isPacked)
         {
@@ -627,7 +627,7 @@ class StructAccess
      * namely the size of the struct, and the 
      * {@link StructAccessor}s
      */
-    static class StructInfo 
+    static class StructInfo
     {
         /**
          * The size of the struct, including paddings that are
@@ -636,7 +636,7 @@ class StructAccess
         private int size;
 
         /**
-         * The StructAccessors for the fields of the struct.
+         * The StructAccessors for the accessors of the struct.
          * See {@link StructAccessor}.
          */
         private StructAccessor structAccessors[];
@@ -684,7 +684,7 @@ class StructAccess
      * an entity that allows accessing (reading or writing) a certain
      * field inside a Struct. 
      */
-    static abstract class StructAccessor
+    public static abstract class StructAccessor
     {
         /**
          * The field that is accessed
@@ -777,7 +777,7 @@ class StructAccess
          * @throws IllegalArgumentException If the field can not be accessed
          * @throws IllegalAccessException If the field can not be accessed 
          */
-        abstract void writeToBuffer(Object object, ByteBuffer targetBuffer)
+        public abstract void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException;
 
         /**
@@ -789,7 +789,7 @@ class StructAccess
          * @throws IllegalArgumentException If the field can not be accessed
          * @throws IllegalAccessException If the field can not be accessed 
          */
-        abstract void readFromBuffer(Object object, ByteBuffer sourceBuffer)
+        public abstract void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException;
 
         /**
@@ -797,7 +797,7 @@ class StructAccess
          * 
          * @return The field of this StructAccessor
          */
-        Field getField()
+        public Field getField()
         {
             return field;
         }
@@ -809,7 +809,7 @@ class StructAccess
          * 
          * @return The offset of the field.
          */
-        int getOffset()
+        public int getOffset()
         {
             return offset;
         }
@@ -820,7 +820,7 @@ class StructAccess
          * 
          * @return The size of the field.
          */
-        int getSize()
+        public int getSize()
         {
             return size;
         } 
@@ -830,7 +830,7 @@ class StructAccess
          * 
          * @return Whether this field is packed
          */
-        boolean isPacked()
+        public boolean isPacked()
         {
             return packed;
         }
@@ -842,7 +842,7 @@ class StructAccess
          * 
          * @return The alignment for the field
          */
-        int getAlignment()
+        public int getAlignment()
         {
             return alignment;
         }
@@ -862,7 +862,7 @@ class StructAccess
     
     
     /**
-     * Implementation of a StructAccessor for byte fields
+     * Implementation of a StructAccessor for byte accessors
      */
     static class StructAccessor_byte extends StructAccessor
     {
@@ -881,7 +881,7 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             //System.out.println("write "+field+" to   "+targetBuffer+" value "+field.getByte(object));
@@ -889,7 +889,7 @@ class StructAccess
         }
         
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             //System.out.println("read  "+field+" from "+sourceBuffer+" value "+sourceBuffer.get(sourceBuffer.position()));
@@ -899,7 +899,7 @@ class StructAccess
     }
 
     /**
-     * Implementation of a StructAccessor for short fields
+     * Implementation of a StructAccessor for short accessors
      */
     static class StructAccessor_short extends StructAccessor
     {
@@ -918,14 +918,14 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             targetBuffer.putShort(field.getShort(object));
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             field.setShort(object, sourceBuffer.getShort());
@@ -934,7 +934,7 @@ class StructAccess
     }
 
     /**
-     * Implementation of a StructAccessor for char fields
+     * Implementation of a StructAccessor for char accessors
      */
     static class StructAccessor_char extends StructAccessor
     {
@@ -953,14 +953,14 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             targetBuffer.putChar(field.getChar(object));
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             field.setChar(object, sourceBuffer.getChar());
@@ -970,7 +970,7 @@ class StructAccess
 
 
     /**
-     * Implementation of a StructAccessor for int fields
+     * Implementation of a StructAccessor for int accessors
      */
     static class StructAccessor_int extends StructAccessor
     {
@@ -989,7 +989,7 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             //System.out.println("write "+field+" to   "+targetBuffer+" value "+field.getInt(object));
@@ -998,7 +998,7 @@ class StructAccess
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             //System.out.println("read  "+field+" from "+sourceBuffer+" value "+sourceBuffer.getInt(sourceBuffer.position()));
@@ -1008,7 +1008,7 @@ class StructAccess
     }
 
     /**
-     * Implementation of a StructAccessor for long fields
+     * Implementation of a StructAccessor for long accessors
      */
     static class StructAccessor_long extends StructAccessor
     {
@@ -1027,14 +1027,14 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             targetBuffer.putLong(field.getLong(object));
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             field.setLong(object, sourceBuffer.getLong());
@@ -1045,7 +1045,7 @@ class StructAccess
 
 
     /**
-     * Implementation of a StructAccessor for float fields
+     * Implementation of a StructAccessor for float accessors
      */
     static class StructAccessor_float extends StructAccessor
     {
@@ -1064,14 +1064,14 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             targetBuffer.putFloat(field.getFloat(object));
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             //System.out.println("Setting "+field+" (offset "+offset+") to "+sourceBuffer.getFloat(offset));
@@ -1082,7 +1082,7 @@ class StructAccess
 
 
     /**
-     * Implementation of a StructAccessor for double fields
+     * Implementation of a StructAccessor for double accessors
      */
     static class StructAccessor_double extends StructAccessor
     {
@@ -1101,14 +1101,14 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             targetBuffer.putDouble(field.getDouble(object));
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             field.setDouble(object, sourceBuffer.getDouble());
@@ -1118,7 +1118,7 @@ class StructAccess
 
 
     /**
-     * Implementation of a StructAccessor for boolean fields
+     * Implementation of a StructAccessor for boolean accessors
      */
     static class StructAccessor_boolean extends StructAccessor
     {
@@ -1137,7 +1137,7 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             int value = 0;
@@ -1149,7 +1149,7 @@ class StructAccess
         }
 
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             
@@ -1171,7 +1171,7 @@ class StructAccess
 
     /**
      * Implementation of a StructAccessor for OpenCL vector type 
-     * fields (e.g. {@link CLTypes.cl_float4}).
+     * accessors (e.g. {@link CLTypes.cl_float4}).
      */
     static class StructAccessor_cl_vector_type extends StructAccessor
     {
@@ -1180,7 +1180,7 @@ class StructAccess
          * 
          * @param field The field to access
          * @param offset The offset
-         * @param The size of the type that is accessed.
+         * @param size The size of the type that is accessed.
          * @param alignment The alignment for the field
          * @param packed If the field is packed
          */
@@ -1191,7 +1191,7 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             cl_vector_type value = (cl_vector_type)field.get(object);
@@ -1204,7 +1204,7 @@ class StructAccess
         }
         
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             cl_vector_type value = (cl_vector_type)field.get(object);
@@ -1229,7 +1229,7 @@ class StructAccess
          * 
          * @param field The field to access
          * @param offset The offset
-         * @param The size of the type that is accessed.
+         * @param size The size of the type that is accessed.
          * @param alignment The alignment for the field
          * @param packed If the field is packed
          */
@@ -1241,7 +1241,7 @@ class StructAccess
         
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             Struct value = (Struct)field.get(object);
@@ -1255,7 +1255,7 @@ class StructAccess
         }
         
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             Struct value = (Struct)field.get(object);
@@ -1298,7 +1298,7 @@ class StructAccess
          * 
          * @param field The field to access
          * @param offset The offset
-         * @param arrayLength The length of the array
+         * @param size The length of the array
          * @param alignment The alignment for the field
          * @param packed If the field is packed
          * @param readProcessor The readProcessor
@@ -1314,7 +1314,7 @@ class StructAccess
         }
         
         @Override
-        void writeToBuffer(Object object, ByteBuffer targetBuffer) 
+        public void writeToBuffer(Object object, ByteBuffer targetBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             Object array = field.get(object);
@@ -1322,7 +1322,7 @@ class StructAccess
         }
         
         @Override
-        void readFromBuffer(Object object, ByteBuffer sourceBuffer) 
+        public void readFromBuffer(Object object, ByteBuffer sourceBuffer)
             throws IllegalArgumentException, IllegalAccessException
         {
             Object array = field.get(object);
@@ -1343,7 +1343,7 @@ class StructAccess
          * doProcess with the final array
          * 
          * @param arrayObject The array object to process
-         * @param targetBuffer The buffer
+         * @param buffer The buffer
          */
         public void process(Object arrayObject, ByteBuffer buffer)
         {

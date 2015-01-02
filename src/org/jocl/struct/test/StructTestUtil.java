@@ -14,9 +14,9 @@ import org.jocl.struct.CLTypes.*;
 
 /**
  * Wierd utility class for the struct support tests. The methods in this
- * class are mainly used to apply a function to all fields of 
+ * class are mainly used to apply a function to all accessors of
  * struct objects, be it primitive- vector- array- or other
- * struct fields. 
+ * struct accessors.
  */
 public class StructTestUtil
 {
@@ -228,7 +228,7 @@ public class StructTestUtil
     
     /**
      * Apply the given function to all public non-volatile 
-     * fields of the given struct
+     * accessors of the given struct
      * 
      * @param struct The struct
      * @param function The function to apply

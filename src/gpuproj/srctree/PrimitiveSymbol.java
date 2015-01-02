@@ -11,30 +11,32 @@ public class PrimitiveSymbol extends TypeSymbol
     public static Map<Character, PrimitiveSymbol> sigMap = new HashMap<>();
     public static List<PrimitiveSymbol> values = new ArrayList<>();
 
-    public static final PrimitiveSymbol VOID = new PrimitiveSymbol("void", 'V');
-    public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol("boolean", 'Z');
-    public static final PrimitiveSymbol CHAR = new PrimitiveSymbol("char", 'C');
-    public static final PrimitiveSymbol DOUBLE = new PrimitiveSymbol("double", 'D');
-    public static final PrimitiveSymbol FLOAT = new PrimitiveSymbol("float", 'F', DOUBLE);
-    public static final PrimitiveSymbol LONG = new PrimitiveSymbol("long", 'J', FLOAT);
-    public static final PrimitiveSymbol INT = new PrimitiveSymbol("int", 'I', LONG);
-    public static final PrimitiveSymbol SHORT = new PrimitiveSymbol("short", 'S', INT);
-    public static final PrimitiveSymbol BYTE = new PrimitiveSymbol("byte", 'B', SHORT);
+    public static final PrimitiveSymbol VOID = new PrimitiveSymbol(Void.TYPE, 'V');
+    public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol(Boolean.TYPE, 'Z');
+    public static final PrimitiveSymbol CHAR = new PrimitiveSymbol(Character.TYPE, 'C');
+    public static final PrimitiveSymbol DOUBLE = new PrimitiveSymbol(Double.TYPE, 'D');
+    public static final PrimitiveSymbol FLOAT = new PrimitiveSymbol(Float.TYPE, 'F', DOUBLE);
+    public static final PrimitiveSymbol LONG = new PrimitiveSymbol(Long.TYPE, 'J', FLOAT);
+    public static final PrimitiveSymbol INT = new PrimitiveSymbol(Integer.TYPE, 'I', LONG);
+    public static final PrimitiveSymbol SHORT = new PrimitiveSymbol(Short.TYPE, 'S', INT);
+    public static final PrimitiveSymbol BYTE = new PrimitiveSymbol(Byte.TYPE, 'B', SHORT);
 
+    public final Class<?> runtimeClass;
     public final char sig;
     public final PrimitiveSymbol wider;
 
-    private PrimitiveSymbol(String name, char sig, PrimitiveSymbol wider) {
-        super(name);
+    private PrimitiveSymbol(Class<?> runtimeClass, char sig, PrimitiveSymbol wider) {
+        super(runtimeClass.getName());
+        this.runtimeClass = runtimeClass;
         this.sig = sig;
         this.wider = wider;
-        nameMap.put(name, this);
+        nameMap.put(getName(), this);
         sigMap.put(sig, this);
         values.add(this);
     }
 
-    private PrimitiveSymbol(String name, char sig) {
-        this(name, sig, null);
+    private PrimitiveSymbol(Class<?> runtimeClass, char sig) {
+        this(runtimeClass, sig, null);
     }
 
     @Override
@@ -82,5 +84,15 @@ public class PrimitiveSymbol extends TypeSymbol
             p1 = p1.wider;
 
         return p1;
+    }
+
+    @Override
+    public String runtimeName() {
+        return fullname;
+    }
+
+    @Override
+    public Class<?> runtimeClass() {
+        return runtimeClass;
     }
 }

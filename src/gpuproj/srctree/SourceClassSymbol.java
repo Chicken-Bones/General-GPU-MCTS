@@ -10,26 +10,9 @@ public class SourceClassSymbol extends ClassSymbol
     }
 
     @Override
-    public ClassSymbol loadAnnotations() {
-        new SourceReader((String) source).readAnnotations(scope, annotations);
-
-        for (ClassSymbol inner : innerClasses)
-            inner.loadAnnotations();
-
-        for (FieldSymbol f : fields)
-            new SourceReader((String) f.source).readAnnotations(scope, f.annotations);
-
-        for (MethodSymbol m : methods)
-            new SourceReader((String) m.source).readAnnotations(scope, m.annotations);
-
-        return this;
-    }
-
-    @Override
     public SourceClassSymbol loadSignatures() {
         SourceReader r = new SourceReader((String) source);
-        r.skipAnnotations();
-        r.seek("interface", "class");
+        r.seekStart("interface", "class");
         r.readElement();//skip interface/class
         r.readElement();//skip name
         r.readTypeParams(this);
@@ -65,7 +48,6 @@ public class SourceClassSymbol extends ClassSymbol
 
     private void loadSignature(MethodSymbol m) {
         SourceReader r = new SourceReader((String) m.source);
-        r.skipAnnotations();
         m.modifiers = r.readModifiers();
         r.readTypeParams(m);
         if(m.getName().equals("<init>"))
@@ -87,7 +69,6 @@ public class SourceClassSymbol extends ClassSymbol
 
     private void loadSignature(FieldSymbol f) {
         SourceReader r = new SourceReader((String) f.source);
-        r.skipAnnotations();
         f.modifiers = r.readModifiers();
         f.type = r.readTypeRef(scope);
     }
@@ -95,7 +76,6 @@ public class SourceClassSymbol extends ClassSymbol
     @Override
     public SourceClassSymbol loadSymbols() {
         SourceReader r = new SourceReader((String) source);
-        r.skipAnnotations();
         modifiers = r.readModifiers();
 
         switch(r.readElement()) {
@@ -115,7 +95,7 @@ public class SourceClassSymbol extends ClassSymbol
         }
 
         //skip to body
-        r.seek("{");
+        r.seekStart("{");
         String body = r.readElement();
         r = new SourceReader(SourceReader.expand(body));
         while(!r.end()) {
@@ -123,7 +103,7 @@ public class SourceClassSymbol extends ClassSymbol
             if(stmt.isEmpty()) continue;
             switch (declarationType(stmt)) {
                 case CLASS_SYM:
-                    innerClasses.add(fromStatement(fullname, scope, stmt).loadSymbols());
+                    innerClasses.add(fromStatement(fullname, scope, stmt).loadSymbols().setInner());
                     break;
                 case FIELD_SYM:
                     fields.add(newField(stmt));
@@ -139,8 +119,7 @@ public class SourceClassSymbol extends ClassSymbol
 
     private MethodSymbol newMethod(String stmt) {
         SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        r.seek("(");
+        r.seekStart("(");
         while(Character.isWhitespace(r.charAt(--r.pos)));//rollback
         while(Character.isJavaIdentifierPart(r.charAt(--r.pos)));
         String name = r.readElement();
@@ -151,7 +130,6 @@ public class SourceClassSymbol extends ClassSymbol
 
     private FieldSymbol newField(String stmt) {
         SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
         r.readModifiers();
         r.skipType();//type
         return new FieldSymbol(SourceUtil.combineName(fullname, r.readElement()), this, stmt);
@@ -159,7 +137,6 @@ public class SourceClassSymbol extends ClassSymbol
 
     private int declarationType(String stmt) {
         SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
         int equals = r.indexOf('=');
         int brace = r.indexOf('{');
         int bracket = r.indexOf('(');
@@ -177,8 +154,7 @@ public class SourceClassSymbol extends ClassSymbol
 
     public static SourceClassSymbol fromStatement(String parent, Scope scope, String stmt) {
         SourceReader r = new SourceReader(stmt);
-        r.skipAnnotations();
-        r.seek("interface", "class");
+        r.seekStart("interface", "class");
         r.readElement();//skip interface/class
         return new SourceClassSymbol(SourceUtil.combineName(parent, r.readElement()), scope, stmt);
     }

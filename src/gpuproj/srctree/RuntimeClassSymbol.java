@@ -10,11 +10,11 @@ public class RuntimeClassSymbol extends ClassSymbol
 
     @Override
     public RuntimeClassSymbol loadSymbols() {
-        Class<?> c = (Class<?>) source;
+        Class<?> c = (Class)source;
         modifiers = c.getModifiers();
         for(Class<?> inner : c.getDeclaredClasses())
             if(!inner.isAnonymousClass())
-                innerClasses.add(new RuntimeClassSymbol(scope, inner).loadSymbols());
+                innerClasses.add(new RuntimeClassSymbol(scope, inner).loadSymbols().setInner());
         for(Field f : c.getDeclaredFields())
             fields.add(new FieldSymbol(SourceUtil.combineName(fullname, f.getName()), this, f));
         for(Constructor<?> m : c.getDeclaredConstructors())
@@ -27,7 +27,7 @@ public class RuntimeClassSymbol extends ClassSymbol
 
     @Override
     public RuntimeClassSymbol loadSignatures() {
-        Class<?> c = (Class<?>) source;
+        Class<?> c = (Class)source;
         loadTypeParams(this, c.getTypeParameters());
 
         Class<?> p = c.getSuperclass();
@@ -46,12 +46,6 @@ public class RuntimeClassSymbol extends ClassSymbol
         for (MethodSymbol m : methods)
             loadSignature(m);
 
-        return this;
-    }
-
-    @Override
-    public ClassSymbol loadAnnotations() {
-        //we don't care about compiled annotations at this time
         return this;
     }
 

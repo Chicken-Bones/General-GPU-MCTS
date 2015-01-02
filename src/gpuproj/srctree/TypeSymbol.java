@@ -49,4 +49,8 @@ public abstract class TypeSymbol implements Symbol
     }
 
     public abstract String signature();
+
+    public abstract String runtimeName();
+
+    public abstract Class<?> runtimeClass();
 }

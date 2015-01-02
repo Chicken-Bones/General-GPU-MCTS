@@ -6,7 +6,7 @@ import java.util.*;
 
 /**
  * Recursively calcualtes the retained symbol set as follows
- * 1. All methods and fields referenced by all statements
+ * 1. All methods and accessors referenced by all statements
  * 2. Classes (structs) referenced by new
  * 3. Fields of retained classes and their types
  * 4. Superclasses of retained classes
@@ -45,19 +45,11 @@ public class RetentionSetEvaluator extends StatementVisitor
     }
 
     public static boolean isOCLGlobal(ClassSymbol sym) {
-        for(AnnotationSymbol ann : sym.annotations)
-            if(ann.type.fullname.equals("gpuproj.translator.OCLGlobal"))
-                return true;
-
-        return false;
+        return sym.getAnnotation(OCLGlobal.class) != null;
     }
 
     public static  boolean isOCLStatic(MethodSymbol sym) {
-        for(AnnotationSymbol ann : sym.annotations)
-            if(ann.type.fullname.equals("gpuproj.translator.OCLStatic"))
-                return true;
-
-        return false;
+        return sym.getAnnotation(OCLStatic.class) != null;
     }
 
     public boolean handle(Symbol sym) {

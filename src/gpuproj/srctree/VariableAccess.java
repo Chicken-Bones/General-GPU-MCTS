@@ -7,7 +7,7 @@ public class VariableAccess extends Expression
 {
     public Variable var;
     /**
-     * Exp will be null for static fields and locals
+     * Exp will be null for static accessors and locals
      */
     public Expression exp;
 

@@ -3,7 +3,7 @@ package gpuproj;
 public interface StructLike<T>
 {
     /**
-     * Set all fields of this to other
+     * Set all accessors of this to other
      * @return this
      */
     public T set(T other);

@@ -56,6 +56,11 @@ public class ArraySymbol extends ReferenceSymbol
     }
 
     @Override
+    public String runtimeName() {
+        return type.runtimeName()+"[]";
+    }
+
+    @Override
     public List<MethodSymbol> getMethods(String name) {
         throw new UnsupportedOperationException();
     }

@@ -1,16 +1,18 @@
 package gpuproj.srctree;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MethodSymbol implements ParameterisableSymbol
+public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
 {
     public final Object source;
     public final Scope scope;
-    public List<AnnotationSymbol> annotations = new LinkedList<>();
+    private Method runtimeMethod;
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef returnType;
@@ -37,6 +39,27 @@ public class MethodSymbol implements ParameterisableSymbol
     @Override
     public Scope scope() {
         return scope;
+    }
+
+    public Method runtimeMethod() {
+        if(runtimeMethod == null) {
+            Class<?> owner = owner().runtimeClass();
+            Class[] paramTypes = new Class[params.size()];
+            for(int i = 0; i < params.size(); i++)
+                paramTypes[i] = params.get(i).getType().type.runtimeClass();
+            try {
+                runtimeMethod = owner.getDeclaredMethod(getName(), paramTypes);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return runtimeMethod;
+    }
+
+    @Override
+    public Annotation getAnnotation(Class<? extends Annotation> type) {
+        return runtimeMethod().getAnnotation(type);
     }
 
     @Override
@@ -139,8 +162,7 @@ public class MethodSymbol implements ParameterisableSymbol
             throw new IllegalArgumentException("Cannot load body for "+this+". Source not available");
 
         SourceReader r = new SourceReader((String) source);
-        r.skipAnnotations();
-        r.seek("{");
+        r.seekStart("{");
         body = (Block) r.readStatement(scope, false);
     }
 

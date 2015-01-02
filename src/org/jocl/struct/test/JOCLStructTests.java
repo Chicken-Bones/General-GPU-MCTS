@@ -74,7 +74,7 @@ public class JOCLStructTests
         
         // Create the arrays of struct objects of the given class,
         // and apply to the i'th array element the function that
-        // sets all fields of the struct to 'i'
+        // sets all accessors of the struct to 'i'
         Struct src[] = createArray(structClass, size);
         Struct dst[] = createArray(structClass, size);
         Struct ref[] = createArray(structClass, size);
@@ -99,7 +99,7 @@ public class JOCLStructTests
         
         // Execute the computation on the reference. That is,
         // apply the function that multiplies values by 2 to
-        // all fields of the structs
+        // all accessors of the structs
         Function multiplyByTwo = new Function()
         {
             public Object apply(Object object)

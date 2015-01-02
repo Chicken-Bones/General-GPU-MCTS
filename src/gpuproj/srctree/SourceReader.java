@@ -46,6 +46,18 @@ public class SourceReader
 
             break;
         }
+
+        //skip annotations
+        if(pos < source.length() && charAt(pos) == '@') {
+            if(pos+10 < source.length() && substring(pos, pos+10).equals("@interface"))
+                return pos;
+
+            pos++;
+            readFullName();
+            if(charAt(seekCode()) == '(')
+                readElement();
+        }
+
         return pos;
     }
 
@@ -132,7 +144,7 @@ public class SourceReader
         char c = charAt(pos);
         if(Character.isDigit(c))
             return readLiteral();
-        if(Character.isJavaIdentifierStart(c))
+        if(Character.isJavaIdentifierStart(c) || c == '@')//@interface, annotations are skipped by seek
             return readIdentifier();
         if(c == '"')
             return readString();
@@ -146,8 +158,6 @@ public class SourceReader
             return readPaired('{', '}');
         if(declaration && c == '<')
             return readPaired('<', '>');
-        if(c == '@')//annotation
-            return readIdentifier();
         return readSymbol();
     }
 
@@ -169,18 +179,6 @@ public class SourceReader
 
     public boolean end() {
         return seekCode() == source.length();
-    }
-
-    public boolean isAnnotation() {
-        return charAt(seekCode()) == '@' && pos+10 <= source.length() && !substring(pos, pos+10).equals("@interface");
-    }
-
-    public void readAnnotations(Scope scope, List<AnnotationSymbol> annotations) {
-        while(isAnnotation()) {
-            ClassSymbol sym = (ClassSymbol) scope.resolve1(readFullName().substring(1), Symbol.CLASS_SYM);
-            String params = charAt(seekCode()) == '(' ? readElement() : "()";
-            annotations.add(new AnnotationSymbol(sym));
-        }
     }
 
     /**
@@ -279,14 +277,6 @@ public class SourceReader
         declaration = false;
     }
 
-    public void skipAnnotations() {
-        while(isAnnotation()) {
-            readFullName();
-            if(charAt(seekCode()) == '(')
-                readElement();
-        }
-    }
-
     public void skipType() {
         String type = readFullName();
         if (type.charAt(0) == '?') {
@@ -308,14 +298,19 @@ public class SourceReader
         declaration = false;
     }
 
-    public void seek(String... needles) {
-        int first = Integer.MAX_VALUE;
-        for(String needle : needles) {
-            int p = indexOf(needle);
-            if(p >= 0 && p < first) first = p;
+    /**
+     * Seeks to the start of the first element that starts with one of needles
+     */
+    public void seekStart(String... needles) {
+        while(!end()) {
+            int mark = pos;
+            String s = readElement();
+            for(String needle : needles)
+                if(s.startsWith(needle)) {
+                    pos = mark;
+                    return;
+                }
         }
-        if(first < Integer.MAX_VALUE)
-            pos = first;
     }
 
     public static String expand(String braced) {
@@ -618,7 +613,7 @@ public class SourceReader
         if(type.type instanceof ArraySymbol) {
             NewArray expr = new NewArray((ArraySymbol) type.type);
             pos = mark;
-            seek("[");
+            seekStart("[");
             for(int i = 0; i < expr.type.dimension(); i++)
                 expr.dimensions.add(new SourceReader(expand(readElement())).readExpression(scope));
 

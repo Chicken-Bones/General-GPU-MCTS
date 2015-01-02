@@ -1,14 +1,14 @@
 package gpuproj.srctree;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.LinkedList;
-import java.util.List;
 
-public class FieldSymbol implements Variable
+public class FieldSymbol implements Variable, AnnotatedSymbol
 {
     public final Object source;
     public final Scope scope;
-    public List<AnnotationSymbol> annotations = new LinkedList<>();
+    private Field runtimeField;
     public int modifiers;
     public TypeRef type;
     public String fullname;
@@ -26,6 +26,24 @@ public class FieldSymbol implements Variable
 
     public FieldSymbol(String fullname) {
         this(fullname, (Scope)null, null);
+    }
+
+    public Field runtimeField() {
+        if(runtimeField == null) {
+            Class<?> owner = owner().runtimeClass();
+            try {
+                runtimeField = owner.getDeclaredField(getName());
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return runtimeField;
+    }
+
+    @Override
+    public Annotation getAnnotation(Class<? extends Annotation> type) {
+        return runtimeField().getAnnotation(type);
     }
 
     @Override
@@ -63,15 +81,22 @@ public class FieldSymbol implements Variable
     public void loadInitialiser() {
         if(source != null) {
             SourceReader r = new SourceReader((String) source);
-            r.skipAnnotations();
-            if(r.indexOf('=') > 0) {
-                r.seek("=");
-                r.readElement();//=
+            r.seekStart("=");
+            if(!r.end()) {
+                r.readElement();
                 init = r.readExpression(scope);
                 return;
             }
         }
 
         init = type.type.defaultValue();
+    }
+
+    public String ownerName() {
+        return SourceUtil.parentName(fullname);
+    }
+
+    public ClassSymbol owner() {
+        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
     }
 }
