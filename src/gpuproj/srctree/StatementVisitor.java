@@ -38,7 +38,8 @@ public abstract class StatementVisitor
     }
 
     public void visit(ReturnStatement stmt) {
-        visit(stmt.exp);
+        if(stmt.exp != null)
+            visit(stmt.exp);
     }
 
     public void visit(ThrowStatement stmt) {
@@ -148,10 +149,16 @@ public abstract class StatementVisitor
 
     public void visit(NewArray exp) {
         for(Expression dim : exp.dimensions)
-            visit(dim);
+            if(dim != null)
+                visit(dim);
 
         if(exp.init != null)
             visit(exp.init);
+    }
+
+    public void visit(InitialiserList init) {
+        for(Expression exp : init.elements)
+            visit(exp);
     }
 
     public void visit(ArrayAccess exp) {

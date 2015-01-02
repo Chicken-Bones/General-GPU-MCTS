@@ -31,7 +31,7 @@ public class FieldSymbol implements Variable
     @Override
     public String toString() {
         if(type != null)
-            return (modifiers != 0 ? Modifier.toString(modifiers) + ' ' : "") + type + ' ' + getName();
+            return (modifiers != 0 ? Modifier.toString(modifiers) + ' ' : "") + type + ' ' + fullname;
 
         return fullname;
     }

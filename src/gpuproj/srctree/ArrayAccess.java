@@ -24,4 +24,9 @@ public class ArrayAccess extends Expression
     public int precedence() {
         return 2;
     }
+
+    @Override
+    public boolean lvalue() {
+        return true;
+    }
 }

@@ -16,6 +16,7 @@ public class MethodSymbol implements ParameterisableSymbol
     public TypeRef returnType;
     public String fullname;
     public List<LocalSymbol> params = new LinkedList<>();
+    public boolean vaargs;
     public Block body;
 
     public MethodSymbol(String fullname, Scope scope, Object source) {

@@ -76,6 +76,10 @@ public class SourceClassSymbol extends ClassSymbol
         String s_params = r.readElement();
         List<String> params = new SourceReader(SourceReader.expand(s_params)).readList();
         for(String s : params) {
+            if(s.contains("...")) {
+                s = s.replace("...", "[]");
+                m.vaargs = true;
+            }
             SourceReader r2 = new SourceReader(s);
             m.params.add(new LocalSymbol(r2.readTypeRef(m.scope), r2.readElement()));
         }

@@ -1,5 +1,6 @@
 package gpuproj.srctree;
 
+import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -487,7 +488,7 @@ public class SourceReader
         if(end())
             return null;
 
-        String elem = readElement();//TODO this
+        String elem = readElement();
         if(elem.startsWith("("))
             return readParensOrCast(scope, expand(elem));
         if (elem.equals("this"))
@@ -541,18 +542,20 @@ public class SourceReader
             return continueExpression1(scope, new MethodCall(method, params));
         }
 
-        Variable var = null;
         for(Symbol sym : symbols)
-            if((sym.symbolType() & Symbol.VARIABLE) != 0) {
-                var = (Variable) sym;
-                break;
+            if(sym instanceof LocalSymbol)
+                return continueExpression1(scope, new VariableAccess((Variable) sym));
+
+        for(Symbol sym : symbols)
+            if(sym instanceof FieldSymbol) {
+                FieldSymbol field = (FieldSymbol)sym;
+                VariableAccess var = new VariableAccess(field);
+                if(!field.isStatic())
+                    var.exp = new This(scope.thisClass());
+                return continueExpression1(scope, var);
             }
 
-        Expression exp = null;
-        if(var instanceof FieldSymbol && !((FieldSymbol) var).isStatic())
-            exp = new This(scope.thisClass());
-
-        return continueExpression1(scope, new VariableAccess(var, exp));
+        throw new IllegalStateException("You shouldn't be able to get here");
     }
 
     /**

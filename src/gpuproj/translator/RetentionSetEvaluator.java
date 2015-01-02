@@ -2,10 +2,7 @@ package gpuproj.translator;
 
 import gpuproj.srctree.*;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Recursively calcualtes the retained symbol set as follows
