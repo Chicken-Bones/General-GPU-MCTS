@@ -19,12 +19,12 @@ public class Block extends Statement implements ScopeProvider
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & Symbol.LOCAL_SYM) != 0) {
+        if(type == Symbol.LOCAL_SYM) {
             for(LocalSymbol l : locals)
                 if(l.name.equals(name))
                     list.add(l);
         }
-        if((type & Symbol.LABEL) != 0) {
+        if(type == Symbol.LABEL) {
             for(LabelledStatement l : labels)
                 if(l.label.equals(name))
                     list.add(l);

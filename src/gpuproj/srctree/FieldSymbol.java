@@ -42,7 +42,7 @@ public class FieldSymbol implements Variable, AnnotatedSymbol
     }
 
     @Override
-    public Annotation getAnnotation(Class<? extends Annotation> type) {
+    public <A extends Annotation> A getAnnotation(Class<A> type) {
         return runtimeField().getAnnotation(type);
     }
 
@@ -105,6 +105,6 @@ public class FieldSymbol implements Variable, AnnotatedSymbol
     }
 
     public ClassSymbol owner() {
-        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
+        return (ClassSymbol) TypeIndex.resolveType(ownerName());
     }
 }

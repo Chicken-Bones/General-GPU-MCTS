@@ -21,7 +21,6 @@ public class RetentionSetEvaluator extends StatementVisitor
 
     public RetentionSetEvaluator() {
         remappers.add(BuiltinMethodRemapper.instance);
-        remappers.add(DefaultMethodRemapper.instance);
     }
 
     public void add(Symbol sym) {
@@ -127,7 +126,7 @@ public class RetentionSetEvaluator extends StatementVisitor
 
         add(exp.method);
         if(exp.method.getName().equals("<init>"))
-            add(TypeIndex.instance().resolveType(exp.method.ownerName()));
+            add(TypeIndex.resolveType(exp.method.ownerName()));
 
         super.visit(exp);
     }

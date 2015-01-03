@@ -16,19 +16,19 @@ public class Literal extends Expression
     @Override
     public TypeRef returnType() {
         if(value.endsWith(".class")) {
-            TypeRef ref = new TypeRef(TypeIndex.instance().CLASS);
-            ref.params.add(new TypeRef(TypeIndex.instance().resolveType(value.substring(0, value.length()-6))));
+            TypeRef ref = new TypeRef(TypeIndex.CLASS);
+            ref.params.add(new TypeRef(TypeIndex.resolveType(value.substring(0, value.length()-6))));
             return ref;
         }
 
         if(value.equals("null"))
-            return new TypeRef(TypeIndex.instance().OBJECT);
+            return new TypeRef(TypeIndex.OBJECT);
         if(value.equals("true") || value.equals("false"))
             return new TypeRef(PrimitiveSymbol.BOOLEAN);
         if(value.startsWith("'"))
             return new TypeRef(PrimitiveSymbol.CHAR);
         if(value.startsWith("\""))
-            return new TypeRef(TypeIndex.instance().STRING);
+            return new TypeRef(TypeIndex.STRING);
         if(value.endsWith("f"))
             return new TypeRef(PrimitiveSymbol.FLOAT);
         if(value.contains(".") || value.contains("e") && !value.startsWith("0x"))

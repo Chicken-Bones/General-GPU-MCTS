@@ -31,7 +31,7 @@ public class NewArray extends Expression
     public TypeSymbol componentType() {
         TypeSymbol component = type;
         while(component instanceof ArraySymbol)
-            component = ((ArraySymbol) component).componentType();
+            component = ((ArraySymbol) component).type;
 
         return component.concrete();
     }

@@ -23,7 +23,7 @@ public class SourceClassSymbol extends ClassSymbol
             parent = r.readTypeRef(scope);
             word = r.readElement();
         } else
-            parent = new TypeRef(TypeIndex.instance().OBJECT);
+            parent = new TypeRef(TypeIndex.OBJECT);
 
         if(word.equals("implements") || word.equals("extends") && isInterface()) {
             int start = r.seekCode();

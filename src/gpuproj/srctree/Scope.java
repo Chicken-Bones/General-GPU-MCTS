@@ -5,12 +5,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Resolves names to symbols.
+ * For a given symbol type and name, parent scopes will only be delegated to if this scope's provider does not provide any symbols
+ * Any resolved symbols for a given name and type are cached
+ */
 public final class Scope
 {
     public interface ScopeProvider
     {
         /**
-         * Add all symbols matching name and type to list
+         * Add all symbols matching name and type to list. Will only be called once for a given name/type pair.
+         * @param name The name to resolve symbols for. Will most likely be simple. Global names will generally be delegated to TypeIndex
+         * @param type The type of symbol to resolve, only add symbols with a matching symbolType to list. Guaranteed to have only one set bit
+         * @param list The list to add resolved symbols to
          */
         public void resolveOnce(String name, int type, List<Symbol> list);
 
@@ -20,11 +28,11 @@ public final class Scope
         public Scope scope();
     }
 
-    public class SymbolCache
+    private class SymbolCache
     {
-        public List[] lists = new LinkedList[Symbol.TYPE_COUNT];
+        List[] lists = new LinkedList[Symbol.TYPE_COUNT];
 
-        public List<Symbol> resolve(String name, int types) {
+        List<Symbol> resolve(String name, int types) {
             List<Symbol> single = null;
             List<Symbol> combined = null;
             for(int i = 0; i < Symbol.TYPE_COUNT; i++) {
@@ -55,7 +63,13 @@ public final class Scope
             return lists[i];
         }
 
-        public void add(Symbol sym) {
+        private void resolveOnce(String name, int types, List<Symbol> list) {
+            provider.resolveOnce(name, types, list);
+            if(list.isEmpty() && parent != null)
+                list.addAll(parent.resolve(name, types));
+        }
+
+        void add(Symbol sym) {
             for(int i = 0; i < Symbol.TYPE_COUNT; i++) {
                 if(sym.symbolType() == 1<<i) {
                     if(lists[i] == null)
@@ -69,7 +83,7 @@ public final class Scope
 
     public final Scope parent;
     public final ScopeProvider provider;
-    public Map<String, SymbolCache> cache = new HashMap<>();
+    private Map<String, SymbolCache> cache = new HashMap<>();
 
     public Scope(Scope parent, ScopeProvider provider) {
         this.parent = parent;
@@ -77,18 +91,13 @@ public final class Scope
     }
 
     public Scope(ScopeProvider provider) {
-        this(TypeIndex.instance().scope, provider);
-    }
-
-    private void resolveOnce(String name, int types, List<Symbol> list) {
-        provider.resolveOnce(name, types, list);
-        if(list.isEmpty() && parent != null)
-            list.addAll(parent.resolve(name, types));
+        this(TypeIndex.scope, provider);
     }
 
     /**
-     * Resolves name to a symbol within this scope matching type.
-     * Uses a map to cache all symbols resolved in this scope
+     * Resolves all symbols matching name and types within this scope
+     * @param name The name to resolve a symbol for
+     * @param types A mask of symbol types
      */
     public List<Symbol> resolve(String name, int types) {
         SymbolCache symbols = cache.get(name);
@@ -98,6 +107,21 @@ public final class Scope
         return symbols.resolve(name, types);
     }
 
+    /**
+     * Wrapper for resolve, throws an exception if list contains more than 1 element.
+     * @param name The name to resolve a symbol for
+     * @param types A mask of symbol types
+     * @return The single resolved element, or null if none were resolved
+     */
+    public Symbol resolve1(String name, int types) {
+        List<Symbol> list = resolve(name, types);
+        if(list.size() > 1) throw new IllegalStateException("Resolved more than one symbol for: "+name);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * Adds a symbol to the cache under a given name
+     */
     public void cache(Symbol sym, String name) {
         SymbolCache symbols = cache.get(name);
         if(symbols == null)
@@ -105,12 +129,10 @@ public final class Scope
         symbols.add(sym);
     }
 
-    public Symbol resolve1(String name, int types) {
-        List<Symbol> list = resolve(name, types);
-        if(list.size() > 1) throw new IllegalStateException("Resolved more than one symbol for: "+name);
-        return list.isEmpty() ? null : list.get(0);
-    }
-
+    /**
+     * Finds the ClassSymbol enclosing this scope.
+     * Will throw a NullPointerException if neither this scope, nor any of it's parents have a ClassSymbol provider
+     */
     public ClassSymbol thisClass() {
         return provider instanceof ClassSymbol ? (ClassSymbol) provider : parent.thisClass();
     }

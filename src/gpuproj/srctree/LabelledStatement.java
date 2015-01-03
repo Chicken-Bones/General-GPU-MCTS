@@ -26,7 +26,7 @@ public class LabelledStatement extends Statement implements Symbol, ScopeProvide
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & Symbol.LABEL) != 0 && label != null && label.equals(name))
+        if(type == Symbol.LABEL && label != null && label.equals(name))
             list.add(this);
     }
 

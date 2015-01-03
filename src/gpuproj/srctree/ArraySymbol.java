@@ -2,9 +2,18 @@ package gpuproj.srctree;
 
 import java.util.List;
 
+/**
+ * Symbol representing array types
+ */
 public class ArraySymbol extends ReferenceSymbol
 {
+    /**
+     * The component type of this array
+     */
     public final TypeSymbol type;
+    /**
+     * The length field
+     */
     public final FieldSymbol length;
 
     public ArraySymbol(TypeSymbol type) {
@@ -39,10 +48,9 @@ public class ArraySymbol extends ReferenceSymbol
         return '['+type.signature();
     }
 
-    public TypeSymbol componentType() {
-        return type;
-    }
-
+    /**
+     * @return The dimension of this array, calculated recursively.
+     */
     public int dimension() {
         return (type instanceof ArraySymbol ? ((ArraySymbol) type).dimension() : 0) + 1;
     }

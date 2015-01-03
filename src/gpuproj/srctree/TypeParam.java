@@ -1,11 +1,17 @@
 package gpuproj.srctree;
 
+/**
+ * A generic type parameter declaration on a ParamaterisableSymbol
+ */
 public class TypeParam extends ReferenceSymbol
 {
     /**
-     * alias extends upper
+     * The upper bound for this param (T extends upper) or Object if none specified
      */
     public TypeRef upper;
+    /**
+     * The symbol which declared this
+     */
     public ParameterisableSymbol owner;
 
     public TypeParam(String alias, TypeRef upper, ParameterisableSymbol owner) {
@@ -15,7 +21,7 @@ public class TypeParam extends ReferenceSymbol
     }
 
     public TypeParam(String alias, ParameterisableSymbol owner) {
-        this(alias, new TypeRef(TypeIndex.instance().OBJECT), owner);
+        this(alias, new TypeRef(TypeIndex.OBJECT), owner);
     }
 
     @Override
@@ -40,7 +46,7 @@ public class TypeParam extends ReferenceSymbol
 
     @Override
     public String toString() {
-        if(upper.type != TypeIndex.instance().OBJECT)
+        if(upper.type != TypeIndex.OBJECT)
             return fullname+" extends "+upper;
 
         return fullname;

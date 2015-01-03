@@ -60,18 +60,18 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
     }
 
     @Override
-    public Annotation getAnnotation(Class<? extends Annotation> type) {
+    public <A extends Annotation> A getAnnotation(Class<A> type) {
         return runtimeMethod().getAnnotation(type);
     }
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & TYPE_PARAM) != 0) {
+        if(type == TYPE_PARAM) {
             for(TypeParam p : typeParams)
                 if(p.getName().equals(name))
                     list.add(p);
         }
-        if((type & LOCAL_SYM) != 0) {
+        if(type == LOCAL_SYM) {
             for(LocalSymbol p : params)
                 if(p.name.equals(name))
                     list.add(p);
@@ -186,6 +186,6 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
     }
 
     public ClassSymbol owner() {
-        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
+        return (ClassSymbol) TypeIndex.resolveType(ownerName());
     }
 }

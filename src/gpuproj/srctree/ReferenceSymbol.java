@@ -39,9 +39,7 @@ public abstract class ReferenceSymbol extends TypeSymbol
     public Class<?> runtimeClass() {
         try {
             if(runtimeClass == null)
-                runtimeClass = isConcrete() ?
-                        getClass().getClassLoader().loadClass(runtimeName()) :
-                        concrete().runtimeClass();
+                runtimeClass = getClass().getClassLoader().loadClass(runtimeName());
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

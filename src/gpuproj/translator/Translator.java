@@ -157,15 +157,15 @@ public class Translator
 
     public static Object valueOf(Literal expr) {
         TypeRef type = expr.returnType();
-        if(type.type == TypeIndex.instance().OBJECT)
+        if(type.type == TypeIndex.OBJECT)
             return null;
-        if(type.type == TypeIndex.instance().CLASS)
+        if(type.type == TypeIndex.CLASS)
             return type.params.get(0).classType().runtimeClass();
         if(type.type == PrimitiveSymbol.BOOLEAN)
             return Boolean.valueOf(expr.value);
         if(type.type == PrimitiveSymbol.CHAR)
             throw new UnsupportedOperationException("Char literal evaluation");
-        if(type.type == TypeIndex.instance().STRING)
+        if(type.type == TypeIndex.STRING)
             throw new UnsupportedOperationException("String literal evaluation");
         if(type.type == PrimitiveSymbol.FLOAT)
             return Float.valueOf(expr.value);

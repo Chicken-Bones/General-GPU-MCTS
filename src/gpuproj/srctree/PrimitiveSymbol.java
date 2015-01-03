@@ -50,11 +50,6 @@ public class PrimitiveSymbol extends TypeSymbol
     }
 
     @Override
-    public String signature() {
-        return String.valueOf(sig);
-    }
-
-    @Override
     public boolean isConcrete() {
         return true;
     }
@@ -79,11 +74,9 @@ public class PrimitiveSymbol extends TypeSymbol
         }
     }
 
-    public static PrimitiveSymbol widen(PrimitiveSymbol p1, PrimitiveSymbol p2) {
-        while(!p2.isAssignableTo(p1))
-            p1 = p1.wider;
-
-        return p1;
+    @Override
+    public String signature() {
+        return String.valueOf(sig);
     }
 
     @Override
@@ -94,5 +87,12 @@ public class PrimitiveSymbol extends TypeSymbol
     @Override
     public Class<?> runtimeClass() {
         return runtimeClass;
+    }
+
+    public static PrimitiveSymbol widen(PrimitiveSymbol p1, PrimitiveSymbol p2) {
+        while(!p2.isAssignableTo(p1))
+            p1 = p1.wider;
+
+        return p1;
     }
 }

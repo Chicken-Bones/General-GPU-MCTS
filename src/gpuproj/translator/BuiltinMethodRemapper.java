@@ -61,7 +61,7 @@ public class BuiltinMethodRemapper implements MethodRemapper
     public MethodSymbol get(String name) {
         MethodSymbol sym = built.get(name);
         if(sym == null) {
-            sym = new MethodSymbol(name, TypeIndex.instance().scope, this);
+            sym = new MethodSymbol(name, TypeIndex.scope, this);
             sym.modifiers |= Modifier.PUBLIC | Modifier.STATIC;
             built.put(name, sym);
         }

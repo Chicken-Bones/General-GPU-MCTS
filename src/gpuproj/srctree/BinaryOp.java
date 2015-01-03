@@ -19,8 +19,8 @@ public class BinaryOp extends Expression
     public TypeRef returnType() {
         switch(op) {
             case "+":
-                if(op1.returnType().concrete() == TypeIndex.instance().STRING || op2.returnType().concrete() == TypeIndex.instance().STRING)
-                    return new TypeRef(TypeIndex.instance().STRING);
+                if(op1.returnType().concrete() == TypeIndex.STRING || op2.returnType().concrete() == TypeIndex.STRING)
+                    return new TypeRef(TypeIndex.STRING);
             case "*":
             case "/":
             case "%":

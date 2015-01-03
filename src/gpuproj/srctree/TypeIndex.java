@@ -7,31 +7,20 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Default scope
+ * The default scope, and provider of all source files and class loading.
+ * This scope provides classes and their members by global name
  */
 public class TypeIndex implements ScopeProvider
 {
-    private static TypeIndex instance;
+    public static final TypeIndex instance = new TypeIndex();
+    public static final Scope scope = new Scope(null, instance);
+    public static List<SourceProvider> sourceProviders = new LinkedList<>();
 
-    public static TypeIndex instance() {
-        return instance;
-    }
+    public static final RuntimeClassSymbol OBJECT = new RuntimeClassSymbol(scope, Object.class);
+    public static final RuntimeClassSymbol STRING = new RuntimeClassSymbol(scope, String.class);
+    public static final RuntimeClassSymbol CLASS = new RuntimeClassSymbol(scope, Class.class);
 
-    public static void newInstance() {
-        new TypeIndex();
-    }
-
-    public final Scope scope = new Scope(null, this);
-    public final RuntimeClassSymbol OBJECT;
-    public final RuntimeClassSymbol STRING;
-    public final RuntimeClassSymbol CLASS;
-    public List<SourceProvider> sourceProviders = new LinkedList<>();
-
-    private TypeIndex() {
-        instance = this;
-        OBJECT = new RuntimeClassSymbol(scope, Object.class);
-        STRING = new RuntimeClassSymbol(scope, String.class);
-        CLASS = new RuntimeClassSymbol(scope, Class.class);
+    static {
         for(PrimitiveSymbol p : PrimitiveSymbol.values)
             register(p);
     }
@@ -75,7 +64,7 @@ public class TypeIndex implements ScopeProvider
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & Symbol.CLASS_SYM) != 0) {
+        if(type == Symbol.CLASS_SYM) {
             ClassSymbol sym = findClass(name);
             if(sym != null) {
                 list.add(sym);
@@ -92,7 +81,7 @@ public class TypeIndex implements ScopeProvider
             }
         }
 
-        if((type & Symbol.CLASS_SYM) != 0 && !name.startsWith("java.lang")) {
+        if(type == Symbol.CLASS_SYM && !name.startsWith("java.lang")) {
             TypeSymbol sym = resolveType("java.lang." + name);
             if(sym != null)
                 list.add(sym);
@@ -104,15 +93,17 @@ public class TypeIndex implements ScopeProvider
         return scope;
     }
 
-    public TypeSymbol resolveType(String name) {
+    /**
+     * Resolves a class symbol by name in this scope
+     */
+    public static TypeSymbol resolveType(String name) {
         return (TypeSymbol) scope.resolve1(name, Symbol.CLASS_SYM);
     }
 
-    public List<Symbol> resolve(String name, int type) {
-        return scope.resolve(name, type);
-    }
-
-    public void register(Symbol sym) {
+    /**
+     * Caches a symbol under its global name
+     */
+    public static void register(Symbol sym) {
         scope.cache(sym, sym.globalName());
     }
 }

@@ -1,11 +1,12 @@
 package gpuproj.srctree;
 
 /**
- * Parent for package/class/method/field
+ * Interface for anything able to be resolved by name within a scope.
+ * Only one symbol instance should exist for each physical source element
  */
 public interface Symbol
 {
-    public static final int CLASS_SYM = 1; //TypeSymbol
+    public static final int CLASS_SYM = 1; //ArraySymbol | PrimitiveSymbol | ClassSymbol
     public static final int FIELD_SYM = 2; //FieldSymbol
     public static final int METHOD_SYM = 4; //MethodSymbol
     public static final int TYPE_PARAM = 8; //TypeParam
@@ -16,12 +17,12 @@ public interface Symbol
     public static final int TYPE_COUNT = 6;
 
     /**
-     * @return One of CLASS_SYM, FIELD_SYM, METHOD_SYM, TYPE_PARAM or LOCAL_SYM
+     * @return One of CLASS_SYM, FIELD_SYM, METHOD_SYM, TYPE_PARAM, LOCAL_SYM or LABEL
      */
     public abstract int symbolType();
 
     /**
-     * The unique name by which this symbol can be obtained from TypeIndex, or null if this is a parameterised class
+     * The unique name by which this symbol can be obtained from TypeIndex, or null if this is a type parameterised or local symbol
      */
     public abstract String globalName();
 }

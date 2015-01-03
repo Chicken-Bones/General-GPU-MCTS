@@ -27,11 +27,9 @@ public class Main
     }
 
     private static void decompClass() {
-        TypeIndex.newInstance();
-        TypeIndex.instance().sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
+        TypeIndex.sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
 
-
-        SourceClassSymbol game = (SourceClassSymbol) TypeIndex.instance().resolveType("gpuproj.games.Ataxx2");
+        SourceClassSymbol game = (SourceClassSymbol) TypeIndex.resolveType("gpuproj.games.Ataxx2");
         SourceClassSymbol board = (SourceClassSymbol) game.parent.params.get(0).concrete();
         MethodSymbol checkWinner = MethodSymbol.match(game.getMethods("checkWinner"), Arrays.asList(board));
         MethodSymbol playRandomMove = MethodSymbol.match(game.getMethods("playRandomMove"), Arrays.asList(board));

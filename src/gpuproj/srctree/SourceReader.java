@@ -1,6 +1,5 @@
 package gpuproj.srctree;
 
-import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -238,7 +237,7 @@ public class SourceReader
 
         while(!end() && charAt(pos) == '[') {
             readElement();
-            type = type.arrayType();
+            type = type.arrayRef();
         }
 
         readTypeRefs(scope, type.params);
@@ -633,7 +632,7 @@ public class SourceReader
         for(String s : new SourceReader(expand(readElement())).readList()) {
             SourceReader r = new SourceReader(s);
             if(r.charAt(r.seekCode()) == '{')
-                init.elements.add(r.readInitialiserList(scope, (ArraySymbol) type.componentType()));
+                init.elements.add(r.readInitialiserList(scope, (ArraySymbol) type.type));
             else
                 init.elements.add(r.readExpression(scope));
         }

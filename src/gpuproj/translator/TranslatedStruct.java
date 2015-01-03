@@ -99,12 +99,12 @@ public class TranslatedStruct
 
                 TypeSymbol baseType = type;
                 while(baseType instanceof ArraySymbol)
-                    baseType = ((ArraySymbol) baseType).componentType();
+                    baseType = ((ArraySymbol) baseType).type;
                 structAccessor = StructAccess.createArrayStructAccessor(
                                 field, baseType.runtimeClass(), currentOffset,
                                 dimensions, fieldAlignment, isPackedField);
             }
-            else if (type.isAssignableTo(TypeIndex.instance().resolveType("org.jocl.struct.CLTypes.cl_vector_type")))
+            else if (type.isAssignableTo(TypeIndex.resolveType("org.jocl.struct.CLTypes.cl_vector_type")))
                 structAccessor = StructAccess.createVectorTypeAccessor(
                         field, currentOffset, SizeofStruct.sizeof(field.getType()),
                         fieldAlignment, isPackedField);

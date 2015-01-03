@@ -7,15 +7,33 @@ import java.util.List;
 
 public abstract class ClassSymbol extends ReferenceSymbol implements ParameterisableSymbol, AnnotatedSymbol
 {
+    /**
+     * extends Modifier
+     */
     public static final int ANNOTATION = 0x00002000;
+    /**
+     * extends Modifier
+     */
     public static final int ENUM = 0x00004000;
+    /**
+     * Symbols which are inherited from parent class/interface scopes
+     */
     public static final int INHERITED_SYMS = Symbol.FIELD_SYM | Symbol.METHOD_SYM | Symbol.CLASS_SYM;
 
     public final Scope scope;
+    /**
+     * Object from which this symbol was constructed. Class for RuntimeClassSymbol, String for SourceClassSymbol
+     */
     public final Object source;
+    /**
+     * True if this is an inner class
+     */
     public boolean inner;
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
+    /**
+     * The parent type of this symbol, null if this is Object
+     */
     public TypeRef parent;
     public List<TypeRef> interfaces = new LinkedList<>();
     public List<ClassSymbol> innerClasses = new LinkedList<>();
@@ -26,7 +44,7 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
         super(fullname);
         this.scope = new Scope(scope, this);
         this.source = source;
-        TypeIndex.instance().register(this);
+        TypeIndex.register(this);
     }
 
     public ClassSymbol load() {
@@ -35,16 +53,33 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
         return this;
     }
 
+    /**
+     * Reads source to create field, method and inner class symbols by name.
+     * The types, parameters of contents of thes symbols are not loaded until loadSignatures.
+     * All contained symbols are loaded before any referenced types to prevent load cycles
+     * Calls loadSymbols on inner classes
+     * @return this
+     */
     public abstract ClassSymbol loadSymbols();
+
+    /**
+     * Reads source to fill out parent class, interfaces, method and field signatures and type parameters, and inner classes
+     * Calls loadSignatures on inner classes
+     * @return this
+     */
     public abstract ClassSymbol loadSignatures();
 
+    /**
+     * Sets inner to true
+     * @return this
+     */
     public ClassSymbol setInner() {
         inner = true;
         return this;
     }
 
     @Override
-    public Annotation getAnnotation(Class<? extends Annotation> type) {
+    public <A extends Annotation> A getAnnotation(Class<A> type) {
         return runtimeClass().getAnnotation(type);
     }
 
@@ -53,12 +88,18 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
         return true;
     }
 
+    /**
+     * @return The name of the owner of this class, will be a valid package name, class name, or "" if this is declared in the root package
+     */
     public String ownerName() {
         return SourceUtil.parentName(fullname);
     }
 
+    /**
+     * @return The ClassSymbol for the outer class if this is an inner class, otherwise null
+     */
     public ClassSymbol owner() {
-        return (ClassSymbol) TypeIndex.instance().resolveType(ownerName());
+        return (ClassSymbol) TypeIndex.resolveType(ownerName());
     }
 
     @Override
@@ -100,33 +141,35 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {
-        if((type & FIELD_SYM) != 0 && list.isEmpty()) {//accessors are shadowed by subclasses
+        if(type == FIELD_SYM && list.isEmpty()) {//accessors are shadowed by subclasses
             for(FieldSymbol sym : fields)
                 if(sym.getName().equals(name))
                     list.add(sym);
         }
-        if((type & METHOD_SYM) != 0) {
+        if(type == METHOD_SYM) {
             boolean shadow = !list.isEmpty();
             for(MethodSymbol sym : methods)
                 if(sym.getName().equals(name) && (!shadow || !shadowed(sym, list)))
                     list.add(sym);
         }
-        if((type & CLASS_SYM) != 0) {
+        if(type == CLASS_SYM) {
             for (ClassSymbol sym : innerClasses)
                 if (sym.getName().equals(name))
                     list.add(sym);
         }
-        if((type & TYPE_PARAM) != 0) {
+        if(type == TYPE_PARAM) {
             for(TypeParam p : typeParams)
                 if(p.getName().equals(name))
                     list.add(p);
         }
 
-        if(parent != null)
-            parent.classType().resolveOnce(name, type & INHERITED_SYMS, list);
+        if((type & INHERITED_SYMS) != 0) {
+            if (parent != null)
+                parent.classType().resolveOnce(name, type, list);
 
-        for(TypeRef iface : interfaces)
-            iface.classType().resolveOnce(name, type & INHERITED_SYMS, list);
+            for (TypeRef iface : interfaces)
+                iface.classType().resolveOnce(name, type, list);
+        }
     }
 
     @Override
@@ -151,7 +194,7 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
 
         if(!typeParams.isEmpty())
             sb.append('<').append(SourceUtil.listString(typeParams)).append('>');
-        if(parent != null && parent.type != TypeIndex.instance().OBJECT)
+        if(parent != null && parent.type != TypeIndex.OBJECT)
             sb.append(" extends ").append(parent);
         if(!interfaces.isEmpty())
             sb.append(" implements ").append(SourceUtil.listString(interfaces));
