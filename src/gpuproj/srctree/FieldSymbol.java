@@ -78,6 +78,14 @@ public class FieldSymbol implements Variable, AnnotatedSymbol
         return (modifiers & Modifier.STATIC) != 0;
     }
 
+    @Override
+    public Expression initialiser() {
+        if(init == null)
+            loadInitialiser();
+
+        return init;
+    }
+
     public void loadInitialiser() {
         if(source != null) {
             SourceReader r = new SourceReader((String) source);

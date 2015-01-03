@@ -7,7 +7,8 @@ public class NewArray extends Expression
 {
     public ArraySymbol type;
     /**
-     * will be null for unspecified dimensions
+     * Is guaranteed to have the same length as the dimensionality of the array
+     * will have null contents for unspecified dimensions
      */
     public List<Expression> dimensions;
     public InitialiserList init;

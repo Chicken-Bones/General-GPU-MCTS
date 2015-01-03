@@ -4,4 +4,5 @@ public interface Variable extends Symbol
 {
     public TypeRef getType();
     public String getName();
+    public Expression initialiser();
 }

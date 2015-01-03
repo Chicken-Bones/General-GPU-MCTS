@@ -2,7 +2,7 @@ package gpuproj.srctree;
 
 public class Literal extends Expression
 {
-    String value;
+    public String value;
 
     public Literal(String value) {
         if(value.endsWith("D") || value.endsWith("d")) {

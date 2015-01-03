@@ -37,6 +37,11 @@ public class LocalSymbol extends Statement implements Variable
     }
 
     @Override
+    public Expression initialiser() {
+        return init;
+    }
+
+    @Override
     public String globalName() {
         return null;
     }

@@ -208,7 +208,7 @@ public class StructAccess
      * @param annotatedElement The element
      * @return Whether the element is packed
      */
-    private static boolean isPacked(AnnotatedElement annotatedElement)
+    public static boolean isPacked(AnnotatedElement annotatedElement)
     {
         if (annotatedElement.isAnnotationPresent(__attribute__.class))
         {
@@ -227,7 +227,7 @@ public class StructAccess
      * @param annotatedElement The element
      * @return The alignment
      */
-    private static int obtainAlignment(AnnotatedElement annotatedElement)
+    public static int obtainAlignment(AnnotatedElement annotatedElement)
     {
         int alignment = 0;
         if (annotatedElement.isAnnotationPresent(__attribute__.class))
@@ -454,8 +454,8 @@ public class StructAccess
      * @param packed If the field is packed
      * @return The StructAccessor
      */
-    private static StructAccessor createPrimitiveStructAccessor(
-        Field field, int offset, int alignment, boolean packed)
+    public static StructAccessor createPrimitiveStructAccessor(
+            Field field, int offset, int alignment, boolean packed)
     {
         if (field.getType().equals(Byte.TYPE))
         {
@@ -502,6 +502,11 @@ public class StructAccess
             throw new CLException("Invalid field type: "+field);
         }
     }
+
+    public static StructAccessor createVectorTypeAccessor(
+            Field field, int offset, int size, int alignment, boolean packed) {
+        return new StructAccessor_cl_vector_type(field, offset, size, alignment, packed);
+    }
     
     /**
      * Computes the product of the given array lengths
@@ -531,9 +536,9 @@ public class StructAccess
      * @param packed If the field is packed
      * @return The StructAccessor
      */
-    private static StructAccessor createArrayStructAccessor(
-        Field field, Class<?> componentType, int offset, 
-        int arrayLengths[], int alignment, boolean packed)
+    public static StructAccessor createArrayStructAccessor(
+            Field field, Class<?> componentType, int offset,
+            int arrayLengths[], int alignment, boolean packed)
     {
         int totalArrayLength = computeTotalArrayLength(arrayLengths);
         int componentTypeSize = 0;
@@ -618,9 +623,7 @@ public class StructAccess
         return result;
     }
 
-    
-    
-    
+
     /**
      * A class storing the information that is specific
      * for one class that extends the Struct class, 
