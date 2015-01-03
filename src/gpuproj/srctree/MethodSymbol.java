@@ -1,7 +1,7 @@
 package gpuproj.srctree;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,7 +12,7 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
 {
     public final Object source;
     public final Scope scope;
-    private Method runtimeMethod;
+    private AnnotatedElement runtimeMethod;
     public int modifiers;
     public List<TypeParam> typeParams = new LinkedList<>();
     public TypeRef returnType;
@@ -41,14 +41,16 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
         return scope;
     }
 
-    public Method runtimeMethod() {
+    public AnnotatedElement runtimeMethod() {
         if(runtimeMethod == null) {
             Class<?> owner = owner().runtimeClass();
             Class[] paramTypes = new Class[params.size()];
             for(int i = 0; i < params.size(); i++)
                 paramTypes[i] = params.get(i).getType().type.runtimeClass();
             try {
-                runtimeMethod = owner.getDeclaredMethod(getName(), paramTypes);
+                runtimeMethod = getName().equals("<init>") ?
+                        owner.getDeclaredConstructor(paramTypes) :
+                        owner.getDeclaredMethod(getName(), paramTypes);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
