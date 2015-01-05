@@ -23,4 +23,13 @@ public class IfStatement extends Statement
         }
         return sb.toString();
     }
+
+    @Override
+    public IfStatement copy(Scope scope) {
+        IfStatement copy = new IfStatement(cond.copy(scope), then.copy(scope));
+        if(otherwise != null)
+            copy.otherwise = otherwise.copy(scope);
+
+        return copy;
+    }
 }

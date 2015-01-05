@@ -29,4 +29,9 @@ public class ArrayAccess extends Expression
     public boolean lvalue() {
         return true;
     }
+
+    @Override
+    public ArrayAccess copy(Scope scope) {
+        return new ArrayAccess(exp.copy(scope), index.copy(scope));
+    }
 }

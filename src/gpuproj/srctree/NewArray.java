@@ -52,4 +52,17 @@ public class NewArray extends Expression
 
         return sb.toString();
     }
+
+    @Override
+    public NewArray copy(Scope scope) {
+        NewArray copy = new NewArray(type);
+        copy.dimensions = new ArrayList<>(dimensions.size());
+        for(Expression exp : dimensions)
+            copy.dimensions.add(exp == null ? null : exp.copy(scope));
+
+        if(init != null)
+            copy.init = init.copy(scope);
+
+        return copy;
+    }
 }

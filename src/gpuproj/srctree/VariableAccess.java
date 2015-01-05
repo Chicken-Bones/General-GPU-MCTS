@@ -46,4 +46,9 @@ public class VariableAccess extends Expression
     public boolean lvalue() {
         return true;
     }
+
+    @Override
+    public VariableAccess copy(Scope scope) {
+        return new VariableAccess(var, exp == null ? null : exp.copy(scope));
+    }
 }

@@ -12,4 +12,9 @@ public class ThrowStatement extends Statement
     public String toString() {
         return "throw "+exp;
     }
+
+    @Override
+    public ThrowStatement copy(Scope scope) {
+        return new ThrowStatement(exp.copy(scope));
+    }
 }

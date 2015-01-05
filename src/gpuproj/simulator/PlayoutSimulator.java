@@ -38,4 +38,14 @@ public abstract class PlayoutSimulator
      * Play at least one game for each node and update the results, should give positive values for wins for the player who played at this node, (board.getTurn()^1)
      */
     public abstract <B extends Board<B>> void play(List<TreeNode<B>> nodes, BoardGame<B> game);
+
+    public static <B extends Board<B>> double playout(B board, BoardGame<B> game) {
+        int player = board.getTurn()^1;
+        int winner = game.checkWinner(board);
+        while(winner < 0) {
+            game.playRandomMove(board);
+            winner = game.checkWinner(board);
+        }
+        return BoardGame.score(winner, player);
+    }
 }

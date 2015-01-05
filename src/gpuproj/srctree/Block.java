@@ -72,4 +72,13 @@ public class Block extends Statement implements ScopeProvider
         sb.append(indent(stmt.toString()));
         finishStatement(sb);
     }
+
+    @Override
+    public Block copy(Scope scope) {
+        Block copy = new Block(scope);
+        for(Statement stmt : statements)
+            copy.statements.add(stmt.copy(copy.scope));
+        copy.index();
+        return copy;
+    }
 }

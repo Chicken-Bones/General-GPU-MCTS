@@ -6,9 +6,14 @@ public class LocalSymbol extends Statement implements Variable
     public String name;
     public Expression init;
 
-    public LocalSymbol(TypeRef type, String name) {
+    public LocalSymbol(TypeRef type, String name, Expression init) {
         this.type = type;
         this.name = name;
+        this.init = init;
+    }
+
+    public LocalSymbol(TypeRef type, String name) {
+        this(type, name, null);
     }
 
     @Override
@@ -44,5 +49,10 @@ public class LocalSymbol extends Statement implements Variable
     @Override
     public String globalName() {
         return null;
+    }
+
+    @Override
+    public LocalSymbol copy(Scope scope) {
+        return new LocalSymbol(type, name, init == null ? null : init.copy(scope));
     }
 }

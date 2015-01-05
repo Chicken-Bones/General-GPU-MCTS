@@ -13,4 +13,7 @@ public abstract class Expression extends Statement
     public boolean lvalue() {
         return false;
     }
+
+    @Override
+    public abstract Expression copy(Scope scope);
 }

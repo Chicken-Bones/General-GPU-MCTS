@@ -47,4 +47,9 @@ public class Literal extends Expression
     public int precedence() {
         return 0;
     }
+
+    @Override
+    public Literal copy(Scope scope) {
+        return new Literal(value);
+    }
 }

@@ -1,6 +1,7 @@
 package gpuproj.srctree;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -58,5 +59,14 @@ public class MethodCall extends Expression
     @Override
     public int precedence() {
         return 2;
+    }
+
+    @Override
+    public MethodCall copy(Scope scope) {
+        List<Expression> copies = new LinkedList<>();
+        for(Expression exp : params)
+            copies.add(exp.copy(scope));
+
+        return new MethodCall(method, copies);
     }
 }

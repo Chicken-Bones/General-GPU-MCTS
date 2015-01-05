@@ -36,4 +36,9 @@ public class TernaryOp extends Expression
     public String toString() {
         return cond + " ? " + then + " : "+otherwise;
     }
+
+    @Override
+    public TernaryOp copy(Scope scope) {
+        return new TernaryOp(cond.copy(scope), then.copy(scope), otherwise.copy(scope));
+    }
 }

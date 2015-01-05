@@ -402,19 +402,13 @@ public class SourceReader
     }
 
     private Statement readBreak(Scope scope, SourceReader r) {
-        BreakStatement stmt = new BreakStatement();
-        if(!r.end())
-            stmt.label = (LabelledStatement) scope.resolve1(r.readElement(), Symbol.LABEL);
-
-        return stmt;
+        return new BreakStatement(r.end() ? null :
+                (LabelledStatement) scope.resolve1(r.readElement(), Symbol.LABEL));
     }
 
     private Statement readContinue(Scope scope, SourceReader r) {
-        ContinueStatement stmt = new ContinueStatement();
-        if(!r.end())
-            stmt.label = (LabelledStatement) scope.resolve1(r.readElement(), Symbol.LABEL);
-
-        return stmt;
+        return new ContinueStatement(r.end() ? null :
+                (LabelledStatement) scope.resolve1(r.readElement(), Symbol.LABEL));
     }
 
     private Statement readFor(Scope scope, SourceReader r) {

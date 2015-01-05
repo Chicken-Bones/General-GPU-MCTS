@@ -25,4 +25,16 @@ public class ForStatement extends LabelledStatement
         printSub(sb, body);
         return sb.toString();
     }
+
+    @Override
+    public ForStatement copy(Scope scope) {
+        ForStatement copy = new ForStatement(scope, label);
+        for(Statement stmt : init)
+            copy.init.add(stmt.copy(scope));
+        copy.cond = cond.copy(copy.scope);
+        for(Statement stmt : update)
+            copy.update.add(stmt.copy(copy.scope));
+        copy.body = body.copy(copy.scope);
+        return copy;
+    }
 }

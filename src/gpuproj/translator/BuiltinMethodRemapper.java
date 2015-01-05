@@ -7,14 +7,12 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BuiltinMethodRemapper implements MethodRemapper
+public class BuiltinMethodRemapper
 {
-    public static final BuiltinMethodRemapper instance = new BuiltinMethodRemapper();
+    public static Map<String, String> map = new HashMap<>();
+    private static Map<String, MethodSymbol> built = new HashMap<>();
 
-    public Map<String, String> map = new HashMap<>();
-    private Map<String, MethodSymbol> built = new HashMap<>();
-
-    private BuiltinMethodRemapper() {
+    static {
         map.put("java.lang.Math.min(II)I", "min");
         map.put("java.lang.Math.min(JJ)J", "min");
         map.put("java.lang.Math.max(II)I", "max");
@@ -58,10 +56,10 @@ public class BuiltinMethodRemapper implements MethodRemapper
     /**
      * Gets or creates a builtin symbol for name
      */
-    public MethodSymbol get(String name) {
+    public static MethodSymbol get(String name) {
         MethodSymbol sym = built.get(name);
         if(sym == null) {
-            sym = new MethodSymbol(name, TypeIndex.scope, this);
+            sym = new MethodSymbol(name, TypeIndex.scope, null);
             sym.modifiers |= Modifier.PUBLIC | Modifier.STATIC;
             built.put(name, sym);
         }
@@ -69,8 +67,7 @@ public class BuiltinMethodRemapper implements MethodRemapper
         return sym;
     }
 
-    @Override
-    public MethodSymbol map(MethodSymbol method) {
+    public static MethodSymbol map(MethodSymbol method) {
         String mapped = map.get(method.fullname);
         if(mapped == null)
             mapped = map.get(method.fullname+method.signature());

@@ -69,6 +69,11 @@ public class BinaryOp extends Expression
         return precedence(op);
     }
 
+    @Override
+    public BinaryOp copy(Scope scope) {
+        return new BinaryOp(op, op1.copy(scope), op2.copy(scope));
+    }
+
     public static int precedence(String op) {
         switch(op) {
             case ".":

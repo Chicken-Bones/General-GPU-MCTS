@@ -13,6 +13,11 @@ public class SwitchStatement extends Statement
         public String toString() {
             return "case "+key+":";
         }
+
+        @Override
+        public Case copy(Scope scope) {
+            return new Case(key);
+        }
     }
 
     public static class Default extends Statement
@@ -20,6 +25,11 @@ public class SwitchStatement extends Statement
         @Override
         public String toString() {
             return "default:";
+        }
+
+        @Override
+        public Statement copy(Scope scope) {
+            return new Default();
         }
     }
 
@@ -38,14 +48,27 @@ public class SwitchStatement extends Statement
                 finishStatement(sb);
             }
         }
+
+        @Override
+        public SwitchBlock copy(Scope scope) {
+            SwitchBlock copy = new SwitchBlock(scope);
+            for(Statement stmt : statements)
+                copy.statements.add(stmt.copy(copy.scope));
+            copy.index();
+            return copy;
+        }
     }
 
     public Expression key;
     public SwitchBlock body;
 
-    public SwitchStatement(Scope scope, Expression key) {
+    public SwitchStatement(Expression key, SwitchBlock body) {
         this.key = key;
-        body = new SwitchBlock(scope);
+        this.body = body;
+    }
+
+    public SwitchStatement(Scope scope, Expression key) {
+        this(key, new SwitchBlock(scope));
     }
 
     @Override
@@ -54,5 +77,10 @@ public class SwitchStatement extends Statement
         sb.append("switch ").append(key);
         printSub(sb, body);
         return sb.toString();
+    }
+
+    @Override
+    public SwitchStatement copy(Scope scope) {
+        return new SwitchStatement(key.copy(scope), body.copy(scope));
     }
 }

@@ -19,4 +19,12 @@ public class DoStatement extends LabelledStatement
         sb.append("while ").append(cond).append(';');
         return sb.toString();
     }
+
+    @Override
+    public DoStatement copy(Scope scope) {
+        DoStatement copy = new DoStatement(scope, label);
+        copy.cond = cond.copy(scope);
+        copy.body = body.copy(copy.scope);
+        return copy;
+    }
 }

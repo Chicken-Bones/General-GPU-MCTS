@@ -10,6 +10,17 @@ import java.util.List;
 public class TypeRef
 {
     /**
+     * If this flag is set, TypeRefs, statements and expressions will print openCL code instead of Java code with toString methods
+     */
+    public static boolean printCL = false;
+
+    //OpenCL reference modifiers
+    public static final int GLOBAL = 1;
+    public static final int LOCAL = 2;
+    public static final int CONSTANT = 4;
+    public static final int UNSIGNED = 8;
+
+    /**
      * The type being referenced
      */
     public final TypeSymbol type;
@@ -21,11 +32,30 @@ public class TypeRef
      * Pointer level. Number of asterisks before this
      */
     public int pointer;
-    public String cType;
+    /**
+     * OpenCL modifiers
+     */
+    public int modifiers;
 
     public TypeRef(TypeSymbol type) {
         if(type == null) throw new IllegalArgumentException("Null type");
         this.type = type;
+    }
+
+    /**
+     * Chaining setter for pointer field
+     */
+    public TypeRef point(int i) {
+        pointer = i;
+        return this;
+    }
+
+    /**
+     * Chaining setter for modifiers field
+     */
+    public TypeRef modify(int i) {
+        modifiers = i;
+        return this;
     }
 
     /**
@@ -94,9 +124,21 @@ public class TypeRef
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(type.fullname);
-        if(!params.isEmpty())
-            sb.append('<').append(SourceUtil.listString(params)).append('>');
+
+        if(printCL) {
+            if((modifiers & GLOBAL) != 0) sb.append("global ");
+            else if((modifiers & LOCAL) != 0) sb.append("local ");
+            else if((modifiers & CONSTANT) != 0) sb.append("constant ");
+            if((modifiers & UNSIGNED) != 0) sb.append("unsigned ");
+
+            sb.append(type.fullname.replaceFirst("\\[\\]", "*"));
+            for(int i = 0; i < pointer; i++)
+                sb.append('*');
+        } else {
+            sb.append(type.fullname);
+            if (!params.isEmpty())
+                sb.append('<').append(SourceUtil.listString(params)).append('>');
+        }
 
         return sb.toString();
     }

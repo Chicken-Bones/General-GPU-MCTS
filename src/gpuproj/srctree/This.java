@@ -21,4 +21,9 @@ public class This extends Expression
     public int precedence() {
         return 1;
     }
+
+    @Override
+    public This copy(Scope scope) {
+        return new This(type);
+    }
 }

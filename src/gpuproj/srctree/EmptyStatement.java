@@ -6,4 +6,9 @@ public class EmptyStatement extends Statement
     public String toString() {
         return "";
     }
+
+    @Override
+    public EmptyStatement copy(Scope scope) {
+        return new EmptyStatement();
+    }
 }

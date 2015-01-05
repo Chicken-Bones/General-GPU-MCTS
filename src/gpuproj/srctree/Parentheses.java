@@ -27,4 +27,9 @@ public class Parentheses extends Expression
     public boolean lvalue() {
         return exp.lvalue();
     }
+
+    @Override
+    public Parentheses copy(Scope scope) {
+        return new Parentheses(exp.copy(scope));
+    }
 }

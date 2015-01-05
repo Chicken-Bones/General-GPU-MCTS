@@ -17,12 +17,6 @@ public class RetentionSetEvaluator extends StatementVisitor
     public Set<Symbol> search = new HashSet<>();
     public Set<Symbol> handled = new HashSet<>();
 
-    public List<MethodRemapper> remappers = new LinkedList<>();
-
-    public RetentionSetEvaluator() {
-        remappers.add(BuiltinMethodRemapper.instance);
-    }
-
     public void add(Symbol sym) {
         if(!retained.contains(sym) && !handled.contains(sym))
             search.add(sym);
@@ -56,18 +50,18 @@ public class RetentionSetEvaluator extends StatementVisitor
             return handle((MethodSymbol) sym);
         if(sym instanceof FieldSymbol)
             return handle((FieldSymbol) sym);
-        if(sym instanceof ClassSymbol)
-            return handle((ClassSymbol) sym);
+        if(sym instanceof TypeSymbol)
+            return handle((TypeSymbol) sym);
 
         return false;
     }
 
-    public boolean handle(ClassSymbol sym) {
-        return isOCLGlobal(sym);
+    public boolean handle(TypeSymbol sym) {
+        return sym instanceof PrimitiveSymbol || sym instanceof ArraySymbol || isOCLGlobal((ClassSymbol)sym);
     }
 
     public boolean handle(MethodSymbol sym) {
-        return sym.source == BuiltinMethodRemapper.instance || isOCLStatic(sym) || isOCLGlobal(sym.owner());
+        return sym.source == null || isOCLStatic(sym) || isOCLGlobal(sym.owner());
     }
 
     public boolean handle(FieldSymbol sym) {
@@ -122,20 +116,11 @@ public class RetentionSetEvaluator extends StatementVisitor
 
     @Override
     public void visit(MethodCall exp) {
-        exp.method = remap(exp.method);
-
         add(exp.method);
         if(exp.method.getName().equals("<init>"))
             add(TypeIndex.resolveType(exp.method.ownerName()));
 
         super.visit(exp);
-    }
-
-    public MethodSymbol remap(MethodSymbol method) {
-        for(MethodRemapper r : remappers)
-            method = r.map(method);
-
-        return method;
     }
 
     @Override

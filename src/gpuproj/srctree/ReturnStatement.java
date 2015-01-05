@@ -10,6 +10,11 @@ public class ReturnStatement extends Statement
 
     @Override
     public String toString() {
-        return "return "+exp;
+        return exp == null ? "return" : "return "+exp;
+    }
+
+    @Override
+    public ReturnStatement copy(Scope scope) {
+        return new ReturnStatement(exp == null ? null : exp.copy(scope));
     }
 }

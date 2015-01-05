@@ -24,4 +24,9 @@ public class Cast extends Expression
     public int precedence() {
         return 3;
     }
+
+    @Override
+    public Cast copy(Scope scope) {
+        return new Cast(type, exp.copy(scope));
+    }
 }

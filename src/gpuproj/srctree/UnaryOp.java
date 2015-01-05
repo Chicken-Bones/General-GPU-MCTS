@@ -32,4 +32,9 @@ public class UnaryOp extends Expression
     public int precedence() {
         return 3;
     }
+
+    @Override
+    public UnaryOp copy(Scope scope) {
+        return new UnaryOp(op, operand.copy(scope), postfix);
+    }
 }

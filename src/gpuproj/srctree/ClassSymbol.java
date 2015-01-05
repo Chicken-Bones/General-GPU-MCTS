@@ -225,4 +225,19 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
     public String signature() {
         return 'L'+fullname.replace('.', '/')+';';
     }
+
+    /**
+     * Recursively passes type through every class and interface extended by this class to create the most specific reference
+     * If type does not reference a TypeParam, this method just wastes time
+     * If type references a TypeParam of a superclass or interface of this class, then it will be replaced by the references specified by the extending/implementing class
+     */
+    public TypeRef specify(TypeRef type) {
+        if(parent != null)
+            type = parent.classType().specify(type).specify(parent);
+
+        for(TypeRef iface : interfaces)
+            type = iface.classType().specify(type).specify(iface);
+
+        return type;
+    }
 }

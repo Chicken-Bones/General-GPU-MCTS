@@ -1,5 +1,6 @@
 package gpuproj.srctree;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class CompactLocalDeclaration extends Statement
@@ -23,5 +24,14 @@ public class CompactLocalDeclaration extends Statement
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public CompactLocalDeclaration copy(Scope scope) {
+        List<LocalSymbol> copies = new LinkedList<>();
+        for(LocalSymbol sym : locals)
+            copies.add(sym.copy(scope));
+
+        return new CompactLocalDeclaration(copies);
     }
 }

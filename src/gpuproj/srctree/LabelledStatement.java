@@ -4,13 +4,13 @@ import gpuproj.srctree.Scope.ScopeProvider;
 
 import java.util.List;
 
-public class LabelledStatement extends Statement implements Symbol, ScopeProvider
+public abstract class LabelledStatement extends Statement implements Symbol, ScopeProvider
 {
     public final Scope scope;
     public String label;
 
     public LabelledStatement(Scope scope, String label) {
-        this.scope = scope;
+        this.scope = new Scope(scope, this);
         this.label = label;
     }
 

@@ -1,11 +1,8 @@
 package gpuproj.srctree;
 
-public class Statement
+public abstract class Statement
 {
-
-    //blocks just indent everything they get
-    //control flow indents substatements, but blocks use the formatted brace structure
-    //case block is special
+    public abstract Statement copy(Scope scope);
 
     public static boolean endsWith(StringBuilder sb, String s) {
         return s.length() <= sb.length() && sb.substring(sb.length()-s.length()).equals(s);
