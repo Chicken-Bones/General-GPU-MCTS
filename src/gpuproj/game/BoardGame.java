@@ -38,7 +38,21 @@ public abstract class BoardGame<B extends Board>
      */
     public abstract void playRandomMove(B board);
 
-    public static double score(int winner, int player) {
-        return winner == 2 ? 0.5 : winner == player ? 1 : 0;
+    /**
+     * @return winner == 2 ? 0.5F : winner == player ? 1 : 0
+     */
+    public static float score(int winner, int player) {
+        return floatScore(score_i(winner, player), 1);
+    }
+
+    /**
+     * @return winner == 2 ? 0 : winner == player ? 1 : -1
+     */
+    public static int score_i(int winner, int player) {
+        return winner == 2 ? 0 : winner == player ? 1 : -1;
+    }
+
+    public static float floatScore(int score, int games) {
+        return (score+games)/2F;
     }
 }

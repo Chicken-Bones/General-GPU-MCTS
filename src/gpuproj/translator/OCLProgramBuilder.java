@@ -1,8 +1,13 @@
 package gpuproj.translator;
 
+import gpuproj.StatDialog;
+import gpuproj.srctree.SourceUtil;
+import gpuproj.srctree.Statement;
 import gpuproj.srctree.TypeRef;
 import org.jocl.*;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,13 +41,14 @@ public class OCLProgramBuilder
             this.type = type;
             this.name = name;
         }
-    }
 
-    public static interface GlobalFunc
-    {
-        public String getName();
-        public String declare();
-        public String implement();
+        @Override
+        public String toString() {
+            TypeRef.printCL = true;
+            String s = type+" "+name;
+            TypeRef.printCL = false;
+            return s;
+        }
     }
 
     private cl_kernel kernel;
@@ -53,6 +59,8 @@ public class OCLProgramBuilder
     private List<KernelArg> args = new LinkedList<>();
     private Map<String, KernelArg> argMap = new HashMap<>();
     private StringBuilder kernelCode = new StringBuilder();
+
+    public List<Runnable> executeCallbacks = new LinkedList<>();
 
     public void declare(Declaration decl) {
         if(declarationMap.containsKey(decl.getName()))
@@ -75,7 +83,7 @@ public class OCLProgramBuilder
      * @param s One or more statements to write, should end with ;
      */
     public void writeKernel(String s) {
-        kernelCode.append('\n').append(s);
+        kernelCode.append('\n').append(Statement.indent(s));
     }
 
     public KernelArg addKernelArg(TypeRef type, String name) {
@@ -92,11 +100,40 @@ public class OCLProgramBuilder
         return argMap.get(name);
     }
 
-    public void build() {
-        //print declarations
-        //write kernel
-        //print implementations
-        //build program
+    public void build(cl_context context) {
+        if(program != null)
+            throw new IllegalStateException("Program already built");
+
+        StringBuilder sb = new StringBuilder();
+        for(Declaration decl : declarations)
+            sb.append(decl.declare()).append("\n\n");
+
+        sb.append("__kernel void kernel_main(").append(SourceUtil.listString(args)).append(") {");
+        sb.append(kernelCode);
+        sb.append("\n}\n\n");
+
+        for(Implementation impl : implementations)
+            sb.append(impl.implement()).append("\n\n");
+
+        String source = sb.toString();
+        logSource(source);
+
+        program = clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
+        clBuildProgram(program, 0, null, "", null, null);
+        kernel = clCreateKernel(program, "kernel_main", null);
+    }
+
+    private static int programID = 0;
+    private static void logSource(String source) {
+        try {
+            File file = new File(StatDialog.getLogDir(), "program" + programID++ + ".cl");
+            file.createNewFile();
+            FileWriter w = new FileWriter(file);
+            w.append(source);
+            w.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void setKernelArg(int i) {
@@ -132,6 +169,9 @@ public class OCLProgramBuilder
     }
 
     public void runKernel(cl_command_queue cmdQueue, long[] global_work_size, long[] local_work_size) {
+        for(Runnable callback : executeCallbacks)
+            callback.run();
+
         for(int i = 0; i < args.size(); i++)
             setKernelArg(i);
 
@@ -139,6 +179,7 @@ public class OCLProgramBuilder
     }
 
     public void release() {
-
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
     }
 }

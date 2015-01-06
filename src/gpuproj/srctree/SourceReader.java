@@ -184,6 +184,8 @@ public class SourceReader
      * Reads a comma separated list. Stops at the end of the source reader
      */
     public List<String> readList() {
+        declaration = true;
+
         List<String> list = new LinkedList<>();
         int start = seekCode();
         int end = start;
@@ -225,13 +227,17 @@ public class SourceReader
     }
 
     public TypeRef readTypeRef(Scope scope) {
+        readModifiers();
         TypeRef type;
         if (charAt(seekCode()) == '?') {
             readElement();//?
-            readElement();//assume extends
-            type = new TypeRef(new TypeParam("?", readTypeRef(scope), null));
-        }
-        else {
+            TypeParam p = new TypeParam("?", null);
+            type = new TypeRef(p);
+            if(!end()) {
+                readElement();//assume extends
+                p.upper = readTypeRef(scope);
+            }
+        } else {
             type = new TypeRef((TypeSymbol) scope.resolve1(readFullName(), Symbol.TYPE_SYM));
         }
 

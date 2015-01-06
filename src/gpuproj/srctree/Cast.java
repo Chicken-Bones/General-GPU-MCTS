@@ -27,6 +27,6 @@ public class Cast extends Expression
 
     @Override
     public Cast copy(Scope scope) {
-        return new Cast(type, exp.copy(scope));
+        return new Cast(type.copy(), exp.copy(scope));
     }
 }

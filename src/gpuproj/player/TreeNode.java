@@ -23,7 +23,7 @@ public class TreeNode<B extends Board<B>>
     public final BoardGame<B> game;
     public TreeNode<B> parent;
     public LinkedList<TreeNode<B>> children;
-    public double wins;
+    public float wins;
     public int sims;
 
     public TreeNode(Move<B> move, BoardGame<B> game) {
@@ -114,7 +114,7 @@ public class TreeNode<B extends Board<B>>
      * @param score The number of wins, must be on range [0-games]
      * @param games The number of played games
      */
-    public void update(double score, int games) {
+    public void update(float score, int games) {
         wins += score;
         sims += games;
         if(!isRoot()) parent.update(games-score, games);

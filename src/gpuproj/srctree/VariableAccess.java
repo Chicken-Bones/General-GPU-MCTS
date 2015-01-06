@@ -34,7 +34,8 @@ public class VariableAccess extends Expression
         if(field.isStatic())
             return field.fullname;
 
-        return exp + "." + field.getName();
+        String op = TypeRef.printCL && exp.returnType().pointer == 1 ? "->" : ".";
+        return exp + op + field.getName();
     }
 
     @Override
@@ -49,6 +50,10 @@ public class VariableAccess extends Expression
 
     @Override
     public VariableAccess copy(Scope scope) {
-        return new VariableAccess(var, exp == null ? null : exp.copy(scope));
+        Variable copy = var;
+        if(copy instanceof LocalSymbol)
+            copy = (Variable) scope.resolve1(copy.getName(), Symbol.LOCAL_SYM);
+
+        return new VariableAccess(copy, exp == null ? null : exp.copy(scope));
     }
 }

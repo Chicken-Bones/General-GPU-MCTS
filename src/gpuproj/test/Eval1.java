@@ -1,19 +1,22 @@
 package gpuproj.test;
 
-import gpuproj.test.Eval2.*;
-
 public abstract class Eval1
 {
-    public static class Inner1
+    public static class Top<A>
     {
     }
 
-    public abstract void method(Inner2 param);
+    public static class Next<B> extends Top<B>
+    {
 
-    private void test(int a, double b){}
-    private void test(double a, int b){}
-
-    private void test() {
-        test(0, 0D);
     }
+
+    public static class Bottom extends Next<Object>
+    {
+
+    }
+
+    public abstract <T> void method(Top<T> param);
+    //supply an instance of Bottom
+    //match Bottom
 }

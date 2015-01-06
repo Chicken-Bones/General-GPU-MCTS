@@ -8,12 +8,8 @@ import gpuproj.player.UCBPlayer;
 import gpuproj.simulator.CPU1Simulator;
 import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.*;
-import gpuproj.translator.RetentionSetEvaluator;
-import gpuproj.translator.TranslatedStruct;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedList;
 
 public class Main
 {

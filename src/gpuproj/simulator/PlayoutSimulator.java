@@ -39,13 +39,13 @@ public abstract class PlayoutSimulator
      */
     public abstract <B extends Board<B>> void play(List<TreeNode<B>> nodes, BoardGame<B> game);
 
-    public static <B extends Board<B>> double playout(B board, BoardGame<B> game) {
+    public static <B extends Board<B>> int playout(B board, BoardGame<B> game) {
         int player = board.getTurn()^1;
         int winner = game.checkWinner(board);
         while(winner < 0) {
             game.playRandomMove(board);
             winner = game.checkWinner(board);
         }
-        return BoardGame.score(winner, player);
+        return BoardGame.score_i(winner, player);
     }
 }

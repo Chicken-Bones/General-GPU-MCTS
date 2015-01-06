@@ -53,6 +53,11 @@ public class LocalSymbol extends Statement implements Variable
 
     @Override
     public LocalSymbol copy(Scope scope) {
-        return new LocalSymbol(type, name, init == null ? null : init.copy(scope));
+        LocalSymbol copy = new LocalSymbol(type.copy(), name);
+        scope.cache(copy, copy.getName());
+        if(init != null)
+            copy.init = init.copy(scope);
+
+        return copy;
     }
 }

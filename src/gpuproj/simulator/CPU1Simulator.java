@@ -18,7 +18,7 @@ public class CPU1Simulator extends PlayoutSimulator
     @Override
     public <B extends Board<B>> void play(List<TreeNode<B>> nodes, BoardGame<B> game) {
         for(TreeNode<B> node : nodes)
-            node.update(playout(node.getBoardCopy(), game), 1);
+            node.update(BoardGame.floatScore(playout(node.getBoardCopy(), game), 1), 1);
 
         simCount += nodes.size();
     }

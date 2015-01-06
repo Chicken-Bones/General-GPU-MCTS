@@ -1,8 +1,6 @@
 package gpuproj.srctree;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Method and constructor (<init>) calls
@@ -21,10 +19,8 @@ public class MethodCall extends Expression
     @Override
     public TypeRef returnType() {
         TypeRef t = method.returnType;
-        if(!method.isStatic())
-            t = t.specify(params.get(0).returnType());
-
-        return t;
+        Map<TypeParam, TypeSymbol> typeMap = TypeRef.specify(t.getParams(), method.params, params);
+        return t.mapParams(typeMap);
     }
 
     @Override
@@ -35,21 +31,34 @@ public class MethodCall extends Expression
         if(method.getName().equals("<init>")) {
             sb.append("new ").append(method.ownerName());
         } else {
-            if (method.isStatic())
-                sb.append(method.ownerName());
-            else
-                sb.append(it.next());
-            sb.append('.').append(method.getName());
+            if (method.isStatic()) {
+                String owner = method.ownerName();
+                if(!owner.isEmpty())
+                    sb.append(method.ownerName()).append('.');
+            } else
+                sb.append(it.next()).append('.');
+            sb.append(method.getName());
         }
         sb.append('(');
 
-        boolean first = true;
+        int i = 0;
         while(it.hasNext()) {
-            if(!first)
-                sb.append(", ");
+            if(i > 0) sb.append(", ");
 
-            sb.append(it.next());
-            first = false;
+            TypeRef paramType = method.params.get(i++).type;
+            Expression exp = it.next();
+            if(TypeRef.printCL) {//add address of/deference as needed to match pointers
+                TypeRef callType = exp.returnType();
+                if(paramType.pointer != callType.pointer) {
+                    if(exp.precedence() >= 3)
+                        exp = new Parentheses(exp);
+                    if(paramType.pointer > callType.pointer)
+                        sb.append('&');
+                    else if(paramType.pointer < callType.pointer)
+                        sb.append('*');
+                }
+            }
+            sb.append(exp);
         }
 
         sb.append(')');

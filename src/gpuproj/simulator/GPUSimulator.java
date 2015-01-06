@@ -30,7 +30,7 @@ public class GPUSimulator extends PlayoutSimulator
     private cl_mem boardMem;
     private ByteBuffer boardBuffer;
     private cl_mem scoreMem;
-    private double[] scoreBuffer;
+    private int[] scoreBuffer;
 
     public GPUSimulator(int simsPerNode) {
         this.simsPerNode = simsPerNode;
@@ -92,18 +92,19 @@ public class GPUSimulator extends PlayoutSimulator
         JavaTranslator t = new JavaTranslator(program);
         ClassSymbol BoardGame = (ClassSymbol) TypeIndex.resolveType("gpuproj.game.BoardGame");
         ClassSymbol Game = (ClassSymbol) TypeIndex.resolveType(gameClass.getCanonicalName());
-        ClassSymbol Board = Game.specify(new TypeRef(BoardGame.typeParams.get(0))).classType();
+        ClassSymbol Board = (ClassSymbol) TypeRef.specify(BoardGame.typeParams.get(0), BoardGame.parameterPattern(), new TypeRef(Game));
 
-        t.addGlobalInstance(BoardGame);
-        t.addGlobalMethod((MethodSymbol) TypeIndex.scope.resolve1("gpuproj.simulator.PlayoutSimulator.playout", Symbol.METHOD_SYM),
-                Arrays.asList(Board, BoardGame));
+        t.addStruct(Board);
+        t.addGlobalInstance(Game);
+        MethodSymbol playout = t.addGlobalMethod((MethodSymbol) TypeIndex.scope.resolve1("gpuproj.simulator.PlayoutSimulator.playout", Symbol.METHOD_SYM), Arrays.asList(Board, Game));
+        t.translate();
 
-        t.getMethod("playout").params.get(0).type.pointer = 0;
+        playout.params.get(0).type.pointer = 0;
 
         program.addKernelArg(new TypeRef(Board).point(1).modify(TypeRef.GLOBAL), "board").data = boardMem;
-        program.addKernelArg(new TypeRef(PrimitiveSymbol.DOUBLE).point(1).modify(TypeRef.GLOBAL), "score").data = scoreMem;
-        program.writeKernel("atomic_add(score + get_group_id(0), playout(board[get_group_id(0)]));");
-        program.build();
+        program.addKernelArg(new TypeRef(PrimitiveSymbol.INT).point(1).modify(TypeRef.GLOBAL), "score").data = scoreMem;
+        program.writeKernel("atomic_add(score + get_group_id(0), "+t.kernelCall(playout, "board[get_group_id(0)]")+");");
+        program.build(context);
 
         boardStruct = TranslatedStruct.translate(Board);
     }
@@ -111,13 +112,13 @@ public class GPUSimulator extends PlayoutSimulator
     private void ensureCapacity(int nodeCount) {
         if(boardBuffer == null || nodeCount * boardStruct.size > boardBuffer.capacity()) {
             boardBuffer = ByteBuffer.allocateDirect(nodeCount * boardStruct.size);
-            scoreBuffer = new double[nodeCount];
+            scoreBuffer = new int[nodeCount];
             if(boardMem != null) {
                 clReleaseMemObject(boardMem);
                 clReleaseMemObject(scoreMem);
             }
             program.getKernelArg("board").data = boardMem = clCreateBuffer(context, CL_MEM_READ_ONLY, boardBuffer.capacity(), null, null);
-            program.getKernelArg("score").data = scoreMem = clCreateBuffer(context, CL_MEM_READ_WRITE, nodeCount * Sizeof.cl_double, null, null);
+            program.getKernelArg("score").data = scoreMem = clCreateBuffer(context, CL_MEM_READ_WRITE, nodeCount * Sizeof.cl_int, null, null);
         }
     }
 
@@ -132,11 +133,11 @@ public class GPUSimulator extends PlayoutSimulator
 
         program.runKernel(commandQueue, new long[]{treeNodes.size()*simsPerNode}, new long[]{simsPerNode});
 
-        clEnqueueReadBuffer(commandQueue, scoreMem, true, 0, treeNodes.size() * Sizeof.cl_double, Pointer.to(scoreBuffer), 0, null, null);
+        clEnqueueReadBuffer(commandQueue, scoreMem, true, 0, treeNodes.size() * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
 
         int i = 0;
         for(TreeNode node : treeNodes)
-            node.update(scoreBuffer[i++], simsPerNode);
+            node.update(BoardGame.floatScore(scoreBuffer[i++], simsPerNode), simsPerNode);
     }
 
     @Override

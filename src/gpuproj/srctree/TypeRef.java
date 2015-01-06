@@ -1,7 +1,6 @@
 package gpuproj.srctree;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A reference to a TypeSymbol, specifies values for parameters
@@ -94,24 +93,45 @@ public class TypeRef
     }
 
     /**
-     * Replaces TypeParam references with specific type references.
-     * If type is a TypeParam, and specified.type is equal to the owner of this TypeParam, then returns the TypeRef of specific that is assigned to this parameter
-     * eg, if type is T from Iterable and specifier is Iterable<String>, returns String
-     *
-     * @param specifier A reference to a declaration of a generic type wth arguments eg, Iterable<String>
-     * @return a more specific reference if found, otherwise this
+     * Finds the reference in this type tree that specifies the parameters to type
+     * Eg. specify(Set) on theoretical IntegerSet extends Set<Integer> would return Set<Integer>
+     * If this.type == type, returns this
      */
-    public TypeRef specify(TypeRef specifier) {
-        if(specifier.params.isEmpty())
+    public TypeRef specifier(TypeSymbol type) {
+        if(this.type == type)
             return this;
 
-        if(type instanceof TypeParam) {
-            TypeParam param = (TypeParam) type;
-            if(param.owner == specifier.type)
-                return specifier.params.get(param.owner.getTypeParams().indexOf(param));
-        }
+        return classType().parentRef(type);
+    }
 
-        return this;
+    /**
+     * Recursively calculates the set of all TypeParams referenced by this and it's params
+     * Eg. Map<A, Pair<A, B>> would return (A, B)
+     */
+    public Collection<TypeParam> getParams() {
+        if(type instanceof TypeParam)
+            return Arrays.asList((TypeParam) type);
+
+        if(params.isEmpty())
+            return Collections.emptyList();
+
+        Set<TypeParam> set = new TreeSet<>();
+        for(TypeRef param : params)
+            set.addAll(param.getParams());
+
+        return set;
+    }
+
+    public TypeRef mapParams(Map<TypeParam, TypeSymbol> typeMap) {
+        if(typeMap.isEmpty())
+            return this;
+
+        TypeSymbol mapped = typeMap.get(type);
+        TypeRef r = new TypeRef(mapped == null ? type : mapped);
+        for(TypeRef ref : params)
+            r.params.add(ref.mapParams(typeMap));
+
+        return r;
     }
 
     /**
@@ -119,6 +139,14 @@ public class TypeRef
      */
     public String signature() {
         return type.signature();
+    }
+
+    public TypeRef copy() {
+        TypeRef copy = new TypeRef(type);
+        for(TypeRef p : params)
+            copy.params.add(p.copy());
+
+        return copy.point(pointer).modify(modifiers);
     }
 
     @Override
@@ -131,8 +159,20 @@ public class TypeRef
             else if((modifiers & CONSTANT) != 0) sb.append("constant ");
             if((modifiers & UNSIGNED) != 0) sb.append("unsigned ");
 
-            sb.append(type.fullname.replaceFirst("\\[\\]", "*"));
-            for(int i = 0; i < pointer; i++)
+            int ptr = pointer;
+            TypeSymbol baseType = type;
+            while(baseType instanceof ArraySymbol) {
+                baseType = ((ArraySymbol) baseType).type;
+                ptr++;
+            }
+            String name;
+            if(type == PrimitiveSymbol.BYTE || type == PrimitiveSymbol.BOOLEAN)
+                name = "char";
+            else
+                name = type.getName();
+
+            sb.append(name);
+            for(int i = 0; i < ptr; i++)
                 sb.append('*');
         } else {
             sb.append(type.fullname);
@@ -165,5 +205,54 @@ public class TypeRef
             return new TypeRef(TypeIndex.resolveType((String) o));
 
         return null;
+    }
+
+    public static TypeSymbol specify(TypeParam param, TypeRef pattern, TypeRef specific) {
+        if(pattern.type == param)
+            return specific.type;
+
+        if(pattern.type instanceof TypeParam || pattern.params.isEmpty())//pattern does not contain param
+            return param;
+
+        TypeRef match = specific.specifier(pattern.type);
+        if(match.params.isEmpty())//match does not specify any information about pattern
+            return param;
+
+        for(int i = 0; i < pattern.params.size(); i++) {
+            TypeSymbol t = specify(param, pattern.params.get(i), match.params.get(i));
+            if(t == param)
+                continue;//nothing new here
+
+            if (!(t instanceof TypeParam))
+                return t;//resolved to a concrete type, hooray
+
+            //resolve the new type param
+            param = (TypeParam) t;
+            return specify(param, ((ClassSymbol)param.owner).parameterPattern(), specific);
+        }
+
+        return param;
+    }
+
+    public static Map<TypeParam, TypeSymbol> specify(Collection<TypeParam> params, List patterns, List specifiers) {
+        if(params.isEmpty())
+            return Collections.emptyMap();
+
+        Map<TypeParam, TypeSymbol> typeMap = new TreeMap<>();
+        List<TypeParam> remaining = new LinkedList<>(params);
+        for(int i = 0; i < specifiers.size() && !remaining.isEmpty(); i++) {
+            TypeRef pattern = get(patterns.get(i));
+            TypeRef specifier = get(specifiers.get(i));
+            for(Iterator<TypeParam> it = remaining.iterator(); it.hasNext();) {
+                TypeParam p = it.next();
+                TypeSymbol t = specify(p, pattern, specifier);
+                if(t != p) {
+                    typeMap.put(p, t);
+                    it.remove();
+                }
+            }
+        }
+
+        return typeMap;
     }
 }

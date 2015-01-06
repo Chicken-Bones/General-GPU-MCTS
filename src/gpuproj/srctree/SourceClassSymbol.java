@@ -137,24 +137,28 @@ public class SourceClassSymbol extends ClassSymbol
 
     private int declarationType(String stmt) {
         SourceReader r = new SourceReader(stmt);
+        r.readModifiers();
+        String s = r.readElement();
+        if(s.equals("class") || s.equals("interface") || s.equals("@interface") || s.equals("enum"))
+            return CLASS_SYM;
+
+        r.pos = 0;
+
         int equals = r.indexOf('=');
         int brace = r.indexOf('{');
         int bracket = r.indexOf('(');
-        int clazz = r.indexOf("class");
 
         if(equals < 0) equals = Integer.MAX_VALUE;
         if(brace < 0) brace = Integer.MAX_VALUE;
         if(bracket < 0) bracket = Integer.MAX_VALUE;
-        if(clazz < 0) clazz = Integer.MAX_VALUE;
 
-        if(clazz < equals && clazz < bracket) return CLASS_SYM;
         if(bracket < equals || brace < equals) return METHOD_SYM;
         return FIELD_SYM;
     }
 
     public static SourceClassSymbol fromStatement(String parent, Scope scope, String stmt) {
         SourceReader r = new SourceReader(stmt);
-        r.seekStart("interface", "class");
+        r.readModifiers();
         r.readElement();//skip interface/class
         return new SourceClassSymbol(SourceUtil.combineName(parent, r.readElement()), scope, stmt);
     }

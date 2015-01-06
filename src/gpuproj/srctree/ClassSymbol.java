@@ -227,17 +227,39 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
     }
 
     /**
-     * Recursively passes type through every class and interface extended by this class to create the most specific reference
-     * If type does not reference a TypeParam, this method just wastes time
-     * If type references a TypeParam of a superclass or interface of this class, then it will be replaced by the references specified by the extending/implementing class
+     * Finds the extends/implements reference for a given type in this class' type tree, to provide the generic arguments
      */
-    public TypeRef specify(TypeRef type) {
-        if(parent != null)
-            type = parent.classType().specify(type).specify(parent);
+    public TypeRef parentRef(TypeSymbol type) {
+        if(parent != null && parent.type == type)
+            return parent;
 
         for(TypeRef iface : interfaces)
-            type = iface.classType().specify(type).specify(iface);
+            if(iface.type == type)
+                return iface;
 
-        return type;
+        if(parent != null) {
+            TypeRef ref = parent.classType().parentRef(type);
+            if(ref != null)
+                return ref;
+        }
+
+        for(TypeRef iface : interfaces) {
+            TypeRef ref = iface.classType().parentRef(type);
+            if(ref != null)
+                return ref;
+        }
+
+        return null;
+    }
+
+    /**
+     * A reference to this with all params
+     */
+    public TypeRef parameterPattern() {
+        TypeRef ref = new TypeRef(this);
+        for(TypeParam p : typeParams)
+            ref.params.add(new TypeRef(p));
+
+        return ref;
     }
 }

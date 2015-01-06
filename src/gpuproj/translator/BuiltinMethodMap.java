@@ -7,7 +7,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BuiltinMethodRemapper
+public class BuiltinMethodMap
 {
     public static Map<String, String> map = new HashMap<>();
     private static Map<String, MethodSymbol> built = new HashMap<>();
@@ -67,13 +67,10 @@ public class BuiltinMethodRemapper
         return sym;
     }
 
-    public static MethodSymbol map(MethodSymbol method) {
+    public static String map(MethodSymbol method) {
         String mapped = map.get(method.fullname);
         if(mapped == null)
             mapped = map.get(method.fullname+method.signature());
-        if(mapped != null)
-            return get(mapped);
-
-        return method;
+        return mapped;
     }
 }

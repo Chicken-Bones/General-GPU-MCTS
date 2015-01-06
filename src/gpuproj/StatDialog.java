@@ -25,7 +25,7 @@ public class StatDialog extends JDialog
         return stat;
     }
 
-    private static File getLogDir() {
+    public static File getLogDir() {
         if(logDir == null) {
             DateFormat fmt = new SimpleDateFormat("dd-MM-yyyy HH.mm.ss");
             logDir = new File("logs/"+fmt.format(new Date()));
