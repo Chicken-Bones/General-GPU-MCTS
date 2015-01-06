@@ -35,7 +35,7 @@ public class TranslatedStruct
         }
     }
 
-    private static Map<ClassSymbol, TranslatedStruct> cache = new HashMap<>();
+    private static Map<ClassSymbol, TranslatedStruct> cache = new HashMap<ClassSymbol, TranslatedStruct>();
     public static TranslatedStruct translate(ClassSymbol type) {
         TranslatedStruct struct = cache.get(type);
         if(struct == null)
@@ -45,7 +45,7 @@ public class TranslatedStruct
     }
 
     public final ClassSymbol type;
-    public List<StructAccessor> accessors = new LinkedList<>();
+    public List<StructAccessor> accessors = new LinkedList<StructAccessor>();
     public int size;
 
     public TranslatedStruct(ClassSymbol type) {
@@ -62,14 +62,14 @@ public class TranslatedStruct
                 fields.add(field);
     }
 
-    private static Stack<ClassSymbol> stack = new Stack<>();
+    private static Stack<ClassSymbol> stack = new Stack<ClassSymbol>();
     public static void createAccessors(ClassSymbol classSym, List<StructAccessor> accessors) {
         if(stack.contains(classSym))
             throw new IllegalArgumentException("Structs cannot contain recursive members");
 
         stack.push(classSym);
 
-        List<FieldSymbol> fields = new LinkedList<>();
+        List<FieldSymbol> fields = new LinkedList<FieldSymbol>();
         getStructFields(classSym, fields);
 
         boolean isPackedStruct = StructAccess.isPacked(classSym.runtimeClass());

@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 public class UnaryOp extends Expression
 {
-    public static Set<String> symbols = new TreeSet<>(Arrays.asList("++", "--", "+", "-", "~", "!"));
+    public static Set<String> symbols = new TreeSet<String>(Arrays.asList("++", "--", "+", "-", "~", "!"));
 
     public String op;
     public Expression operand;

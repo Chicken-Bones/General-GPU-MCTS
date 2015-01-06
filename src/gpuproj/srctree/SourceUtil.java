@@ -8,28 +8,6 @@ import java.util.TreeSet;
 
 public class SourceUtil
 {
-    public static String type2c(String type) {
-        switch(type) {
-            case "byte": return "char";
-            case "boolean": return "uchar";
-            case "char": return "ushort";
-            default: return type;
-        }
-    }
-
-    public static int pointerLevel(String type) {
-        int p = 0;
-        while(type.charAt(type.length()-1-p) == '*') p++;
-        return p;
-    }
-
-    /**
-     * @return True if an operator of given precedence associates left to right (left operands are grouped first)
-     */
-    public static boolean assosciateRight(int precedence) {
-        return precedence != 3 && precedence != 15;
-    }
-
     public static String simpleName(String fullName) {
         int dot = fullName.lastIndexOf('.');
         return dot < 0 ? fullName : fullName.substring(dot+1);
@@ -52,7 +30,7 @@ public class SourceUtil
     /**
      * set of all operator symbols, excluding brackets
      */
-    public static Set<String> operator_symbols = new TreeSet<>(Arrays.asList(
+    public static Set<String> operator_symbols = new TreeSet<String>(Arrays.asList(
             ".",
             "++", "--", "+", "-", "~", "!",
             "*", "/", "%",
@@ -66,20 +44,19 @@ public class SourceUtil
     ));
 
     public static int getModifier(String word) {
-        switch(word) {
-            case "public": return Modifier.PUBLIC;
-            case "protected": return Modifier.PROTECTED;
-            case "private": return Modifier.PRIVATE;
-            case "abstract": return Modifier.ABSTRACT;
-            case "static": return Modifier.STATIC;
-            case "final": return Modifier.FINAL;
-            case "transient": return Modifier.TRANSIENT;
-            case "volatile": return Modifier.VOLATILE;
-            case "synchronized": return Modifier.SYNCHRONIZED;
-            case "native": return Modifier.NATIVE;
-            default: return 0;
-        }
+        if (word.equals("public")) return Modifier.PUBLIC;
+        if (word.equals("protected")) return Modifier.PROTECTED;
+        if (word.equals("private")) return Modifier.PRIVATE;
+        if (word.equals("abstract")) return Modifier.ABSTRACT;
+        if (word.equals("static")) return Modifier.STATIC;
+        if (word.equals("final")) return Modifier.FINAL;
+        if (word.equals("transient")) return Modifier.TRANSIENT;
+        if (word.equals("volatile")) return Modifier.VOLATILE;
+        if (word.equals("synchronized")) return Modifier.SYNCHRONIZED;
+        if (word.equals("native")) return Modifier.NATIVE;
+        return 0;
     }
+
     public static String listString(List<?> list) {
         return listString(list, ", ");
     }

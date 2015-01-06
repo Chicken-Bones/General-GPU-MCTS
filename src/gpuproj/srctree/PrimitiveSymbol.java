@@ -7,9 +7,9 @@ import java.util.*;
  */
 public class PrimitiveSymbol extends TypeSymbol
 {
-    public static Map<String, PrimitiveSymbol> nameMap = new HashMap<>();
-    public static Map<Character, PrimitiveSymbol> sigMap = new HashMap<>();
-    public static List<PrimitiveSymbol> values = new ArrayList<>();
+    public static Map<String, PrimitiveSymbol> nameMap = new HashMap<String, PrimitiveSymbol>();
+    public static Map<Character, PrimitiveSymbol> sigMap = new HashMap<Character, PrimitiveSymbol>();
+    public static List<PrimitiveSymbol> values = new ArrayList<PrimitiveSymbol>();
 
     public static final PrimitiveSymbol VOID = new PrimitiveSymbol(Void.TYPE, 'V');
     public static final PrimitiveSymbol BOOLEAN = new PrimitiveSymbol(Boolean.TYPE, 'Z');

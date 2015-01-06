@@ -48,7 +48,7 @@ public class Othello extends BoardGame<SimpleBoard>
         return board;
     }
 
-    private ArrayList<SimpleBoard> moves = new ArrayList<>();
+    private ArrayList<SimpleBoard> moves = new ArrayList<SimpleBoard>();
     @Override
     public List<? extends Move<SimpleBoard>> expand(SimpleBoard board) {
         moves.clear();

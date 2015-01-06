@@ -78,21 +78,15 @@ public class SourceClassSymbol extends ClassSymbol
         SourceReader r = new SourceReader((String) source);
         modifiers = r.readModifiers();
 
-        switch(r.readElement()) {
-            case "@interface":
-                modifiers |= ANNOTATION;
-                break;
-            case "interface":
-                modifiers |= Modifier.INTERFACE;
-                break;
-            case "enum":
-                modifiers |= ENUM;
-                break;
-            case "class":
-                break;
-            default:
-                throw new IllegalStateException("Unknown class type");
-        }
+        String s = r.readElement();
+        if (s.equals("@interface"))
+            modifiers |= ANNOTATION;
+        else if (s.equals("interface"))
+            modifiers |= Modifier.INTERFACE;
+        else if (s.equals("enum"))
+            modifiers |= ENUM;
+        else if (!s.equals("class"))
+            throw new IllegalStateException("Unknown class type");
 
         //skip to body
         r.seekStart("{");

@@ -9,9 +9,9 @@ public class Block extends Statement implements ScopeProvider
 {
     public final Scope scope;
 
-    public List<Statement> statements = new LinkedList<>();
-    private List<LocalSymbol> locals = new LinkedList<>();
-    private List<LabelledStatement> labels = new LinkedList<>();
+    public List<Statement> statements = new LinkedList<Statement>();
+    private List<LocalSymbol> locals = new LinkedList<LocalSymbol>();
+    private List<LabelledStatement> labels = new LinkedList<LabelledStatement>();
 
     public Block(Scope scope) {
         this.scope = new Scope(scope, this);

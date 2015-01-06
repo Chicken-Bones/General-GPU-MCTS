@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class BuiltinMethodMap
 {
-    public static Map<String, String> map = new HashMap<>();
-    private static Map<String, MethodSymbol> built = new HashMap<>();
+    public static Map<String, String> map = new HashMap<String, String>();
+    private static Map<String, MethodSymbol> built = new HashMap<String, MethodSymbol>();
 
     static {
         map.put("java.lang.Math.min(II)I", "min");

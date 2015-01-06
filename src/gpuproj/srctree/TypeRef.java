@@ -26,7 +26,7 @@ public class TypeRef
     /**
      * Values for the parameters of type. May be empty for unspecified parameters
      */
-    public List<TypeRef> params = new LinkedList<>();
+    public List<TypeRef> params = new LinkedList<TypeRef>();
     /**
      * Pointer level. Number of asterisks before this
      */
@@ -115,7 +115,7 @@ public class TypeRef
         if(params.isEmpty())
             return Collections.emptyList();
 
-        Set<TypeParam> set = new TreeSet<>();
+        Set<TypeParam> set = new TreeSet<TypeParam>();
         for(TypeRef param : params)
             set.addAll(param.getParams());
 
@@ -238,8 +238,8 @@ public class TypeRef
         if(params.isEmpty())
             return Collections.emptyMap();
 
-        Map<TypeParam, TypeSymbol> typeMap = new TreeMap<>();
-        List<TypeParam> remaining = new LinkedList<>(params);
+        Map<TypeParam, TypeSymbol> typeMap = new TreeMap<TypeParam, TypeSymbol>();
+        List<TypeParam> remaining = new LinkedList<TypeParam>(params);
         for(int i = 0; i < specifiers.size() && !remaining.isEmpty(); i++) {
             TypeRef pattern = get(patterns.get(i));
             TypeRef specifier = get(specifiers.get(i));

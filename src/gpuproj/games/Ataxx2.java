@@ -118,7 +118,7 @@ public class Ataxx2 extends BoardGame<AtaxxBoard2>
         return board;
     }
 
-    private final MoveList<AtaxxMove2> moves = new MoveList<>(200, AtaxxMove2.class);
+    private final MoveList<AtaxxMove2> moves = new MoveList<AtaxxMove2>(200, AtaxxMove2.class);
 
     /**
      * Clears the move list, and adds all moves of b to it

@@ -34,7 +34,7 @@ public class SourceFile implements ScopeProvider
 
     public final Scope scope = new Scope(this);
     public String pkg = "";
-    public List<Import> imports = new LinkedList<>();
+    public List<Import> imports = new LinkedList<Import>();
 
     @Override
     public void resolveOnce(String name, int type, List<Symbol> list) {

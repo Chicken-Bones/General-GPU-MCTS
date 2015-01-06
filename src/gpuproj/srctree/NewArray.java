@@ -15,7 +15,7 @@ public class NewArray extends Expression
 
     public NewArray(ArraySymbol type) {
         this.type = type;
-        dimensions = new ArrayList<>(type.dimension());
+        dimensions = new ArrayList<Expression>(type.dimension());
     }
 
     @Override
@@ -56,7 +56,7 @@ public class NewArray extends Expression
     @Override
     public NewArray copy(Scope scope) {
         NewArray copy = new NewArray(type);
-        copy.dimensions = new ArrayList<>(dimensions.size());
+        copy.dimensions = new ArrayList<Expression>(dimensions.size());
         for(Expression exp : dimensions)
             copy.dimensions.add(exp == null ? null : exp.copy(scope));
 

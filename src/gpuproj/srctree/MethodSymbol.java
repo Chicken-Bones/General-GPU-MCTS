@@ -14,10 +14,10 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
     public final Scope scope;
     private AnnotatedElement runtimeMethod;
     public int modifiers;
-    public List<TypeParam> typeParams = new LinkedList<>();
+    public List<TypeParam> typeParams = new LinkedList<TypeParam>();
     public TypeRef returnType;
     public String fullname;
-    public List<LocalSymbol> params = new LinkedList<>();
+    public List<LocalSymbol> params = new LinkedList<LocalSymbol>();
     public boolean vaargs;
     public Block body;
 
@@ -132,7 +132,7 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
     }
 
     public static MethodSymbol match(List<MethodSymbol> methods, List paramTypes) {
-        List<MethodSymbol> matching = new LinkedList<>();
+        List<MethodSymbol> matching = new LinkedList<MethodSymbol>();
         for(MethodSymbol m : methods)
             if(m.matches(paramTypes))
                 matching.add(m);

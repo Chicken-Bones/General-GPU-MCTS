@@ -13,9 +13,9 @@ import java.util.*;
  */
 public class RetentionSetEvaluator extends StatementVisitor
 {
-    public Set<Symbol> retained = new HashSet<>();
-    public Set<Symbol> search = new HashSet<>();
-    public Set<Symbol> handled = new HashSet<>();
+    public Set<Symbol> retained = new HashSet<Symbol>();
+    public Set<Symbol> search = new HashSet<Symbol>();
+    public Set<Symbol> handled = new HashSet<Symbol>();
 
     public void add(Symbol sym) {
         if(!retained.contains(sym) && !handled.contains(sym))

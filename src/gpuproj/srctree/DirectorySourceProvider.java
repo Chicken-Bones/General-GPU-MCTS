@@ -1,9 +1,9 @@
 package gpuproj.srctree;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class DirectorySourceProvider implements SourceProvider
 {
@@ -18,8 +18,13 @@ public class DirectorySourceProvider implements SourceProvider
         File file = new File(base, path);
         if(!file.exists()) return null;
         try {
-            byte[] bytes = Files.readAllBytes(Paths.get(file.toURI()));
-            return new String(bytes);
+            StringBuilder sb = new StringBuilder();
+            BufferedReader r = new BufferedReader(new FileReader(file));
+            String s;
+            while((s = r.readLine()) != null)
+                sb.append(s).append('\n');
+
+            return sb.toString();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -76,7 +76,7 @@ public class JavaTranslator implements ScopeProvider
     public class StructDecl implements Declaration
     {
         public ClassSymbol type;
-        public List<FieldSymbol> fields = new LinkedList<>();
+        public List<FieldSymbol> fields = new LinkedList<FieldSymbol>();
 
         public StructDecl(ClassSymbol type) {
             this.type = type;
@@ -113,9 +113,9 @@ public class JavaTranslator implements ScopeProvider
 
     public class MethodInfo
     {
-        public Set<MethodSymbol> callers = new HashSet<>();
-        public Set<MethodSymbol> calls = new HashSet<>();
-        public Set<KernelVar> globals = new HashSet<>();
+        public Set<MethodSymbol> callers = new HashSet<MethodSymbol>();
+        public Set<MethodSymbol> calls = new HashSet<MethodSymbol>();
+        public Set<KernelVar> globals = new HashSet<KernelVar>();
     }
 
     private class ExpansionVisitor extends StatementVisitor
@@ -211,12 +211,12 @@ public class JavaTranslator implements ScopeProvider
      */
     public static final Object builtinSource = new Object();
     private Scope scope = new Scope(null, this);
-    private Map<MethodSymbol, MethodSymbol> translatedMap = new HashMap<>();
-    private Map<MethodSymbol, MethodInfo> methodInfo = new HashMap<>();
-    private Set<ClassSymbol> globalClasses = new HashSet<>();
-    private Set<ClassSymbol> structs = new HashSet<>();
-    private Map<FieldSymbol, FieldSymbol> globalFields = new HashMap<>();
-    private List<FieldSymbol> fieldOrder = new LinkedList<>();
+    private Map<MethodSymbol, MethodSymbol> translatedMap = new HashMap<MethodSymbol, MethodSymbol>();
+    private Map<MethodSymbol, MethodInfo> methodInfo = new HashMap<MethodSymbol, MethodInfo>();
+    private Set<ClassSymbol> globalClasses = new HashSet<ClassSymbol>();
+    private Set<ClassSymbol> structs = new HashSet<ClassSymbol>();
+    private Map<FieldSymbol, FieldSymbol> globalFields = new HashMap<FieldSymbol, FieldSymbol>();
+    private List<FieldSymbol> fieldOrder = new LinkedList<FieldSymbol>();
 
     public JavaTranslator(OCLProgramBuilder program) {
         this.program = program;

@@ -69,7 +69,7 @@ public class MoveList<T extends StructLike<T>>
     }
 
     public List<T> toList() {
-        ArrayList<T> list = new ArrayList<>(size);
+        ArrayList<T> list = new ArrayList<T>(size);
         for(int i = 0; i < size; i++)
             list.add(((T)arr[i]).copy());
         return list;

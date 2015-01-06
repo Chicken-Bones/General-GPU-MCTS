@@ -72,7 +72,7 @@ public class MethodCall extends Expression
 
     @Override
     public MethodCall copy(Scope scope) {
-        List<Expression> copies = new LinkedList<>();
+        List<Expression> copies = new LinkedList<Expression>();
         for(Expression exp : params)
             copies.add(exp.copy(scope));
 

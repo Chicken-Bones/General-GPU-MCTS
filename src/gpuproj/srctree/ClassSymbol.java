@@ -30,15 +30,15 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
      */
     public boolean inner;
     public int modifiers;
-    public List<TypeParam> typeParams = new LinkedList<>();
+    public List<TypeParam> typeParams = new LinkedList<TypeParam>();
     /**
      * The parent type of this symbol, null if this is Object
      */
     public TypeRef parent;
-    public List<TypeRef> interfaces = new LinkedList<>();
-    public List<ClassSymbol> innerClasses = new LinkedList<>();
-    public List<FieldSymbol> fields = new LinkedList<>();
-    public List<MethodSymbol> methods = new LinkedList<>();
+    public List<TypeRef> interfaces = new LinkedList<TypeRef>();
+    public List<ClassSymbol> innerClasses = new LinkedList<ClassSymbol>();
+    public List<FieldSymbol> fields = new LinkedList<FieldSymbol>();
+    public List<MethodSymbol> methods = new LinkedList<MethodSymbol>();
 
     public ClassSymbol(String fullname, Scope scope, Object source) {
         super(fullname);
@@ -109,14 +109,14 @@ public abstract class ClassSymbol extends ReferenceSymbol implements Parameteris
 
     @Override
     public FieldSymbol getField(String name) {
-        LinkedList<Symbol> list = new LinkedList<>();
+        LinkedList<Symbol> list = new LinkedList<Symbol>();
         resolveOnce(name, FIELD_SYM, list);
         return list.isEmpty() ? null : (FieldSymbol)list.getFirst();
     }
 
     @Override
     public List<MethodSymbol> getMethods(String name) {
-        LinkedList<Symbol> list = new LinkedList<>();
+        LinkedList<Symbol> list = new LinkedList<Symbol>();
         resolveOnce(name, METHOD_SYM, list);
         return (List<MethodSymbol>)(List)list;
     }

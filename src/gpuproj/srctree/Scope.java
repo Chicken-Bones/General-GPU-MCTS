@@ -42,7 +42,7 @@ public final class Scope
                     single = list;
                 else {
                     if(combined == null)
-                        combined = new LinkedList<>(single);
+                        combined = new LinkedList<Symbol>(single);
                     combined.addAll(list);
                 }
             }
@@ -53,7 +53,7 @@ public final class Scope
         private List<Symbol> resolve_i(String name, int i) {
             if(lists[i] == null) {
                 List<Symbol> list = lists[i] = new LinkedList();
-                LinkedList<Symbol> temp = new LinkedList<>();
+                LinkedList<Symbol> temp = new LinkedList<Symbol>();
                 resolveOnce(name, 1 << i, temp);
                 for(Symbol sym : temp)
                     if(!list.contains(sym))//remove duplicates
@@ -83,7 +83,7 @@ public final class Scope
 
     public final Scope parent;
     public final ScopeProvider provider;
-    private Map<String, SymbolCache> cache = new HashMap<>();
+    private Map<String, SymbolCache> cache = new HashMap<String, SymbolCache>();
 
     public Scope(Scope parent, ScopeProvider provider) {
         this.parent = parent;

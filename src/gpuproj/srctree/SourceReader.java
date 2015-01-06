@@ -186,7 +186,7 @@ public class SourceReader
     public List<String> readList() {
         declaration = true;
 
-        List<String> list = new LinkedList<>();
+        List<String> list = new LinkedList<String>();
         int start = seekCode();
         int end = start;
         while(!end()) {
@@ -388,7 +388,7 @@ public class SourceReader
 
         TypeRef ref = new TypeRef(type);
         r.readTypeRefs(scope, ref.params);
-        List<LocalSymbol> locals = new LinkedList<>();
+        List<LocalSymbol> locals = new LinkedList<LocalSymbol>();
 
         for(String svar : r.readList()) {
             SourceReader r2 = new SourceReader(svar);
@@ -507,7 +507,7 @@ public class SourceReader
             ReferenceSymbol type = (ReferenceSymbol) scope.resolve1(elem, Symbol.CLASS_SYM);
             elem += readElement() + readElement();
             if(type != null) {
-                symbols = new LinkedList<>();
+                symbols = new LinkedList<Symbol>();
                 String name = SourceUtil.simpleName(elem);
 
                 if(name.equals("class"))
@@ -596,7 +596,7 @@ public class SourceReader
     }
 
     private List<Expression> readParameters(Scope scope, String s_params) {
-        List<Expression> list = new LinkedList<>();
+        List<Expression> list = new LinkedList<Expression>();
         for(String s : new SourceReader(expand(s_params)).readList())
             list.add(new SourceReader(s).readExpression(scope));
         return list;

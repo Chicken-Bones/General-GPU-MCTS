@@ -28,7 +28,7 @@ public class CompactLocalDeclaration extends Statement
 
     @Override
     public CompactLocalDeclaration copy(Scope scope) {
-        List<LocalSymbol> copies = new LinkedList<>();
+        List<LocalSymbol> copies = new LinkedList<LocalSymbol>();
         for(LocalSymbol sym : locals)
             copies.add(sym.copy(scope));
 

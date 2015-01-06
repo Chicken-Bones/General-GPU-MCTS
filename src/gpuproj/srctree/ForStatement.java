@@ -5,9 +5,9 @@ import java.util.List;
 
 public class ForStatement extends LabelledStatement
 {
-    public List<Statement> init = new LinkedList<>();
+    public List<Statement> init = new LinkedList<Statement>();
     public Expression cond;
-    public List<Statement> update = new LinkedList<>();
+    public List<Statement> update = new LinkedList<Statement>();
     public Statement body;
 
     public ForStatement(Scope scope, String label) {

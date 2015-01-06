@@ -14,7 +14,7 @@ public class TypeIndex implements ScopeProvider
 {
     public static final TypeIndex instance = new TypeIndex();
     public static final Scope scope = new Scope(null, instance);
-    public static List<SourceProvider> sourceProviders = new LinkedList<>();
+    public static List<SourceProvider> sourceProviders = new LinkedList<SourceProvider>();
 
     public static final RuntimeClassSymbol OBJECT = new RuntimeClassSymbol(scope, Object.class);
     public static final RuntimeClassSymbol STRING = new RuntimeClassSymbol(scope, String.class);
@@ -46,18 +46,15 @@ public class TypeIndex implements ScopeProvider
         while(!r.end()) {
             String stmt = r.readStatement();
             SourceReader sr = new SourceReader(stmt);
-            switch(sr.readElement()) {
-                case "package":
-                    f.pkg = sr.substring(sr.seekCode());
-                    break;
-                case "import":
-                    int mod = sr.readModifiers();
-                    String imp = sr.substring(sr.seekCode());
-                    f.addImport(imp, mod == Modifier.STATIC);
-                    break;
-                default:
-                    return SourceClassSymbol.fromStatement(f.pkg, f.scope, stmt).load();
-            }
+            String s = sr.readElement();
+            if (s.equals("package")) {
+                f.pkg = sr.substring(sr.seekCode());
+            } else if (s.equals("import")) {
+                int mod = sr.readModifiers();
+                String imp = sr.substring(sr.seekCode());
+                f.addImport(imp, mod == Modifier.STATIC);
+            } else
+                return SourceClassSymbol.fromStatement(f.pkg, f.scope, stmt).load();
         }
         return null;
     }

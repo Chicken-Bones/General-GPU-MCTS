@@ -42,7 +42,7 @@ public class Ataxx extends BoardGame<AtaxxBoard>
         return board;
     }
 
-    private ArrayList<AtaxxBoard> moves = new ArrayList<>();
+    private ArrayList<AtaxxBoard> moves = new ArrayList<AtaxxBoard>();
     @Override
     public List<AtaxxBoard> expand(AtaxxBoard board) {
         moves.clear();

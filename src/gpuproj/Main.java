@@ -21,15 +21,15 @@ public class Main
 
     private static <B extends Board<B>> void MCTSvsUCB(BoardGame<B> game) {
         GameMachine.playGames(game,
-                new MCTSPlayer<>(game, CPU1Simulator.instance),
-                new UCBPlayer<>(game, CPU1Simulator.instance),
+                new MCTSPlayer<B>(game, CPU1Simulator.instance),
+                new UCBPlayer<B>(game, CPU1Simulator.instance),
                 200, 500);
     }
 
     private static <B extends Board<B>> void CPUvsGPU(BoardGame<B> game, int simsPerNode) {
         GameMachine.playGames(game,
-                new MCTSPlayer<>(game, CPU1Simulator.instance),
-                new MCTSPlayer<>(game, new GPUSimulator(simsPerNode)),
+                new MCTSPlayer<B>(game, CPU1Simulator.instance),
+                new MCTSPlayer<B>(game, new GPUSimulator(simsPerNode)),
                 200, 500);
     }
 }

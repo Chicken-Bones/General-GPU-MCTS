@@ -6,7 +6,7 @@ import java.util.List;
 public class InitialiserList extends Expression
 {
     public TypeSymbol type;
-    public List<Expression> elements = new LinkedList<>();
+    public List<Expression> elements = new LinkedList<Expression>();
 
     public InitialiserList(TypeSymbol type) {
         this.type = type;

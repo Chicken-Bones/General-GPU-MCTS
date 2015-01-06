@@ -59,28 +59,22 @@ public class Translator
     }
 
     public static Object unaryOp(String op, long value) {
-        switch(op) {
-            case "+": return value;
-            case "-": return -value;
-            case "~": return ~value;
-        }
+        if (op.equals("+")) return value;
+        if (op.equals("-")) return -value;
+        if (op.equals("~")) return ~value;
 
         throw new UnsupportedOperationException();
     }
 
     public static Object unaryOp(String op, double value) {
-        switch(op) {
-            case "+": return value;
-            case "-": return -value;
-        }
+        if (op.equals("+")) return value;
+        if (op.equals("-")) return -value;
 
         throw new UnsupportedOperationException();
     }
 
     public static Object unaryOp(String op, boolean value) {
-        switch(op) {
-            case "!": return !value;
-        }
+        if (op.equals("!")) return !value;
 
         throw new UnsupportedOperationException();
     }
@@ -109,48 +103,42 @@ public class Translator
     }
 
     public static Object binaryOp(String op, long a, long b) {
-        switch(op) {
-            case "+": return a + b;
-            case "*": return a * b;
-            case "/": return a / b;
-            case "%": return a % b;
-            case "-": return a - b;
-            case "&": return a & b;
-            case "^": return a ^ b;
-            case "|": return a | b;
-            case ">>": return a << b;
-            case "<<": return a << b;
-            case ">>>": return a >>> b;
-            case "<": return a < b;
-            case "<=": return a <= b;
-            case ">": return a > b;
-            case ">=": return a >= b;
-            case "==": return a == b;
-            case "!=": return a != b;
-        }
+        if (op.equals("+")) return a + b;
+        if (op.equals("*")) return a * b;
+        if (op.equals("/")) return a / b;
+        if (op.equals("%")) return a % b;
+        if (op.equals("-")) return a - b;
+        if (op.equals("&")) return a & b;
+        if (op.equals("^")) return a ^ b;
+        if (op.equals("|")) return a | b;
+        if (op.equals(">>")) return a << b;
+        if (op.equals("<<")) return a << b;
+        if (op.equals(">>>")) return a >>> b;
+        if (op.equals("<")) return a < b;
+        if (op.equals("<=")) return a <= b;
+        if (op.equals(">")) return a > b;
+        if (op.equals(">=")) return a >= b;
+        if (op.equals("==")) return a == b;
+        if (op.equals("!=")) return a != b;
 
         throw new UnsupportedOperationException();
     }
 
     public static double binaryOp(String op, double a, double b) {
-        switch(op) {
-            case "+": return a + b;
-            case "*": return a * b;
-            case "/": return a / b;
-            case "%": return a % b;
-            case "-": return a - b;
-        }
+        if (op.equals("+")) return a + b;
+        if (op.equals("*")) return a * b;
+        if (op.equals("/")) return a / b;
+        if (op.equals("%")) return a % b;
+        if (op.equals("-")) return a - b;
 
         throw new UnsupportedOperationException();
     }
 
     public static Object binaryOp(String op, boolean a, boolean b) {
-        switch(op) {
-            case "==": return a == b;
-            case "!=": return a != b;
-            case "&&": return a && b;
-            case "||": return a || b;
-        }
+        if (op.equals("==")) return a == b;
+        if (op.equals("!=")) return a != b;
+        if (op.equals("&&")) return a && b;
+        if (op.equals("||")) return a || b;
 
         throw new UnsupportedOperationException();
     }

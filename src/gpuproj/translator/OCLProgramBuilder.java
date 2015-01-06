@@ -53,14 +53,14 @@ public class OCLProgramBuilder
 
     private cl_kernel kernel;
     private cl_program program;
-    private List<Declaration> declarations = new LinkedList<>();
-    private Map<String, Declaration> declarationMap = new HashMap<>();
-    private List<Implementation> implementations = new LinkedList<>();
-    private List<KernelArg> args = new LinkedList<>();
-    private Map<String, KernelArg> argMap = new HashMap<>();
+    private List<Declaration> declarations = new LinkedList<Declaration>();
+    private Map<String, Declaration> declarationMap = new HashMap<String, Declaration>();
+    private List<Implementation> implementations = new LinkedList<Implementation>();
+    private List<KernelArg> args = new LinkedList<KernelArg>();
+    private Map<String, KernelArg> argMap = new HashMap<String, KernelArg>();
     private StringBuilder kernelCode = new StringBuilder();
 
-    public List<Runnable> executeCallbacks = new LinkedList<>();
+    public List<Runnable> executeCallbacks = new LinkedList<Runnable>();
 
     public void declare(Declaration decl) {
         if(declarationMap.containsKey(decl.getName()))
