@@ -2,12 +2,12 @@ package gpuproj;
 
 import gpuproj.game.Board;
 import gpuproj.game.BoardGame;
-import gpuproj.games.Ataxx;
 import gpuproj.player.MCTSPlayer;
 import gpuproj.player.UCBPlayer;
 import gpuproj.simulator.CPUSimulator;
 import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.*;
+import gpuproj.games.*;
 
 import java.io.File;
 
@@ -16,7 +16,7 @@ public class Main
     public static void main(String[] args) {
         //MCTSvsUCB(new GoMoku());
         TypeIndex.sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
-        CPUvsGPU(new Ataxx(), 32);
+        CPUvsGPU(new Squavalath(), 32);
     }
 
     private static <B extends Board<B>> void MCTSvsUCB(BoardGame<B> game) {

@@ -132,6 +132,8 @@ public abstract class StatementVisitor
             visit((BinaryOp)exp);
         else if(exp instanceof TernaryOp)
             visit((TernaryOp)exp);
+        else if(exp instanceof InitialiserList)
+            visit((InitialiserList)exp);
         else
             throw new IllegalArgumentException("Unknown expression "+exp.getClass()+" "+exp);
     }

@@ -28,7 +28,23 @@ public class JavaTranslator implements ScopeProvider
         public String declare() {
             StringBuilder sb = new StringBuilder();
             TypeRef.printCL = true;
-            sb.append(field.type).append(' ').append(field.getName()).append(" = ").append(field.init).append(';');
+
+            TypeRef type = field.type;
+            while(type.type instanceof ArraySymbol)
+                type = type.componentRef();
+
+            sb.append(type).append(' ').append(field.getName());
+
+            Expression init = field.init;
+            if(init instanceof NewArray) {
+                ((NewArray) init).printDimensions(sb);
+                init = ((NewArray) init).init;
+            }
+
+            if(init != null)
+                sb.append(" = ").append(init);
+
+            sb.append(';');
             TypeRef.printCL = false;
             return sb.toString();
         }

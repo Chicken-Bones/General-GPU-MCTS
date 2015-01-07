@@ -75,7 +75,7 @@ public class TypeRef
      * @return A TypeRef for the component type of this, assuming this references an ArraySymbol
      */
     public TypeRef componentRef() {
-        return new TypeRef(((ArraySymbol)type).type);
+        return new TypeRef(((ArraySymbol)type).type).modify(modifiers);
     }
 
     /**
@@ -159,20 +159,12 @@ public class TypeRef
             else if((modifiers & CONSTANT) != 0) sb.append("constant ");
             if((modifiers & UNSIGNED) != 0) sb.append("unsigned ");
 
-            int ptr = pointer;
-            TypeSymbol baseType = type;
-            while(baseType instanceof ArraySymbol) {
-                baseType = ((ArraySymbol) baseType).type;
-                ptr++;
-            }
-            String name;
             if(type == PrimitiveSymbol.BYTE || type == PrimitiveSymbol.BOOLEAN)
-                name = "char";
+                sb.append("char");
             else
-                name = type.getName();
+                sb.append(type.getName());
 
-            sb.append(name);
-            for(int i = 0; i < ptr; i++)
+            for(int i = 0; i < pointer; i++)
                 sb.append('*');
         } else {
             sb.append(type.fullname);

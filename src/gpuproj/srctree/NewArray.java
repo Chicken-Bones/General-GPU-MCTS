@@ -36,16 +36,20 @@ public class NewArray extends Expression
         return component.concrete();
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(componentType().fullname);
+    public void printDimensions(StringBuilder sb) {
         for(Expression exp : dimensions) {
             sb.append('[');
             if(exp != null)
                 sb.append(exp);
             sb.append(']');
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("new ").append(componentType().fullname);
+        printDimensions(sb);
 
         if(init != null)
             sb.append(init);

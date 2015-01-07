@@ -1,5 +1,7 @@
 package gpuproj.srctree;
 
+import gpuproj.srctree.SwitchStatement.Default;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -356,8 +358,8 @@ public class SourceReader
         if (elem.equals("break")) return readBreak(scope, r);
         if (elem.equals("continue")) return readContinue(scope, r);
         if (elem.equals("switch")) return readSwitch(scope, r);
-        if (elem.equals("case")) return new SwitchStatement.Case(r.readElement());
-        if (elem.equals("default")) return new SwitchStatement.Default();
+        if (elem.equals("case")) return readCase(r);
+        if (elem.equals("default")) return readDefault(r);
 
         String elem2 = r.readElement();
         if (elem2.equals(":")) {
@@ -372,6 +374,19 @@ public class SourceReader
         }
 
         return new SourceReader(s).readExpression(scope);
+    }
+
+    private Statement readCase(SourceReader r) {
+        Statement stmt = new SwitchStatement.Case(r.readElement());
+        r.readElement();//:
+        pos += r.pos - r.source.length();
+        return stmt;
+    }
+
+    private Statement readDefault(SourceReader r) {
+        r.readElement();//:
+        pos += r.pos - r.source.length();
+        return new Default();
     }
 
     private Statement readSwitch(Scope scope, SourceReader r) {
