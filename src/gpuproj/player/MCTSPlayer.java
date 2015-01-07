@@ -68,6 +68,6 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
 
     @Override
     public String toString() {
-        return "MCTS";
+        return "MCTS ("+simulator+")";
     }
 }

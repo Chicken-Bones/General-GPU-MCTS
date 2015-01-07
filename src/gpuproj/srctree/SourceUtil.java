@@ -69,4 +69,21 @@ public class SourceUtil
         }
         return sb.toString();
     }
+
+    /**
+     * Determines whether statement is a method or a field by which of '=', '{' or '(' comes first
+     * @return Symbol.METHOD_SYM or Symbol.FIELD_SYM
+     */
+    public static int methodOrField(String stmt) {
+        int equals = stmt.indexOf('=');
+        int brace = stmt.indexOf('{');
+        int bracket = stmt.indexOf('(');
+
+        if(equals < 0) equals = Integer.MAX_VALUE;
+        if(brace < 0) brace = Integer.MAX_VALUE;
+        if(bracket < 0) bracket = Integer.MAX_VALUE;
+
+        if(bracket < equals || brace < equals) return Symbol.METHOD_SYM;
+        return Symbol.FIELD_SYM;
+    }
 }

@@ -50,6 +50,6 @@ public class UCBPlayer<B extends Board<B>> extends Player<B>
 
     @Override
     public String toString() {
-        return "UCB";
+        return "UCB ("+simulator+")";
     }
 }

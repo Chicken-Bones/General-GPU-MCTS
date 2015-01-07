@@ -51,6 +51,7 @@ public class TranslatedStruct
     public TranslatedStruct(ClassSymbol type) {
         this.type = type;
         createAccessors(type, accessors);
+        size = StructAccess.computeSize((Class)type.runtimeClass(), accessors.toArray(new StructAccessor[accessors.size()]));
     }
 
     public static void getStructFields(ClassSymbol type, List<FieldSymbol> fields) {

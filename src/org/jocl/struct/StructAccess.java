@@ -365,7 +365,7 @@ public class StructAccess
      * @param structAccessors The struct accessors
      * @return The size of the struct
      */
-    private static int computeSize(Class<? extends Struct> structClass, 
+    public static int computeSize(Class<? extends Struct> structClass,
         StructAccessor structAccessors[])
     {
         if (structAccessors.length == 0)

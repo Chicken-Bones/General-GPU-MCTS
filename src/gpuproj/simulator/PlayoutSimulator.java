@@ -34,6 +34,12 @@ public abstract class PlayoutSimulator
         StatDialog.get("Sim Count").clear();
     }
 
+    public final int simsPerNode;
+
+    public PlayoutSimulator(int simsPerNode) {
+        this.simsPerNode = simsPerNode;
+    }
+
     /**
      * Play at least one game for each node and update the results, should give positive values for wins for the player who played at this node, (board.getTurn()^1)
      */

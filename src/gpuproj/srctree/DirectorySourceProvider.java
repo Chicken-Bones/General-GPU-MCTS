@@ -14,7 +14,7 @@ public class DirectorySourceProvider implements SourceProvider
     }
 
     @Override
-    public String findClass(String path) {
+    public String provideSource(String path) {
         File file = new File(base, path);
         if(!file.exists()) return null;
         try {
@@ -24,6 +24,7 @@ public class DirectorySourceProvider implements SourceProvider
             while((s = r.readLine()) != null)
                 sb.append(s).append('\n');
 
+            r.close();
             return sb.toString();
         } catch (IOException e) {
             throw new RuntimeException(e);

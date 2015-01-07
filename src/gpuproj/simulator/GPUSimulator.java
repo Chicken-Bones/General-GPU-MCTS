@@ -18,26 +18,15 @@ import static org.jocl.CL.clCreateBuffer;
 
 public class GPUSimulator extends PlayoutSimulator
 {
-    private final int simsPerNode;
+    private static cl_device_id device;
+    private static cl_context context;
+    private static cl_command_queue commandQueue;
 
-    private cl_context context;
-    private cl_command_queue commandQueue;
-
-    private Class<? extends BoardGame> gameClass;
-    private OCLProgramBuilder program;
-    private TranslatedStruct boardStruct;
-
-    private cl_mem boardMem;
-    private ByteBuffer boardBuffer;
-    private cl_mem scoreMem;
-    private int[] scoreBuffer;
-
-    public GPUSimulator(int simsPerNode) {
-        this.simsPerNode = simsPerNode;
+    static {
         initCL();
     }
 
-    private void initCL() {
+    private static void initCL() {
         final int platformIndex = 0;
         final long deviceType = CL_DEVICE_TYPE_GPU;
         final int deviceIndex = 0;
@@ -67,7 +56,7 @@ public class GPUSimulator extends PlayoutSimulator
         // Obtain a device ID
         cl_device_id devices[] = new cl_device_id[numDevices];
         clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
-        cl_device_id device = devices[deviceIndex];
+        device = devices[deviceIndex];
 
         // Create a context for the selected device
         context = clCreateContext(
@@ -76,7 +65,23 @@ public class GPUSimulator extends PlayoutSimulator
 
         // Create a command-queue for the selected device
         commandQueue = clCreateCommandQueue(context, device, 0, null);
+    }
 
+    private Class<? extends BoardGame> gameClass;
+    private OCLProgramBuilder program;
+    private TranslatedStruct boardStruct;
+
+    private cl_mem boardMem;
+    private ByteBuffer boardBuffer;
+    private cl_mem scoreMem;
+    private int[] scoreBuffer;
+
+    public GPUSimulator(int simsPerNode) {
+        super(simsPerNode);
+        checkWorkgroupSize();
+    }
+
+    private void checkWorkgroupSize() {
         int[] maxWorkGroupSize = new int[1];
         clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.size_t, Pointer.to(maxWorkGroupSize), null);
         if(simsPerNode > maxWorkGroupSize[0])
@@ -122,29 +127,36 @@ public class GPUSimulator extends PlayoutSimulator
         }
     }
 
-    private void runKernel(List<TreeNode> treeNodes) {
-        ensureCapacity(treeNodes.size());
+    private void runKernel(List<TreeNode> nodes) {
+        ensureCapacity(nodes.size());
 
-        boardBuffer.reset();
-        for(TreeNode node : treeNodes)
+        boardBuffer.rewind();
+        for(TreeNode node : nodes)
             boardStruct.write(node.getBoard(), boardBuffer);
-        boardBuffer.reset();
-        clEnqueueWriteBuffer(commandQueue, boardMem, true, 0, treeNodes.size() * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
 
-        program.runKernel(commandQueue, new long[]{treeNodes.size()*simsPerNode}, new long[]{simsPerNode});
+        boardBuffer.rewind();
+        clEnqueueWriteBuffer(commandQueue, boardMem, true, 0, nodes.size() * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, scoreMem, true, 0, treeNodes.size() * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+        program.runKernel(commandQueue, new long[]{nodes.size()*simsPerNode}, new long[]{simsPerNode});
+
+        clEnqueueReadBuffer(commandQueue, scoreMem, true, 0, nodes.size() * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
 
         int i = 0;
-        for(TreeNode node : treeNodes)
+        for(TreeNode node : nodes)
             node.update(BoardGame.floatScore(scoreBuffer[i++], simsPerNode), simsPerNode);
     }
 
     @Override
-    public <B extends Board<B>> void play(List<TreeNode<B>> treeNodes, BoardGame<B> game) {
+    public <B extends Board<B>> void play(List<TreeNode<B>> nodes, BoardGame<B> game) {
         if(gameClass != game.getClass())
             build(game.getClass());
 
-        runKernel((List)treeNodes);
+        runKernel((List)nodes);
+        simCount += nodes.size() * simsPerNode;
+    }
+
+    @Override
+    public String toString() {
+        return "GPU "+simsPerNode+"/node";
     }
 }

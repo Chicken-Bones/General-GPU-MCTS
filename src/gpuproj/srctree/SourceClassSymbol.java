@@ -114,8 +114,7 @@ public class SourceClassSymbol extends ClassSymbol
     private MethodSymbol newMethod(String stmt) {
         SourceReader r = new SourceReader(stmt);
         r.seekStart("(");
-        while(Character.isWhitespace(r.charAt(--r.pos)));//rollback
-        while(Character.isJavaIdentifierPart(r.charAt(--r.pos)));
+        r.rollbackIdentifier();
         String name = r.readElement();
         if(name.equals(getName()))
             name = "<init>";
@@ -136,18 +135,7 @@ public class SourceClassSymbol extends ClassSymbol
         if(s.equals("class") || s.equals("interface") || s.equals("@interface") || s.equals("enum"))
             return CLASS_SYM;
 
-        r.pos = 0;
-
-        int equals = r.indexOf('=');
-        int brace = r.indexOf('{');
-        int bracket = r.indexOf('(');
-
-        if(equals < 0) equals = Integer.MAX_VALUE;
-        if(brace < 0) brace = Integer.MAX_VALUE;
-        if(bracket < 0) bracket = Integer.MAX_VALUE;
-
-        if(bracket < equals || brace < equals) return METHOD_SYM;
-        return FIELD_SYM;
+        return SourceUtil.methodOrField(stmt);
     }
 
     public static SourceClassSymbol fromStatement(String parent, Scope scope, String stmt) {

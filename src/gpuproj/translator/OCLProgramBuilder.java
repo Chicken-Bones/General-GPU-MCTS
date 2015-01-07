@@ -1,6 +1,7 @@
 package gpuproj.translator;
 
 import gpuproj.StatDialog;
+import gpuproj.srctree.SourceReader;
 import gpuproj.srctree.SourceUtil;
 import gpuproj.srctree.Statement;
 import gpuproj.srctree.TypeRef;
@@ -17,9 +18,32 @@ import static org.jocl.CL.*;
 
 public class OCLProgramBuilder
 {
+    public static class Define
+    {
+        public final String line;
+
+        public Define(String line) {
+            if(!line.startsWith("#define "))
+                throw new IllegalArgumentException("must start with #define :"+line);
+
+            this.line = line;
+        }
+
+        public String identifier() {
+            return new SourceReader(line.substring(8)).readElement();
+        }
+
+        public String value() {
+            SourceReader r = new SourceReader(line.substring(8));
+            r.readElement();//identifier
+            r.seekCode();
+            return (r.end()) ? "" : r.substring(r.pos);
+        }
+    }
+
     public static interface Declaration
     {
-        public String getName();
+        public List<String> identifiers();
         public String declare();
     }
 
@@ -51,23 +75,53 @@ public class OCLProgramBuilder
         }
     }
 
+    public interface KernelPreFunc
+    {
+        public void prepareKernel(OCLProgramBuilder program);
+    }
+
     private cl_kernel kernel;
     private cl_program program;
+
+    private List<Define> definitions = new LinkedList<Define>();
+    private Map<String, Define> defineMap = new HashMap<String, Define>();
     private List<Declaration> declarations = new LinkedList<Declaration>();
     private Map<String, Declaration> declarationMap = new HashMap<String, Declaration>();
-    private List<Implementation> implementations = new LinkedList<Implementation>();
     private List<KernelArg> args = new LinkedList<KernelArg>();
     private Map<String, KernelArg> argMap = new HashMap<String, KernelArg>();
+    private List<Implementation> implementations = new LinkedList<Implementation>();
     private StringBuilder kernelCode = new StringBuilder();
+    private List<KernelPreFunc> kernelPreFuncs = new LinkedList<KernelPreFunc>();
 
-    public List<Runnable> executeCallbacks = new LinkedList<Runnable>();
+    public void define(String s) {
+        Define def = new Define(s);
+        String identifier = def.identifier();
+        if(defineMap.containsKey(identifier))
+            throw new IllegalArgumentException(identifier+" already defined when defining "+def);
+
+        defineMap.put(identifier, def);
+        definitions.add(def);
+    }
+
+    public void undef(String identifier) {
+        Define def = defineMap.get(identifier);
+        if(def != null)
+            definitions.remove(def);
+    }
+
+    public String getDef(String identifier) {
+        Define d = defineMap.get(identifier);
+        return d == null ? null : d.value();
+    }
 
     public void declare(Declaration decl) {
-        if(declarationMap.containsKey(decl.getName()))
-            throw new IllegalArgumentException(decl.getName()+" already defined when declaring "+decl);
+        for(String identifier : decl.identifiers())
+            if(declarationMap.containsKey(identifier))
+                throw new IllegalArgumentException(identifier+" already defined when declaring "+decl);
+            else
+                declarationMap.put(identifier, decl);
 
         declarations.add(decl);
-        declarationMap.put(decl.getName(), decl);
     }
 
     public Declaration getDeclaration(String name) {
@@ -100,20 +154,27 @@ public class OCLProgramBuilder
         return argMap.get(name);
     }
 
+    public void addPreFunc(KernelPreFunc func) {
+        kernelPreFuncs.add(func);
+    }
+
     public void build(cl_context context) {
         if(program != null)
             throw new IllegalStateException("Program already built");
 
         StringBuilder sb = new StringBuilder();
+        for(Define define : definitions)
+            sb.append(define.line).append("\n");
+
         for(Declaration decl : declarations)
             sb.append(decl.declare()).append("\n\n");
 
-        sb.append("__kernel void kernel_main(").append(SourceUtil.listString(args)).append(") {");
-        sb.append(kernelCode);
-        sb.append("\n}\n\n");
-
         for(Implementation impl : implementations)
             sb.append(impl.implement()).append("\n\n");
+
+        sb.append("__kernel void kernel_main(").append(SourceUtil.listString(args)).append(") {");
+        sb.append(kernelCode);
+        sb.append("\n}");
 
         String source = sb.toString();
         logSource(source);
@@ -137,7 +198,7 @@ public class OCLProgramBuilder
     }
 
     private void setKernelArg(int i) {
-        Object value = args.get(i);
+        Object value = args.get(i).data;
         int size;
         Pointer ptr;
         if(value instanceof cl_mem) {
@@ -169,8 +230,8 @@ public class OCLProgramBuilder
     }
 
     public void runKernel(cl_command_queue cmdQueue, long[] global_work_size, long[] local_work_size) {
-        for(Runnable callback : executeCallbacks)
-            callback.run();
+        for(KernelPreFunc func : kernelPreFuncs)
+            func.prepareKernel(this);
 
         for(int i = 0; i < args.size(); i++)
             setKernelArg(i);

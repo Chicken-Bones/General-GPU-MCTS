@@ -20,8 +20,8 @@ public class JavaTranslator implements ScopeProvider
         }
 
         @Override
-        public String getName() {
-            return field.getName();
+        public List<String> identifiers() {
+            return Arrays.asList(field.getName());
         }
 
         @Override
@@ -43,8 +43,8 @@ public class JavaTranslator implements ScopeProvider
         }
 
         @Override
-        public String getName() {
-            return method.getName();
+        public List<String> identifiers() {
+            return Arrays.asList(method.getName());
         }
 
         private void declare(StringBuilder sb) {
@@ -84,8 +84,8 @@ public class JavaTranslator implements ScopeProvider
         }
 
         @Override
-        public String getName() {
-            return type.getName();
+        public List<String> identifiers() {
+            return Arrays.asList(type.getName());
         }
 
         @Override
@@ -94,7 +94,7 @@ public class JavaTranslator implements ScopeProvider
             sb.append("typedef struct {\n");
 
             TypeRef.printCL = true;
-            for(FieldSymbol field : fields)
+            for (FieldSymbol field : fields)
                 sb.append("   ").append(field.type).append(' ').append(field.getName()).append(";\n");
             TypeRef.printCL = false;
 
@@ -104,23 +104,90 @@ public class JavaTranslator implements ScopeProvider
     }
 
     /**
+     * TypeSymbol that just implements getName, assumed an internal cl type that doesn't necesesarily have an outside mapping
+     */
+    public static class CLTypeSymbol extends TypeSymbol
+    {
+        public CLTypeSymbol(String name) {
+            super(name);
+        }
+
+        @Override
+        public boolean isConcrete() {
+            return true;
+        }
+
+        @Override
+        public String signature() {
+            return null;
+        }
+
+        @Override
+        public String runtimeName() {
+            return null;
+        }
+
+        @Override
+        public Class<?> runtimeClass() {
+            return null;
+        }
+
+        @Override
+        public int symbolType() {
+            return Symbol.CLASS_SYM;
+        }
+    }
+
+    /**
      * A replacement for program scope variables, these are declared in the kernel and passed as extra function arguments to methods that need them.
      */
     public class KernelVar
     {
+        /**
+         * A raw cl type or struct, not a pointer
+         */
+        public final String type;
+        /**
+         * Name of the var
+         */
+        public final String name;
 
+        public KernelVar(String type, String name) {
+            this.type = type;
+            this.name = name;
+        }
     }
 
     public class MethodInfo
     {
-        public Set<MethodSymbol> callers = new HashSet<MethodSymbol>();
-        public Set<MethodSymbol> calls = new HashSet<MethodSymbol>();
-        public Set<KernelVar> globals = new HashSet<KernelVar>();
+        /**
+         * The translated method symbol to which this info applies
+         */
+        public final MethodSymbol method;
+        public Set<MethodInfo> callers = new HashSet<MethodInfo>();
+        public List<MethodCall> calls = new LinkedList<MethodCall>();
+        public Set<KernelVar> kernelVars = new HashSet<KernelVar>();
+
+
+        private MethodInfo(MethodSymbol method) {
+            this.method = method;
+        }
     }
 
     private class ExpansionVisitor extends StatementVisitor
     {
+        /**
+         * Caches scope when entering blocks for symbol re-evaluation
+         */
         private Scope scope;
+        /**
+         * Symbol hosting this expansion
+         */
+        private final Symbol host;
+
+        public ExpansionVisitor(Symbol host) {
+            this.host = host;
+        }
 
         @Override
         public void visit(Block block) {
@@ -134,7 +201,7 @@ public class JavaTranslator implements ScopeProvider
         public void visit(MethodCall exp) {
             super.visit(exp);
 
-            if(!exp.method.isStatic()) {//find the correct instance implementation
+            if (!exp.method.isStatic()) {//find the correct instance implementation
                 ClassSymbol type = exp.params.get(0).returnType().classType();
                 List<MethodSymbol> methods = type.getMethods(exp.method.getName());
                 exp.method = MethodSymbol.match(methods, exp.params.subList(1, exp.params.size()));
@@ -142,19 +209,24 @@ public class JavaTranslator implements ScopeProvider
 
             exp.method = addGlobalMethod(exp.method, exp.params);
 
-            for(Iterator<Expression> it = exp.params.iterator(); it.hasNext();)
-                if(isGlobalType(it.next()))
+            for (Iterator<Expression> it = exp.params.iterator(); it.hasNext(); )
+                if (isGlobalType(it.next()))
                     it.remove();
+
+            MethodInfo info = getInfo(exp.method);
+            info.calls.add(exp);
+            if (host instanceof MethodSymbol)
+                info.callers.add(getInfo((MethodSymbol) host));
         }
 
         @Override
         public void visit(VariableAccess exp) {
-            if(exp.var instanceof FieldSymbol) {
+            if (exp.var instanceof FieldSymbol) {
                 FieldSymbol field = (FieldSymbol) exp.var;
-                if(field.isStatic())
+                if (field.isStatic())
                     exp.var = addGlobalField(field);
-                else if(exp.exp instanceof This) {
-                    if(isGlobalType(exp.exp)) {
+                else if (exp.exp instanceof This) {
+                    if (isGlobalType(exp.exp)) {
                         exp.exp = null;
                         exp.var = addGlobalField(field);
                     } else {
@@ -169,15 +241,15 @@ public class JavaTranslator implements ScopeProvider
         @Override
         public void visit(BinaryOp exp) {
             super.visit(exp);
-            if(exp.op.equals(">>>")) {
+            if (exp.op.equals(">>>")) {
                 exp.op = ">>";
-                if(exp.op1.precedence() >= 3)
+                if (exp.op1.precedence() >= 3)
                     exp.op1 = new Parentheses(exp.op1);
                 exp.op1 = new Cast(exp.op1.returnType().copy().modify(TypeRef.UNSIGNED), exp.op1);
-            } else if(exp.op.endsWith("=")) {
-                if(exp.op1 instanceof VariableAccess) {
-                    VariableAccess varAcc = (VariableAccess)exp.op1;
-                    if(varAcc.var instanceof FieldSymbol)
+            } else if (exp.op.endsWith("=")) {
+                if (exp.op1 instanceof VariableAccess) {
+                    VariableAccess varAcc = (VariableAccess) exp.op1;
+                    if (varAcc.var instanceof FieldSymbol)
                         ((FieldSymbol) varAcc.var).modifiers &= ~Modifier.FINAL;
                 }
             }
@@ -193,14 +265,14 @@ public class JavaTranslator implements ScopeProvider
         }
 
         public void translate() {
-            for(Iterator<LocalSymbol> it = method.params.iterator(); it.hasNext();)
-                if(isGlobalType(it.next()))
+            for (Iterator<LocalSymbol> it = method.params.iterator(); it.hasNext(); )
+                if (isGlobalType(it.next()))
                     it.remove();
 
-            new ExpansionVisitor().visit(method.body);
+            new ExpansionVisitor(method).visit(method.body);
 
-            for(LocalSymbol local : method.params)
-                if(local.type.pointer == 0 && local.type.type instanceof ClassSymbol)
+            for (LocalSymbol local : method.params)
+                if (local.type.pointer == 0 && local.type.type instanceof ClassSymbol)
                     local.type.pointer++;
         }
     }
@@ -211,23 +283,23 @@ public class JavaTranslator implements ScopeProvider
      */
     public static final Object builtinSource = new Object();
     private Scope scope = new Scope(null, this);
-    private Map<MethodSymbol, MethodSymbol> translatedMap = new HashMap<MethodSymbol, MethodSymbol>();
-    private Map<MethodSymbol, MethodInfo> methodInfo = new HashMap<MethodSymbol, MethodInfo>();
+    private Map<MethodSymbol, MethodInfo> translated = new HashMap<MethodSymbol, MethodInfo>();
     private Set<ClassSymbol> globalClasses = new HashSet<ClassSymbol>();
     private Set<ClassSymbol> structs = new HashSet<ClassSymbol>();
     private Map<FieldSymbol, FieldSymbol> globalFields = new HashMap<FieldSymbol, FieldSymbol>();
     private List<FieldSymbol> fieldOrder = new LinkedList<FieldSymbol>();
+    public Map<String, KernelVar> kernelVars = new HashMap<String, KernelVar>();
 
     public JavaTranslator(OCLProgramBuilder program) {
         this.program = program;
     }
 
     public void addStruct(final ClassSymbol sym) {
-        if(structs.contains(sym))
+        if (structs.contains(sym))
             return;
 
-        if(program.getDeclaration(sym.getName()) != null)
-            throw new UnsupportedOperationException(sym.getName()+" already declared"); //could implement some remapping system
+        if (program.getDeclaration(sym.getName()) != null)
+            throw new UnsupportedOperationException(sym.getName() + " already declared"); //could implement some remapping system
 
         program.declare(new StructDecl(sym));
     }
@@ -244,47 +316,57 @@ public class JavaTranslator implements ScopeProvider
     }
 
     public FieldSymbol addGlobalField(FieldSymbol sym) {
-        FieldSymbol translated = globalFields.get(sym);
-        if(translated != null)
-            return translated;
+        FieldSymbol clfield = globalFields.get(sym);
+        if (clfield != null)
+            return clfield;
 
-        if(program.getDeclaration(sym.getName()) != null)
-            throw new UnsupportedOperationException(sym.getName()+" already declared"); //could implement some remapping system
+        if (program.getDeclaration(sym.getName()) != null)
+            throw new UnsupportedOperationException(sym.getName() + " already declared"); //could implement some remapping system
 
-        translated = new FieldSymbol(sym.getName());
-        translated.modifiers |= Modifier.FINAL | Modifier.STATIC;
-        translated.type = sym.type;
-        globalFields.put(sym, translated);
+        clfield = new FieldSymbol(sym.getName());
+        clfield.modifiers |= Modifier.FINAL | Modifier.STATIC;
+        clfield.type = sym.type;
+        globalFields.put(sym, clfield);
 
-        if(sym.init == null) sym.loadInitialiser();
-        translated.init = sym.init.copy(scope);
+        if (sym.init == null) sym.loadInitialiser();
+        clfield.init = sym.init.copy(scope);
 
-        new ExpansionVisitor().visit(translated.init);
+        new ExpansionVisitor(clfield).visit(clfield.init);
 
-        fieldOrder.add(translated);
+        fieldOrder.add(clfield);
 
-        return translated;
+        return clfield;
+    }
+
+    public MethodInfo getInfo(MethodSymbol sym) {
+        MethodInfo info = translated.get(sym);
+        if (info == null)
+            translated.put(sym, info = new MethodInfo(sym));
+        if (info.method != sym)
+            throw new IllegalArgumentException("getInfo called on mapped method. You shouldn't be doing this, consider addGlobalMethod to resolve the mapping first");
+        return info;
     }
 
     public MethodSymbol addGlobalMethod(MethodSymbol sym, List callParams) {
-        MethodSymbol translated = translatedMap.get(sym);
-        if(translated != null) {
-            if(canCall(translated, callParams))
-                return translated;
-            throw new IllegalArgumentException("Cannot call flattened method "+translated+" with params ("+SourceUtil.listString(callParams)+")");
+        MethodInfo info = translated.get(sym);
+        if (info != null) {
+            if (canCall(info.method, callParams))
+                return info.method;
+
+            throw new IllegalArgumentException("Cannot call flattened method " + translated + " with params (" + SourceUtil.listString(callParams) + ")");
         }
 
         String builtin = BuiltinMethodMap.map(sym);
-        if(builtin != null) {
-            translated = new MethodSymbol(builtin, scope, builtinSource);
-            translated.modifiers = Modifier.STATIC;
-            translated.returnType = sym.returnType;
-            translated.params = sym.params;
-            translatedMap.put(sym, translated);
-            return translated;
+        if (builtin != null) {
+            MethodSymbol clmethod = new MethodSymbol(builtin, scope, builtinSource);
+            clmethod.modifiers = Modifier.STATIC;
+            clmethod.returnType = sym.returnType;
+            clmethod.params = sym.params;
+            translated.put(sym, getInfo(clmethod));
+            return clmethod;
         }
 
-        if(isOCLStatic(sym)) {
+        if (isOCLStatic(sym)) {
             OCLStaticConverter c;
             try {
                 c = sym.getAnnotation(OCLStatic.class).value().newInstance();
@@ -292,46 +374,63 @@ public class JavaTranslator implements ScopeProvider
                 throw new RuntimeException(e);
             }
 
-            translated = c.convert(sym, this);
-            translatedMap.put(sym, translated);
-            return translated;
+            MethodSymbol clmethod = c.convert(sym, this);
+            translated.put(sym, getInfo(clmethod));
+            return clmethod;
         }
 
-        if(program.getDeclaration(sym.getName()) != null)
-            throw new UnsupportedOperationException(sym.getName()+" already declared"); //could implement some remapping system
+        if (program.getDeclaration(sym.getName()) != null)
+            throw new UnsupportedOperationException(sym.getName() + " already declared"); //could implement some remapping system
 
-        translated = new MethodSymbol(sym.getName(), scope, this);
-        translated.modifiers = Modifier.STATIC;
+        MethodSymbol clmethod = new MethodSymbol(sym.getName(), scope, this);
+        clmethod.modifiers = Modifier.STATIC;
 
         TypeRef t = sym.returnType;//infer a concrete return type from params
         Map<TypeParam, TypeSymbol> typeMap = TypeRef.specify(t.getParams(), sym.params, callParams);
-        translated.returnType = new TypeRef(t.mapParams(typeMap).concrete());
+        clmethod.returnType = new TypeRef(t.mapParams(typeMap).concrete());
 
         int i = 0;
-        if(!sym.isStatic())
-            translated.params.add(new LocalSymbol(TypeRef.get(callParams.get(i++)).copy(), "this"));
+        if (!sym.isStatic())
+            clmethod.params.add(new LocalSymbol(TypeRef.get(callParams.get(i++)).copy(), "this"));
 
-        for(int j = 0; i < callParams.size(); i++, j++)
-            translated.params.add(new LocalSymbol(TypeRef.get(callParams.get(i)).copy(), sym.params.get(j).name));
+        for (int j = 0; i < callParams.size(); i++, j++)
+            clmethod.params.add(new LocalSymbol(TypeRef.get(callParams.get(i)).copy(), sym.params.get(j).name));
 
-        if(sym.body == null) sym.loadBody();
-        translated.body = sym.body.copy(translated.scope);
+        if (sym.body == null) sym.loadBody();
+        clmethod.body = sym.body.copy(clmethod.scope);
 
-        translatedMap.put(sym, translated);
-        new MethodTranslator(translated).translate();
-        MethodDecl w = new MethodDecl(translated);
+        translated.put(sym, getInfo(clmethod));
+        new MethodTranslator(clmethod).translate();
+        MethodDecl w = new MethodDecl(clmethod);
         program.declare(w);
         program.implement(w);
-        return translated;
+        return clmethod;
+    }
+
+    /**
+     * Gets a kernel var by name, adding it if it doesn't exist, and verifying matching type if it does
+     *
+     * @param type The cl type of the var
+     * @param name The name of the var
+     */
+    public KernelVar getKernelVar(String type, String name) {
+        KernelVar var = kernelVars.get(name);
+        if (var == null) {
+            kernelVars.put(name, var = new KernelVar(type, name));
+            program.writeKernel(type + ' ' + name + ';');
+        } else if (!type.equals(var.type))
+            throw new IllegalArgumentException("Defined kernel var " + type + ' ' + name + " is not of type " + type);
+
+        return var;
     }
 
     private boolean canCall(MethodSymbol sym, List params) {
-        if(sym.source == builtinSource)
+        if (sym.source == builtinSource)
             return true;
 
-        for(int i = 0, j = 0; i < params.size();) {
+        for (int i = 0, j = 0; i < params.size(); ) {
             TypeRef p = TypeRef.get(params.get(i++));
-            if(isGlobalType(p))//will be discarded
+            if (isGlobalType(p))//will be discarded
                 continue;
 
             TypeSymbol type = sym.params.get(j++).type.type;
@@ -348,29 +447,71 @@ public class JavaTranslator implements ScopeProvider
 
     /**
      * Returns a call string for calling a global function from the kernel. It will automatically fill in the kernel scope parameters as arguments
+     *
      * @param method The method to call
-     * @param args Non-global
+     * @param args   Non-global
      * @return Valid kernel function code for the method call
      */
     public String kernelCall(MethodSymbol method, String... args) {
         StringBuilder sb = new StringBuilder();
         sb.append(method.getName()).append('(');
         int i = 0;
-        for(String arg : args) {
+        for (String arg : args) {
             if (i++ > 0) sb.append(", ");
             sb.append(arg);
         }
 
-        //TODO append kernel args
+        MethodInfo info = getInfo(method);
+        for (KernelVar var : info.kernelVars) {
+            if (i++ > 0) sb.append(", ");
+            sb.append('&').append(var.name);
+        }
 
         return sb.append(')').toString();
     }
 
     public void translate() {
-        for(FieldSymbol field : fieldOrder)
-            if((field.modifiers & Modifier.FINAL) != 0)
+        propogateKernelVars();
+
+        for (FieldSymbol field : fieldOrder)
+            if ((field.modifiers & Modifier.FINAL) != 0)
                 program.declare(new ConstantDecl(field));
-            //TODO else add kernel arg
+        //TODO else add kernel arg
+    }
+
+    private void propogateKernelVars() {
+        List<MethodInfo> kernelVars = new LinkedList<MethodInfo>();
+        Set<MethodInfo> infos = new HashSet<MethodInfo>(translated.values());//multiple mappings
+        for (MethodInfo info : infos)
+            if (!info.kernelVars.isEmpty())
+                kernelVars.add(info);
+
+        for (MethodInfo info : kernelVars)
+            propogateKernelVars(info);
+
+        for (MethodInfo info : infos)
+            updateCalls(info);
+    }
+
+    private void updateCalls(MethodInfo info) {
+        if (info.kernelVars.isEmpty())
+            return;
+
+        List<LocalSymbol> kernelParams = new LinkedList<LocalSymbol>();
+        for(KernelVar var : info.kernelVars)
+            kernelParams.add(new LocalSymbol(new TypeRef(new CLTypeSymbol(var.type)).point(1), var.name));
+        info.method.params.addAll(kernelParams);
+
+        for (MethodCall call : info.calls)
+            for (LocalSymbol p : kernelParams)
+                call.params.add(new VariableAccess(p));
+    }
+
+    private void propogateKernelVars(MethodInfo info) {
+        for (MethodInfo caller : info.callers) {
+            caller.kernelVars.addAll(info.kernelVars);
+            propogateKernelVars(caller);
+        }
     }
 
     @Override

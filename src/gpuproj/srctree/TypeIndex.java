@@ -23,15 +23,24 @@ public class TypeIndex implements ScopeProvider
     static {
         for(PrimitiveSymbol p : PrimitiveSymbol.values)
             register(p);
+
+        sourceProviders.add(new ClassPathSourceProvider("/src/"));
+    }
+
+    public static String provideSource(String path) {
+        for(SourceProvider p : sourceProviders) {
+            String source = p.provideSource(path);
+            if(source != null)
+                return source;
+        }
+
+        return null;
     }
 
     private ClassSymbol findClass(String name) {
-        String path = name.replace('.', '/')+".java";
-        for(SourceProvider p : sourceProviders) {
-            String source = p.findClass(path);
-            if(source != null)
-                return loadSourceFile(source);
-        }
+        String source = provideSource(name.replace('.', '/') + ".java");
+        if(source != null)
+            return loadSourceFile(source);
 
         try {
             return new RuntimeClassSymbol(scope, Class.forName(name, false, getClass().getClassLoader())).load();

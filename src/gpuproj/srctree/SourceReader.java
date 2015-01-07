@@ -143,7 +143,7 @@ public class SourceReader
         char c = charAt(pos);
         if(Character.isDigit(c))
             return readLiteral();
-        if(Character.isJavaIdentifierStart(c) || c == '@')//@interface, annotations are skipped by seek
+        if(Character.isJavaIdentifierStart(c) || c == '@' || c == '#')//@interface, annotations are skipped by seek, #preprocessor
             return readIdentifier();
         if(c == '"')
             return readString();
@@ -161,6 +161,14 @@ public class SourceReader
     }
 
     /**
+     * Assumes the previous element to be an identifier, and sets pos to the start of it
+     */
+    public void rollbackIdentifier() {
+        while(Character.isWhitespace(charAt(--pos)));
+        while(Character.isJavaIdentifierPart(charAt(--pos)));
+    }
+
+    /**
      * Seeks to the start of code and returns everything until the next ';' or '{}' pair
      */
     public String readStatement() {
@@ -171,7 +179,7 @@ public class SourceReader
         do {
             c = readElement().charAt(0);
             end = pos;
-        } while(!end() && c != '{' && c != ';');
+        } while(c != '{' && c != ';' && !end());
 
         return substring(start, c == ';' ? end - 1 : end);
     }
@@ -688,5 +696,13 @@ public class SourceReader
 
         block.index();
         return block;
+    }
+
+    public String readLine() {
+        int p = indexOf('\n');
+        if(p < 0) p = source.length();
+        String s = substring(pos, p);
+        pos = p;
+        return s;
     }
 }
