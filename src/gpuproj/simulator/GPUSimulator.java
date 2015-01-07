@@ -4,8 +4,8 @@ import gpuproj.game.Board;
 import gpuproj.game.BoardGame;
 import gpuproj.player.TreeNode;
 import gpuproj.srctree.*;
+import gpuproj.translator.CLProgramBuilder;
 import gpuproj.translator.JavaTranslator;
-import gpuproj.translator.OCLProgramBuilder;
 import gpuproj.translator.TranslatedStruct;
 import org.jocl.*;
 
@@ -68,7 +68,7 @@ public class GPUSimulator extends PlayoutSimulator
     }
 
     private Class<? extends BoardGame> gameClass;
-    private OCLProgramBuilder program;
+    private CLProgramBuilder program;
     private TranslatedStruct boardStruct;
 
     private cl_mem boardMem;
@@ -93,7 +93,7 @@ public class GPUSimulator extends PlayoutSimulator
         if(program != null)
             program.release();
 
-        program = new OCLProgramBuilder();
+        program = new CLProgramBuilder();
         JavaTranslator t = new JavaTranslator(program);
         ClassSymbol BoardGame = (ClassSymbol) TypeIndex.resolveType("gpuproj.game.BoardGame");
         ClassSymbol Game = (ClassSymbol) TypeIndex.resolveType(gameClass.getCanonicalName());

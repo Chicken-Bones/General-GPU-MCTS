@@ -7,7 +7,7 @@ import gpuproj.srctree.TypeRef;
 import gpuproj.translator.*;
 import gpuproj.translator.CLSourceLoader.CLDecl;
 import gpuproj.translator.CLSourceLoader.CLImpl;
-import gpuproj.translator.OCLProgramBuilder.KernelPreFunc;
+import gpuproj.translator.CLProgramBuilder.KernelPreFunc;
 
 import java.lang.reflect.Modifier;
 import java.util.Random;
@@ -15,11 +15,11 @@ import java.util.Random;
 /**
  * Functions that will be linked to a specifically coded equivalent on the GPU but cannot be directly translated
  */
-public class Portable implements OCLStaticConverter
+public class Portable implements CLStaticConverter
 {
     private static Random rand = new Random();
 
-    @OCLStatic(Portable.class)
+    @CLStatic(Portable.class)
     public static int randInt(int max) {
         return rand.nextInt(max);
     }
@@ -55,7 +55,7 @@ public class Portable implements OCLStaticConverter
         t.program.addPreFunc(new KernelPreFunc()
         {
             @Override
-            public void prepareKernel(OCLProgramBuilder program) {
+            public void prepareKernel(CLProgramBuilder program) {
                 program.getKernelArg("randStart").data = rand.nextLong();
             }
         });

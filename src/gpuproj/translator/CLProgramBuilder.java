@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.jocl.CL.*;
 
-public class OCLProgramBuilder
+public class CLProgramBuilder
 {
     public static class Define
     {
@@ -77,7 +77,7 @@ public class OCLProgramBuilder
 
     public interface KernelPreFunc
     {
-        public void prepareKernel(OCLProgramBuilder program);
+        public void prepareKernel(CLProgramBuilder program);
     }
 
     private cl_kernel kernel;

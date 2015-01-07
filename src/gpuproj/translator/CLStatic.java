@@ -5,9 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OCLGlobal
+public @interface CLStatic
 {
-    Class<? extends OCLGlobalConverter> value();
+    Class<? extends CLStaticConverter> value();
 }

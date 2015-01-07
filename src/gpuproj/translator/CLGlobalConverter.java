@@ -3,7 +3,7 @@ package gpuproj.translator;
 import gpuproj.srctree.FieldSymbol;
 import gpuproj.srctree.MethodSymbol;
 
-public interface OCLGlobalConverter
+public interface CLGlobalConverter
 {
     /**
      * Should change the type of sym, potentially defining a new struct and adding

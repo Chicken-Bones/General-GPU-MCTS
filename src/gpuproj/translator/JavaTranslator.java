@@ -2,8 +2,8 @@ package gpuproj.translator;
 
 import gpuproj.srctree.*;
 import gpuproj.srctree.Scope.ScopeProvider;
-import gpuproj.translator.OCLProgramBuilder.Declaration;
-import gpuproj.translator.OCLProgramBuilder.Implementation;
+import gpuproj.translator.CLProgramBuilder.Declaration;
+import gpuproj.translator.CLProgramBuilder.Implementation;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -293,7 +293,7 @@ public class JavaTranslator implements ScopeProvider
         }
     }
 
-    public OCLProgramBuilder program;
+    public CLProgramBuilder program;
     /**
      * Object used as MethodSymbol.source for builtin OpenCL methods
      */
@@ -306,7 +306,7 @@ public class JavaTranslator implements ScopeProvider
     private List<FieldSymbol> fieldOrder = new LinkedList<FieldSymbol>();
     public Map<String, KernelVar> kernelVars = new HashMap<String, KernelVar>();
 
-    public JavaTranslator(OCLProgramBuilder program) {
+    public JavaTranslator(CLProgramBuilder program) {
         this.program = program;
     }
 
@@ -383,9 +383,9 @@ public class JavaTranslator implements ScopeProvider
         }
 
         if (isOCLStatic(sym)) {
-            OCLStaticConverter c;
+            CLStaticConverter c;
             try {
-                c = sym.getAnnotation(OCLStatic.class).value().newInstance();
+                c = sym.getAnnotation(CLStatic.class).value().newInstance();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -541,6 +541,6 @@ public class JavaTranslator implements ScopeProvider
     }
 
     public static boolean isOCLStatic(MethodSymbol sym) {
-        return sym.getAnnotation(OCLStatic.class) != null;
+        return sym.getAnnotation(CLStatic.class) != null;
     }
 }

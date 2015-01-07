@@ -4,8 +4,8 @@ import gpuproj.srctree.SourceReader;
 import gpuproj.srctree.SourceUtil;
 import gpuproj.srctree.Symbol;
 import gpuproj.srctree.TypeIndex;
-import gpuproj.translator.OCLProgramBuilder.Declaration;
-import gpuproj.translator.OCLProgramBuilder.Implementation;
+import gpuproj.translator.CLProgramBuilder.Declaration;
+import gpuproj.translator.CLProgramBuilder.Implementation;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -52,9 +52,9 @@ public class CLSourceLoader
         }
     }
 
-    public OCLProgramBuilder program;
+    public CLProgramBuilder program;
 
-    public CLSourceLoader(OCLProgramBuilder program) {
+    public CLSourceLoader(CLProgramBuilder program) {
         this.program = program;
     }
 
