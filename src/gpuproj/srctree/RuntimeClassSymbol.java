@@ -30,7 +30,7 @@ public class RuntimeClassSymbol extends ClassSymbol
         Class<?> c = (Class)source;
         loadTypeParams(this, c.getTypeParameters());
 
-        Class<?> p = c.getSuperclass();
+        Type p = c.getGenericSuperclass();
         if(p != null)
             parent = loadTypeRef(scope, p);
 

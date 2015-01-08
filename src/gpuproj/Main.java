@@ -10,13 +10,25 @@ import gpuproj.srctree.*;
 import gpuproj.games.*;
 
 import java.io.File;
+import java.net.URISyntaxException;
 
 public class Main
 {
     public static void main(String[] args) {
-        //MCTSvsUCB(new GoMoku());
-        TypeIndex.sourceProviders.add(new DirectorySourceProvider(new File("D:\\QUT\\VRES\\GPU\\project\\src")));
+        loadSourceDir(args);
         CPUvsGPU(new Squavalath(), 32);
+    }
+
+    private static void loadSourceDir(String[] args) {
+        try {
+            if(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).isDirectory()) {
+                if(args.length < 1)
+                    throw new IllegalArgumentException("Must specify source directory as program argument in a development environment");
+                TypeIndex.sourceProviders.add(new DirectorySourceProvider(new File(args[0])));
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
 
     private static <B extends Board<B>> void MCTSvsUCB(BoardGame<B> game) {

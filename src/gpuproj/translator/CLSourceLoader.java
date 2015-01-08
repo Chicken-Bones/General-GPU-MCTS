@@ -59,7 +59,11 @@ public class CLSourceLoader
     }
 
     public void load(String path) {
-        SourceReader r = new SourceReader(TypeIndex.provideSource(path));
+        String source = TypeIndex.provideSource(path);
+        if(source == null)
+            throw new IllegalArgumentException("Could not find source for "+path+". Ensure a SourceProvider with this file is added to TypeIndex");
+
+        SourceReader r = new SourceReader(source);
 
         while(!r.end()) {
             if(r.charAt(r.pos) == '#') {

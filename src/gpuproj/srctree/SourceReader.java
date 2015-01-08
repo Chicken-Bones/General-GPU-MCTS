@@ -16,6 +16,9 @@ public class SourceReader
     public boolean declaration;
 
     public SourceReader(String source) {
+        if(source == null)
+            throw new IllegalArgumentException("Null source");
+
         this.source = source;
     }
 
