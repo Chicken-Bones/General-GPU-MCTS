@@ -28,7 +28,7 @@ public class RuntimeClassSymbol extends ClassSymbol
     @Override
     public RuntimeClassSymbol loadSignatures() {
         Class<?> c = (Class)source;
-        loadTypeParams(this, c.getTypeParameters());
+        loadTypeParams(this, c);
 
         Type p = c.getGenericSuperclass();
         if(p != null)
@@ -59,7 +59,7 @@ public class RuntimeClassSymbol extends ClassSymbol
         if(msym.source instanceof Constructor) {
             Constructor c = (Constructor) msym.source;
             msym.modifiers = c.getModifiers();
-            loadTypeParams(msym, c.getTypeParameters());
+            loadTypeParams(msym, c);
             msym.returnType = new TypeRef(this);
             for(Type t : c.getGenericParameterTypes()) {
                 if(t instanceof Class && ((Class)t).isAnonymousClass())
@@ -69,14 +69,23 @@ public class RuntimeClassSymbol extends ClassSymbol
         } else {
             Method m = (Method) msym.source;
             msym.modifiers = m.getModifiers();
-            loadTypeParams(msym, m.getTypeParameters());
+            loadTypeParams(msym, m);
             msym.returnType = loadTypeRef(msym.scope, m.getGenericReturnType());
             for(Type t : m.getGenericParameterTypes())
                 msym.params.add(new LocalSymbol(loadTypeRef(msym.scope, t), "arg"+msym.params.size()));
         }
     }
 
-    private static void loadTypeParams(ParameterisableSymbol symbol, TypeVariable<?>[] generics) {
+    private static void loadTypeParams(ParameterisableSymbol symbol, GenericDeclaration decl) {
+        TypeVariable<?>[] generics;
+        try {
+            generics = decl.getTypeParameters();
+        } catch (Exception e) {
+            System.err.println("Warning, unable to get type parameters for "+symbol);
+            e.printStackTrace();
+            return;
+        }
+
         for(TypeVariable<?> v : generics) {
             TypeParam p = new TypeParam(v.getName(), symbol);
             symbol.getTypeParams().add(p);
