@@ -10,7 +10,7 @@ import java.util.*;
 
 public class JavaTranslator implements ScopeProvider
 {
-    public class ConstantDecl implements Declaration
+    public static class ConstantDecl implements Declaration
     {
         public FieldSymbol field;
 
@@ -50,7 +50,7 @@ public class JavaTranslator implements ScopeProvider
         }
     }
 
-    public class MethodDecl implements Declaration, Implementation
+    public static class MethodDecl implements Declaration, Implementation
     {
         public MethodSymbol method;
 
@@ -89,7 +89,7 @@ public class JavaTranslator implements ScopeProvider
         }
     }
 
-    public class StructDecl implements Declaration
+    public static class StructDecl implements Declaration
     {
         public ClassSymbol type;
         public List<FieldSymbol> fields = new LinkedList<FieldSymbol>();
@@ -374,10 +374,7 @@ public class JavaTranslator implements ScopeProvider
 
         String builtin = BuiltinMethodMap.map(sym);
         if (builtin != null) {
-            MethodSymbol clmethod = new MethodSymbol(builtin, scope, builtinSource);
-            clmethod.modifiers = Modifier.STATIC;
-            clmethod.returnType = sym.returnType;
-            clmethod.params = sym.params;
+            MethodSymbol clmethod = BuiltinMethodMap.get(builtin, sym, this);
             translated.put(sym, getInfo(clmethod));
             return clmethod;
         }

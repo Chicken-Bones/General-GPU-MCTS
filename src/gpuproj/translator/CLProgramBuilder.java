@@ -1,6 +1,7 @@
 package gpuproj.translator;
 
 import gpuproj.StatDialog;
+import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.SourceReader;
 import gpuproj.srctree.SourceUtil;
 import gpuproj.srctree.Statement;
@@ -9,15 +10,23 @@ import org.jocl.*;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 import static org.jocl.CL.*;
 
 public class CLProgramBuilder
 {
+    public static String cString(byte[] bytes) {
+        int i = 0;
+        while(bytes[i] != 0) i++;
+        try {
+            return new String(bytes, 0, i, "US-ASCII");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static class Define
     {
         public final String line;
@@ -80,9 +89,13 @@ public class CLProgramBuilder
         public void prepareKernel(CLProgramBuilder program);
     }
 
+    public final cl_device_id device;
+    public final String vendor;
+
     private cl_kernel kernel;
     private cl_program program;
 
+    private Set<String> extensions = new HashSet<String>();
     private List<Define> definitions = new LinkedList<Define>();
     private Map<String, Define> defineMap = new HashMap<String, Define>();
     private List<Declaration> declarations = new LinkedList<Declaration>();
@@ -92,6 +105,14 @@ public class CLProgramBuilder
     private List<Implementation> implementations = new LinkedList<Implementation>();
     private StringBuilder kernelCode = new StringBuilder();
     private List<KernelPreFunc> kernelPreFuncs = new LinkedList<KernelPreFunc>();
+
+    public CLProgramBuilder(cl_device_id device) {
+        this.device = device;
+
+        byte[] buf = new byte[100];
+        clGetDeviceInfo(device, CL_DEVICE_VENDOR, buf.length, Pointer.to(buf), null);
+        vendor = CLProgramBuilder.cString(buf);
+    }
 
     public void define(String s) {
         Define def = new Define(s);
@@ -112,6 +133,10 @@ public class CLProgramBuilder
     public String getDef(String identifier) {
         Define d = defineMap.get(identifier);
         return d == null ? null : d.value();
+    }
+
+    public void enableExtension(String extension) {
+        extensions.add(extension);
     }
 
     public void declare(Declaration decl) {
@@ -163,8 +188,15 @@ public class CLProgramBuilder
             throw new IllegalStateException("Program already built");
 
         StringBuilder sb = new StringBuilder();
+        for(String extension : extensions)
+            sb.append("#pragma OPENCL EXTENSION ").append(extension).append(" : enable\n");
+        if(!extensions.isEmpty())
+            sb.append("\n");
+
         for(Define define : definitions)
             sb.append(define.line).append("\n");
+        if(!definitions.isEmpty())
+            sb.append("\n");
 
         for(Declaration decl : declarations)
             sb.append(decl.declare()).append("\n\n");
@@ -180,7 +212,14 @@ public class CLProgramBuilder
         logSource(source);
 
         program = clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
-        clBuildProgram(program, 0, null, "", null, null);
+        try {
+            clBuildProgram(program, 0, null, "-cl-opt-disable", null, null);
+        } catch (CLException e) {
+            e.printStackTrace();
+            byte[] bytes = new byte[32768];
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, bytes.length, Pointer.to(bytes), null);
+            System.err.println(cString(bytes));
+        }
         kernel = clCreateKernel(program, "kernel_main", null);
     }
 

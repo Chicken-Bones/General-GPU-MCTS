@@ -9,9 +9,9 @@ import java.util.List;
 /**
  * Single Threaded CPU Implementation
  */
-public class CPUSimulator extends PlayoutSimulator
+public class CPUBlockSimulator extends PlayoutSimulator
 {
-    public CPUSimulator(int simsPerNode) {
+    public CPUBlockSimulator(int simsPerNode) {
         super(simsPerNode);
     }
 
@@ -26,6 +26,7 @@ public class CPUSimulator extends PlayoutSimulator
         }
 
         simCount += nodes.size() * simsPerNode;
+        expCount++;
     }
 
     @Override

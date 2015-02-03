@@ -14,6 +14,10 @@ public abstract class PlayoutSimulator
      * Number of simulations performed this turn, subclasses should update this.
      */
     public static int simCount = 0;
+    /**
+     * Number of nodes expanded this turn, subclasses should update this.
+     */
+    public static int expCount = 0;
 
     /**
      * Logs simulation speed info
@@ -23,8 +27,9 @@ public abstract class PlayoutSimulator
      */
     public static void logTurn(int turn, Player player, long time) {
         if(simCount == 0) return;
-        StatDialog.get("Sim Count").println("Turn "+turn+" ("+player+"): "+simCount+" in "+time+"ms "+(simCount*1000D/time)+"/sec");
+        StatDialog.get("Sim Count").println("Turn "+turn+" ("+player+"): "+simCount+"("+expCount+") in "+time+"ms "+(simCount*1000D/time)+"/sec");
         simCount = 0;
+        expCount = 0;
     }
 
     /**

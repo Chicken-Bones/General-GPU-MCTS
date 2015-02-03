@@ -26,7 +26,7 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
     @Override
     public Move<B> selectMove(long limit) {
         long start = System.currentTimeMillis();
-        while(System.currentTimeMillis() - start < limit) {
+        do {
             //selection
             TreeNode<B> node = tree;
             while(!node.isLeaf())
@@ -37,7 +37,7 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
                 simulator.play(Arrays.asList(node), game);//get a better estimate
             else
                 simulator.play(node.children, game);
-        }
+        } while(System.currentTimeMillis() - start < limit);
 
         StatDialog.get("Tree Depth").setText(""+tree.getDepth());
 

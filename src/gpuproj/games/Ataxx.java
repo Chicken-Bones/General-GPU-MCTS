@@ -96,34 +96,17 @@ public class Ataxx extends BoardGame<AtaxxBoard>
         long empty = ~(ply|opp|AtaxxBoard.blocked);
         long moveSet = movementMask(ply) & empty;//valid move destinations
 
-        int randmove = Portable.randInt(Long.bitCount(moveSet));
-        for(int i = 0;; i++) {
-            long move = moveSet & -moveSet;
-            if (i == randmove) {
-                long pieces = movementMask(move) & ~attackMask(move) & ply;//non duplicating source pieces
+        long move = Portable.randBit(moveSet);
+        long pieces = movementMask(move) & ~attackMask(move) & ply;//non duplicating source pieces
 
-                //apply move and attack
-                long attack = attackMask(move);
-                ply |= move | opp & attack;
-                opp &= ~attack;
+        //apply move and attack
+        long attack = attackMask(move);
+        ply |= move | opp & attack;
+        opp &= ~attack;
 
-                int randpiece = Portable.randInt(Long.bitCount(pieces) + 1);
-                if(randpiece > 0) {//0 is a duplicating move. Otherwise find the source piece and remove it
-                    for(int j = 1;; j++) {
-                        long piece = pieces & -pieces;
-                        if(j == randpiece) {
-                            ply &= ~piece;
-                            break;
-                        }
-
-                        pieces &= ~piece;
-                    }
-                }
-                break;
-            }
-
-            moveSet &= ~move;
-        }
+        int randpiece = Portable.randInt(Long.bitCount(pieces) + 1);
+        if(randpiece > 0) //0 is a duplicating move. Otherwise find the source piece and remove it
+            ply &= ~Portable.nthBit(pieces, randpiece-1);
 
         board.set(board.turn, ply);
         board.set(board.turn^1, opp);

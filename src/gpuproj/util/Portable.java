@@ -24,8 +24,7 @@ public class Portable implements CLStaticConverter
         return rand.nextInt(max);
     }
 
-    @Override
-    public MethodSymbol convert(MethodSymbol sym, JavaTranslator t) {
+    private MethodSymbol convertRandInt(MethodSymbol sym, JavaTranslator t) {
         //load the mwc64x_rng module
         new CLSourceLoader(t.program).load("mwc64x_rng.cl");
 
@@ -33,14 +32,12 @@ public class Portable implements CLStaticConverter
         t.program.declare(new CLDecl("int randInt(int max, mwc64x_state_t *rand);", "randInt"));
         t.program.implement(new CLImpl(
                 "int randInt(int max, mwc64x_state_t *rand) {\n" +
-                "    return MWC64X_NextUint(rand) % max;\n" +
-                "}"));
+                        "    return MWC64X_NextUint(rand) % max;\n" +
+                        "}"));
 
         //create method symbol for java bindings
-        sym = new MethodSymbol("randInt", t.scope(), this);
+        sym = sym.copySig("randInt", t.scope(), this);
         sym.modifiers |= Modifier.STATIC;
-        sym.returnType = new TypeRef(PrimitiveSymbol.INT);
-        sym.params.add(new LocalSymbol(new TypeRef(PrimitiveSymbol.INT), "max"));
 
         //add a kernel var for the rng
         t.getInfo(sym).kernelVars.add(t.getKernelVar("mwc64x_state_t", "rand"));
@@ -61,5 +58,33 @@ public class Portable implements CLStaticConverter
         });
 
         return sym;
+    }
+
+    @CLStatic(Portable.class)
+    public static long nthBit(long l, int n) {
+        while(n-- > 0) l &= l-1;
+        return l & -l;
+    }
+
+    private MethodSymbol convertNthBit(MethodSymbol sym, JavaTranslator t) {
+        new CLSourceLoader(t.program).load("nth_bit.cl");
+
+        //create method symbol for java bindings
+        sym = sym.copySig("nthBit", t.scope(), this);
+        sym.modifiers |= Modifier.STATIC;
+
+        return sym;
+    }
+
+    public static long randBit(long l) {
+        return nthBit(l, randInt(Long.bitCount(l)));
+    }
+
+    @Override
+    public MethodSymbol convert(MethodSymbol sym, JavaTranslator t) {
+        if(sym.getName().equals("randInt"))
+            return convertRandInt(sym, t);
+        else
+            return convertNthBit(sym, t);
     }
 }

@@ -19,7 +19,7 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
     public String fullname;
     public List<LocalSymbol> params = new LinkedList<LocalSymbol>();
     public boolean vaargs;
-    public Block body;
+    public Statement body;
 
     public MethodSymbol(String fullname, Scope scope, Object source) {
         this.fullname = fullname;
@@ -187,5 +187,13 @@ public class MethodSymbol implements ParameterisableSymbol, AnnotatedSymbol
 
     public ClassSymbol owner() {
         return (ClassSymbol) TypeIndex.resolveType(ownerName());
+    }
+
+    public MethodSymbol copySig(String name, Scope scope, Object source) {
+        MethodSymbol sym = new MethodSymbol(name, scope, source);
+        sym.returnType = returnType;
+        sym.params = new LinkedList<LocalSymbol>(params);
+        sym.typeParams = new LinkedList<TypeParam>(typeParams);
+        return sym;
     }
 }

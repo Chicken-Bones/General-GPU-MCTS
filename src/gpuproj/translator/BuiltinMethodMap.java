@@ -1,7 +1,7 @@
 package gpuproj.translator;
 
-import gpuproj.srctree.MethodSymbol;
-import gpuproj.srctree.TypeIndex;
+import gpuproj.srctree.*;
+import gpuproj.translator.JavaTranslator.MethodDecl;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -10,7 +10,8 @@ import java.util.Map;
 public class BuiltinMethodMap
 {
     public static Map<String, String> map = new HashMap<String, String>();
-    private static Map<String, MethodSymbol> built = new HashMap<String, MethodSymbol>();
+    private static Map<String, String> nvidiaASM = new HashMap<String, String>();
+    private static Map<PrimitiveSymbol, String> regASMMap = new HashMap<PrimitiveSymbol, String>();
 
     static {
         map.put("java.lang.Math.min(II)I", "min");
@@ -51,17 +52,41 @@ public class BuiltinMethodMap
         map.put("java.lang.Math.sqrt", "sqrt");
         map.put("java.lang.Math.tan", "tan");
         map.put("java.lang.Math.tanh", "tanh");
+
+        nvidiaASM.put("popcount(J)I", "popc.b64 %0, %1");
+        regASMMap.put(PrimitiveSymbol.SHORT, "h");
+        regASMMap.put(PrimitiveSymbol.INT, "r");
+        regASMMap.put(PrimitiveSymbol.LONG, "l");
+        regASMMap.put(PrimitiveSymbol.FLOAT, "f");
+        regASMMap.put(PrimitiveSymbol.DOUBLE, "d");
     }
 
-    /**
-     * Gets or creates a builtin symbol for name
-     */
-    public static MethodSymbol get(String name) {
-        MethodSymbol sym = built.get(name);
-        if(sym == null) {
-            sym = new MethodSymbol(name, TypeIndex.scope, null);
-            sym.modifiers |= Modifier.PUBLIC | Modifier.STATIC;
-            built.put(name, sym);
+    public static MethodSymbol get(String name, MethodSymbol sym, JavaTranslator t) {
+        sym = sym.copySig(name, t.scope(), JavaTranslator.builtinSource);
+        sym.modifiers = Modifier.STATIC;
+
+        String asm = nvidiaASM.get(name+sym.signature());
+        if(asm != null && t.program.vendor.equals("NVIDIA Corporation")) {
+            TypeRef.printCL = true;
+            StringBuilder body = new StringBuilder().append("{\n");
+            body.append("    ").append(sym.returnType).append(" ret;\n");
+
+            body.append("    asm(\"").append(asm).append(";\"");
+
+            if(sym.returnType.type != PrimitiveSymbol.VOID)
+                body.append(" : \"=").append(regASMMap.get(sym.returnType.type)).append("\"(ret)");
+
+            for(LocalSymbol param : sym.params)
+                body.append(" : \"").append(regASMMap.get(param.type.type)).append("\"(").append(param.name).append(")");
+
+            body.append(");\n");
+            body.append("    return ret;\n}");
+            TypeRef.printCL = false;
+
+            sym.body = new CStatement(body.toString());
+            MethodDecl w = new MethodDecl(sym);
+            t.program.declare(w);
+            t.program.implement(w);
         }
 
         return sym;

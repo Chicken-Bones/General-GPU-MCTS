@@ -1,5 +1,7 @@
 package gpuproj.game;
 
+import gpuproj.util.Portable;
+
 /**
  * Contains static utility functions for manipulating 8x8 bitboards represented as longs, where the bit index for a given x,y is y*8+x (y<<3|x) and the origin is in the lower left corner.
  */

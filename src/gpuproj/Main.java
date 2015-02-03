@@ -4,8 +4,8 @@ import gpuproj.game.Board;
 import gpuproj.game.BoardGame;
 import gpuproj.player.MCTSPlayer;
 import gpuproj.player.UCBPlayer;
-import gpuproj.simulator.CPUSimulator;
-import gpuproj.simulator.GPUSimulator;
+import gpuproj.simulator.CPUBlockSimulator;
+import gpuproj.simulator.GPUBlockSimulator;
 import gpuproj.srctree.*;
 import gpuproj.games.*;
 
@@ -16,7 +16,7 @@ public class Main
 {
     public static void main(String[] args) {
         loadSourceDir(args);
-        CPUvsGPU(new Squavalath(), 32);
+        CPUvsGPUBlock(new Ataxx(), 128);
     }
 
     private static void loadSourceDir(String[] args) {
@@ -33,15 +33,15 @@ public class Main
 
     private static <B extends Board<B>> void MCTSvsUCB(BoardGame<B> game) {
         GameMachine.playGames(game,
-                new MCTSPlayer<B>(game, new CPUSimulator(1)),
-                new UCBPlayer<B>(game, new CPUSimulator(1)),
+                new MCTSPlayer<B>(game, new CPUBlockSimulator(1)),
+                new UCBPlayer<B>(game, new CPUBlockSimulator(1)),
                 200, 500);
     }
 
-    private static <B extends Board<B>> void CPUvsGPU(BoardGame<B> game, int simsPerNode) {
+    private static <B extends Board<B>> void CPUvsGPUBlock(BoardGame<B> game, int simsPerNode) {
         GameMachine.playGames(game,
-                new MCTSPlayer<B>(game, new CPUSimulator(simsPerNode)),
-                new MCTSPlayer<B>(game, new GPUSimulator(simsPerNode)),
+                new MCTSPlayer<B>(game, new CPUBlockSimulator(simsPerNode)),
+                new MCTSPlayer<B>(game, new GPUBlockSimulator(simsPerNode)),
                 200, 500);
     }
 }
