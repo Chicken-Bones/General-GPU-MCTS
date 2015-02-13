@@ -6,6 +6,7 @@ import gpuproj.player.MCTSPlayer;
 import gpuproj.player.UCBPlayer;
 import gpuproj.simulator.CPUBlockSimulator;
 import gpuproj.simulator.GPUBlockSimulator;
+import gpuproj.simulator.GPUWarpSimulator;
 import gpuproj.srctree.*;
 import gpuproj.games.*;
 
@@ -35,6 +36,13 @@ public class Main
         GameMachine.playGames(game,
                 new MCTSPlayer<B>(game, new CPUBlockSimulator(1)),
                 new UCBPlayer<B>(game, new CPUBlockSimulator(1)),
+                200, 500);
+    }
+
+    private static <B extends Board<B>> void CPUvsGPUWarp(BoardGame<B> game, int simsPerKernel) {
+        GameMachine.playGames(game,
+                new MCTSPlayer<B>(game, new CPUBlockSimulator(1)),
+                new MCTSPlayer<B>(game, new GPUWarpSimulator(simsPerKernel)),
                 200, 500);
     }
 

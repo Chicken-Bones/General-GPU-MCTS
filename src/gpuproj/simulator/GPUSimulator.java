@@ -6,6 +6,7 @@ import gpuproj.player.TreeNode;
 import gpuproj.srctree.*;
 import gpuproj.translator.CLProgramBuilder;
 import gpuproj.translator.JavaTranslator;
+import gpuproj.translator.KernelEnv;
 import gpuproj.translator.TranslatedStruct;
 import org.jocl.*;
 
@@ -13,7 +14,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -21,14 +21,10 @@ import java.util.List;
 import java.util.Properties;
 
 import static org.jocl.CL.*;
-import static org.jocl.CL.clCreateBuffer;
 
 public abstract class GPUSimulator extends PlayoutSimulator
 {
-    public static cl_device_id device;
-    private static cl_context context;
-    private static cl_command_queue commandQueue;
-    private static int maxWorkGroupSize;
+    private static KernelEnv env;
 
     static {
         initCL();
@@ -134,23 +130,12 @@ public abstract class GPUSimulator extends PlayoutSimulator
         CL.setExceptionsEnabled(true);
 
         Device d = selectDevice();
-        device = d.id;
 
         // Initialize the context properties
         cl_context_properties contextProperties = new cl_context_properties();
         contextProperties.addProperty(CL_CONTEXT_PLATFORM, d.platform);
 
-        // Create a context for the selected device
-        context = clCreateContext(
-                contextProperties, 1, new cl_device_id[]{device},
-                null, null, null);
-
-        // Create a command-queue for the selected device
-        commandQueue = clCreateCommandQueue(context, device, 0, null);
-
-        int[] maxWorkGroupSizeArr = new int[1];
-        clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.size_t, Pointer.to(maxWorkGroupSizeArr), null);
-        maxWorkGroupSize = maxWorkGroupSizeArr[0];
+        env = new KernelEnv(d.id, contextProperties);
     }
 
     private Class<? extends BoardGame> gameClass;
@@ -171,7 +156,7 @@ public abstract class GPUSimulator extends PlayoutSimulator
         if(program != null)
             program.release();
 
-        program = new CLProgramBuilder(device);
+        program = new CLProgramBuilder(env);
         JavaTranslator t = new JavaTranslator(program);
         ClassSymbol BoardGame = (ClassSymbol) TypeIndex.resolveType("gpuproj.game.BoardGame");
         ClassSymbol Game = (ClassSymbol) TypeIndex.resolveType(gameClass.getCanonicalName());
@@ -188,52 +173,49 @@ public abstract class GPUSimulator extends PlayoutSimulator
         program.addKernelArg(new TypeRef(PrimitiveSymbol.INT).point(1).modify(TypeRef.GLOBAL), "score").data = scoreMem;
         program.writeKernel("atom_add(score + get_group_id(0), "+t.kernelCall(playout, "board[get_group_id(0)]")+");");
         program.enableExtension("cl_khr_global_int32_base_atomics");
-        program.build(context);
+        program.build();
 
         boardStruct = TranslatedStruct.translate(Board);
-    }
 
-    private void ensureCapacity(int nodeCount) {
-        if(boardBuffer == null || nodeCount * boardStruct.size > boardBuffer.capacity()) {
-            boardBuffer = ByteBuffer.allocateDirect(nodeCount * boardStruct.size);
-            scoreBuffer = new int[nodeCount];
-            if(boardMem != null) {
-                clReleaseMemObject(boardMem);
-                clReleaseMemObject(scoreMem);
-            }
-            program.getKernelArg("board").data = boardMem = clCreateBuffer(context, CL_MEM_READ_ONLY, boardBuffer.capacity(), null, null);
-            program.getKernelArg("score").data = scoreMem = clCreateBuffer(context, CL_MEM_READ_WRITE, nodeCount * Sizeof.cl_int, null, null);
-        }
+        boardBuffer = ByteBuffer.allocateDirect(env.maxWorkItems() * boardStruct.size);
+        scoreBuffer = new int[env.maxWorkItems()];
+        program.getKernelArg("board").data = boardMem = clCreateBuffer(env.context, CL_MEM_READ_ONLY, boardBuffer.capacity(), null, null);
+        program.getKernelArg("score").data = scoreMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, scoreBuffer.length * Sizeof.cl_int, null, null);
     }
 
     public int getMaxWorkGroupSize() {
-        return maxWorkGroupSize;
+        return env.maxWorkGroupSize;
     }
 
     public abstract int getWorkSize(int nodes);
 
     private void runKernel(List<TreeNode> nodes) {
-        ensureCapacity(nodes.size());
-
-        boardBuffer.rewind();
-        for(TreeNode node : nodes)
-            boardStruct.write(node.getBoard(), boardBuffer);
-
-        boardBuffer.rewind();
-        clEnqueueWriteBuffer(commandQueue, boardMem, true, 0, nodes.size() * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
-
-        Arrays.fill(scoreBuffer, 0);
-        clEnqueueWriteBuffer(commandQueue, scoreMem, true, 0, nodes.size() * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
-
         int workSize = getWorkSize(nodes.size());
-        program.runKernel(commandQueue, new long[]{nodes.size()*workSize}, new long[]{workSize});
-        clFinish(commandQueue);
+        if (workSize <= 0 || workSize > env.maxWorkGroupSize)
+            throw new IllegalArgumentException("getWorkSize returned invalid value: " + workSize);
 
-        clEnqueueReadBuffer(commandQueue, scoreMem, true, 0, nodes.size() * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+        //execute kernel in batches of at most 128 nodes
+        for (int group = 0; group < nodes.size(); group += KernelEnv.maxWorkGroups) {
+            int groupSize = Math.min(nodes.size()-group, KernelEnv.maxWorkGroups);
 
-        int i = 0;
-        for(TreeNode node : nodes)
-            node.update(BoardGame.floatScore(scoreBuffer[i++], workSize), workSize);
+            boardBuffer.rewind();
+            for (int i = 0; i < groupSize; i++)
+                boardStruct.write(nodes.get(group+i).getBoard(), boardBuffer);
+
+            boardBuffer.rewind();
+            clEnqueueWriteBuffer(env.commandQueue, boardMem, true, 0, groupSize * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
+
+            Arrays.fill(scoreBuffer, 0);
+            clEnqueueWriteBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+
+            program.runKernel(new long[]{groupSize * workSize}, new long[]{workSize});
+            clFinish(env.commandQueue);
+
+            clEnqueueReadBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+
+            for (int i = 0; i < groupSize; i++)
+                nodes.get(group+i).update(BoardGame.floatScore(scoreBuffer[i], workSize), workSize);
+        }
 
         simCount += nodes.size()*workSize;
     }

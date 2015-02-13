@@ -89,8 +89,7 @@ public class CLProgramBuilder
         public void prepareKernel(CLProgramBuilder program);
     }
 
-    public final cl_device_id device;
-    public final String vendor;
+    public final KernelEnv env;
 
     private cl_kernel kernel;
     private cl_program program;
@@ -104,14 +103,11 @@ public class CLProgramBuilder
     private Map<String, KernelArg> argMap = new HashMap<String, KernelArg>();
     private List<Implementation> implementations = new LinkedList<Implementation>();
     private StringBuilder kernelCode = new StringBuilder();
+    private StringBuilder kernelCode2 = new StringBuilder();
     private List<KernelPreFunc> kernelPreFuncs = new LinkedList<KernelPreFunc>();
 
-    public CLProgramBuilder(cl_device_id device) {
-        this.device = device;
-
-        byte[] buf = new byte[100];
-        clGetDeviceInfo(device, CL_DEVICE_VENDOR, buf.length, Pointer.to(buf), null);
-        vendor = CLProgramBuilder.cString(buf);
+    public CLProgramBuilder(KernelEnv env) {
+        this.env = env;
     }
 
     public void define(String s) {
@@ -165,6 +161,10 @@ public class CLProgramBuilder
         kernelCode.append('\n').append(Statement.indent(s));
     }
 
+    public void writePostKernel(String s) {
+        kernelCode2.append('\n').append(Statement.indent(s));
+    }
+
     public KernelArg addKernelArg(TypeRef type, String name) {
         if(argMap.containsKey(name))
             throw new IllegalArgumentException("Kernel argument "+name+" already added");
@@ -183,7 +183,7 @@ public class CLProgramBuilder
         kernelPreFuncs.add(func);
     }
 
-    public void build(cl_context context) {
+    public void build() {
         if(program != null)
             throw new IllegalStateException("Program already built");
 
@@ -206,18 +206,19 @@ public class CLProgramBuilder
 
         sb.append("__kernel void kernel_main(").append(SourceUtil.listString(args)).append(") {");
         sb.append(kernelCode);
+        sb.append(kernelCode2);
         sb.append("\n}");
 
         String source = sb.toString();
         logSource(source);
 
-        program = clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
+        program = clCreateProgramWithSource(env.context, 1, new String[]{source}, null, null);
         try {
             clBuildProgram(program, 0, null, "-cl-opt-disable", null, null);
         } catch (CLException e) {
             e.printStackTrace();
             byte[] bytes = new byte[32768];
-            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, bytes.length, Pointer.to(bytes), null);
+            clGetProgramBuildInfo(program, env.device, CL_PROGRAM_BUILD_LOG, bytes.length, Pointer.to(bytes), null);
             System.err.println(cString(bytes));
         }
         kernel = clCreateKernel(program, "kernel_main", null);
@@ -268,14 +269,14 @@ public class CLProgramBuilder
         clSetKernelArg(kernel, i, size, ptr);
     }
 
-    public void runKernel(cl_command_queue cmdQueue, long[] global_work_size, long[] local_work_size) {
+    public void runKernel(long[] global_work_size, long[] local_work_size) {
         for(KernelPreFunc func : kernelPreFuncs)
             func.prepareKernel(this);
 
         for(int i = 0; i < args.size(); i++)
             setKernelArg(i);
 
-        clEnqueueNDRangeKernel(cmdQueue, kernel, global_work_size.length, null, global_work_size, local_work_size, 0, null, null);
+        clEnqueueNDRangeKernel(env.commandQueue, kernel, global_work_size.length, null, global_work_size, local_work_size, 0, null, null);
     }
 
     public void release() {

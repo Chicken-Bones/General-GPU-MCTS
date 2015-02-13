@@ -1,6 +1,6 @@
 package gpuproj.util;
 
-import gpuproj.srctree.LocalSymbol;
+import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.MethodSymbol;
 import gpuproj.srctree.PrimitiveSymbol;
 import gpuproj.srctree.TypeRef;
@@ -8,9 +8,16 @@ import gpuproj.translator.*;
 import gpuproj.translator.CLSourceLoader.CLDecl;
 import gpuproj.translator.CLSourceLoader.CLImpl;
 import gpuproj.translator.CLProgramBuilder.KernelPreFunc;
+import gpuproj.translator.JavaTranslator.CLTypeSymbol;
+import org.jocl.Sizeof;
+import org.jocl.cl_context;
+import org.jocl.cl_device_id;
+import org.jocl.cl_mem;
 
 import java.lang.reflect.Modifier;
 import java.util.Random;
+
+import static org.jocl.CL.*;
 
 /**
  * Functions that will be linked to a specifically coded equivalent on the GPU but cannot be directly translated
@@ -24,9 +31,31 @@ public class Portable implements CLStaticConverter
         return rand.nextInt(max);
     }
 
+    private static cl_mem randMem;
+    private void initRandMem(KernelEnv env) {
+        if(randMem != null)
+            clReleaseMemObject(randMem);
+
+        randMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, env.maxWorkItems() * Sizeof.cl_uint * 2, null, null);
+
+        //run a kernel to seed the random
+        CLProgramBuilder program = new CLProgramBuilder(env);
+        new CLSourceLoader(program).load("mwc64x_rng.cl");
+        program.addKernelArg(new TypeRef(PrimitiveSymbol.LONG).modify(TypeRef.UNSIGNED), "randStart").data = rand.nextLong();
+        program.addKernelArg(new TypeRef(new CLTypeSymbol("mwc64x_state_t")).point(1).modify(TypeRef.GLOBAL), "randMem").data = randMem;
+
+        program.writeKernel("mwc64x_state_t rand = randMem[get_global_id(0)];");
+        program.writeKernel("MWC64X_SeedStreams(&rand, randStart, 1<<16);");
+        program.writeKernel("randMem[get_global_id(0)] = rand;");
+        program.build();
+        program.runKernel(new long[]{env.maxWorkItems()}, new long[]{env.maxWorkGroupSize});
+    }
+
     private MethodSymbol convertRandInt(MethodSymbol sym, JavaTranslator t) {
+        initRandMem(t.program.env);
+
         //load the mwc64x_rng module
-        new CLSourceLoader(t.program).load("mwc64x_rng.cl");
+        new CLSourceLoader(t.program).load("mwc64x_step.cl");
 
         //write a wrapper function
         t.program.declare(new CLDecl("int randInt(int max, mwc64x_state_t *rand);", "randInt"));
@@ -43,19 +72,12 @@ public class Portable implements CLStaticConverter
         t.getInfo(sym).kernelVars.add(t.getKernelVar("mwc64x_state_t", "rand"));
 
         //add a kernel argument for the rng base
-        t.program.addKernelArg(new TypeRef(PrimitiveSymbol.LONG).modify(TypeRef.UNSIGNED), "randStart");
+        t.program.addKernelArg(new TypeRef(new CLTypeSymbol("mwc64x_state_t")).point(1).modify(TypeRef.GLOBAL), "randMem").data = randMem;
 
-        //seed the rng, split the streams by a sufficently large number, a power of 2 because it improves the speed of the seed function
-        t.program.writeKernel("MWC64X_SeedStreams(&rand, randStart, 1<<16);");
-
-        //add the host callback to generate a new seed each run
-        t.program.addPreFunc(new KernelPreFunc()
-        {
-            @Override
-            public void prepareKernel(CLProgramBuilder program) {
-                program.getKernelArg("randStart").data = rand.nextLong();
-            }
-        });
+        //cache the rand instance
+        t.program.writeKernel("rand = randMem[get_global_id(0)];");
+        //load it back into global mem
+        t.program.writePostKernel("randMem[get_global_id(0)] = rand;");
 
         return sym;
     }

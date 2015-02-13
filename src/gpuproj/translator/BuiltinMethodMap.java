@@ -66,7 +66,7 @@ public class BuiltinMethodMap
         sym.modifiers = Modifier.STATIC;
 
         String asm = nvidiaASM.get(name+sym.signature());
-        if(asm != null && t.program.vendor.equals("NVIDIA Corporation")) {
+        if(asm != null && t.program.env.vendor.equals("NVIDIA Corporation")) {
             TypeRef.printCL = true;
             StringBuilder body = new StringBuilder().append("{\n");
             body.append("    ").append(sym.returnType).append(" ret;\n");
