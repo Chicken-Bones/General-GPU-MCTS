@@ -35,6 +35,7 @@ public class GameMachine
             statBoard.println("Turn: "+cnt+"\n"+board);
             PlayoutSimulator.logTurn(cnt, turn, limit);
         } while(winner < 0);
+
         StatDialog.get("Game Results").println(cnt+" turns. "+(winner == 2 ? "Draw" : winner == 0 ? p1+" (White)" : p2+" (Black)"));
         return winner;
     }

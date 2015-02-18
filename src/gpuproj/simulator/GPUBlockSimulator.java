@@ -1,9 +1,14 @@
 package gpuproj.simulator;
 
+import gpuproj.game.BoardGame;
+
 public class GPUBlockSimulator extends GPUSimulator
 {
-    public GPUBlockSimulator(int simsPerNode) {
-        super(simsPerNode);
+    private int simsPerNode;
+
+    public GPUBlockSimulator(Class<? extends BoardGame> gameClass, int simsPerNode) {
+        super(gameClass);
+        this.simsPerNode = simsPerNode;
     }
 
     @Override

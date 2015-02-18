@@ -125,7 +125,6 @@ public abstract class GPUSimulator extends PlayoutSimulator
     }
 
     private static void initCL() {
-
         // Enable exceptions and subsequently omit error checks in this sample
         CL.setExceptionsEnabled(true);
 
@@ -138,49 +137,88 @@ public abstract class GPUSimulator extends PlayoutSimulator
         env = new KernelEnv(d.id, contextProperties);
     }
 
-    private Class<? extends BoardGame> gameClass;
-    private CLProgramBuilder program;
-    private TranslatedStruct boardStruct;
+    public static class BoardGameKernel
+    {
+        public final Class<? extends BoardGame> gameClass;
+        public final int nodesPerKernel;
+        public CLProgramBuilder program;
+        public TranslatedStruct boardStruct;
 
-    private cl_mem boardMem;
-    private ByteBuffer boardBuffer;
-    private cl_mem scoreMem;
-    private int[] scoreBuffer;
+        public cl_mem boardMem;
+        public ByteBuffer boardBuffer;
+        public cl_mem scoreMem;
+        public int[] scoreBuffer;
 
-    public GPUSimulator(int simsPerNode) {
-        super(simsPerNode);
+        public BoardGameKernel(Class<? extends BoardGame> gameClass, int nodesPerKernel) {
+            this.gameClass = gameClass;
+            this.nodesPerKernel = nodesPerKernel;
+
+            program = new CLProgramBuilder(env);
+            JavaTranslator t = new JavaTranslator(program);
+            ClassSymbol BoardGame = (ClassSymbol) TypeIndex.resolveType("gpuproj.game.BoardGame");
+            ClassSymbol Game = (ClassSymbol) TypeIndex.resolveType(gameClass.getCanonicalName());
+            ClassSymbol Board = (ClassSymbol) TypeRef.specify(BoardGame.typeParams.get(0), BoardGame.parameterPattern(), new TypeRef(Game));
+
+            t.addStruct(Board);
+            t.addGlobalInstance(Game);
+            MethodSymbol playout = t.addGlobalMethod((MethodSymbol) TypeIndex.scope.resolve1("gpuproj.simulator.PlayoutSimulator.playout", Symbol.METHOD_SYM), Arrays.asList(Board, Game));
+            t.translate();
+
+            boardStruct = TranslatedStruct.translate(Board);
+
+            boardBuffer = ByteBuffer.allocateDirect(nodesPerKernel * boardStruct.size);
+            scoreBuffer = new int[nodesPerKernel];
+            boardMem = clCreateBuffer(env.context, CL_MEM_READ_ONLY, boardBuffer.capacity(), null, null);
+            scoreMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, scoreBuffer.length * Sizeof.cl_int, null, null);
+
+            playout.params.get(0).type.pointer = 0;
+
+            program.addKernelArg(new TypeRef(Board).point(1).modify(TypeRef.GLOBAL), "board").data = boardMem;
+            program.addKernelArg(new TypeRef(PrimitiveSymbol.INT).point(1).modify(TypeRef.GLOBAL), "score").data = scoreMem;
+            program.writeKernel("atom_add(score + get_group_id(0), "+t.kernelCall(playout, "board[get_group_id(0)]")+");");
+            program.enableExtension("cl_khr_global_int32_base_atomics");
+            program.build();
+        }
+
+        public void release() {
+            program.release();
+            clReleaseMemObject(boardMem);
+            clReleaseMemObject(scoreMem);
+        }
+
+        public void run(List<TreeNode> nodes, int simsPerNode) {
+            if (simsPerNode <= 0 || simsPerNode > env.maxWorkGroupSize)
+                throw new IllegalArgumentException("Invald sims per node: " + simsPerNode+". Cap: "+env.maxWorkGroupSize);
+
+            //execute kernel in batches of at most 128 nodes
+            for (int group = 0; group < nodes.size(); group += nodesPerKernel) {
+                int groupSize = Math.min(nodes.size()-group, nodesPerKernel);
+
+                boardBuffer.rewind();
+                for (int i = 0; i < groupSize; i++)
+                    boardStruct.write(nodes.get(group+i).getBoard(), boardBuffer);
+
+                boardBuffer.rewind();
+                clEnqueueWriteBuffer(env.commandQueue, boardMem, true, 0, groupSize * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
+
+                Arrays.fill(scoreBuffer, 0);
+                clEnqueueWriteBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+
+                program.runKernel(new long[]{groupSize * simsPerNode}, new long[]{simsPerNode});
+                clFinish(env.commandQueue);
+
+                clEnqueueReadBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
+
+                for (int i = 0; i < groupSize; i++)
+                    nodes.get(group+i).update(BoardGame.floatScore(scoreBuffer[i], simsPerNode), simsPerNode);
+            }
+        }
     }
 
-    private void build(Class<? extends BoardGame> gameClass) {
-        this.gameClass = gameClass;
-        if(program != null)
-            program.release();
+    private BoardGameKernel kernel;
 
-        program = new CLProgramBuilder(env);
-        JavaTranslator t = new JavaTranslator(program);
-        ClassSymbol BoardGame = (ClassSymbol) TypeIndex.resolveType("gpuproj.game.BoardGame");
-        ClassSymbol Game = (ClassSymbol) TypeIndex.resolveType(gameClass.getCanonicalName());
-        ClassSymbol Board = (ClassSymbol) TypeRef.specify(BoardGame.typeParams.get(0), BoardGame.parameterPattern(), new TypeRef(Game));
-
-        t.addStruct(Board);
-        t.addGlobalInstance(Game);
-        MethodSymbol playout = t.addGlobalMethod((MethodSymbol) TypeIndex.scope.resolve1("gpuproj.simulator.PlayoutSimulator.playout", Symbol.METHOD_SYM), Arrays.asList(Board, Game));
-        t.translate();
-
-        playout.params.get(0).type.pointer = 0;
-
-        program.addKernelArg(new TypeRef(Board).point(1).modify(TypeRef.GLOBAL), "board").data = boardMem;
-        program.addKernelArg(new TypeRef(PrimitiveSymbol.INT).point(1).modify(TypeRef.GLOBAL), "score").data = scoreMem;
-        program.writeKernel("atom_add(score + get_group_id(0), "+t.kernelCall(playout, "board[get_group_id(0)]")+");");
-        program.enableExtension("cl_khr_global_int32_base_atomics");
-        program.build();
-
-        boardStruct = TranslatedStruct.translate(Board);
-
-        boardBuffer = ByteBuffer.allocateDirect(env.maxWorkItems() * boardStruct.size);
-        scoreBuffer = new int[env.maxWorkItems()];
-        program.getKernelArg("board").data = boardMem = clCreateBuffer(env.context, CL_MEM_READ_ONLY, boardBuffer.capacity(), null, null);
-        program.getKernelArg("score").data = scoreMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, scoreBuffer.length * Sizeof.cl_int, null, null);
+    public GPUSimulator(Class<? extends BoardGame> gameClass) {
+        kernel = new BoardGameKernel(gameClass, 128);
     }
 
     public int getMaxWorkGroupSize() {
@@ -189,43 +227,15 @@ public abstract class GPUSimulator extends PlayoutSimulator
 
     public abstract int getWorkSize(int nodes);
 
-    private void runKernel(List<TreeNode> nodes) {
-        int workSize = getWorkSize(nodes.size());
-        if (workSize <= 0 || workSize > env.maxWorkGroupSize)
-            throw new IllegalArgumentException("getWorkSize returned invalid value: " + workSize);
-
-        //execute kernel in batches of at most 128 nodes
-        for (int group = 0; group < nodes.size(); group += KernelEnv.maxWorkGroups) {
-            int groupSize = Math.min(nodes.size()-group, KernelEnv.maxWorkGroups);
-
-            boardBuffer.rewind();
-            for (int i = 0; i < groupSize; i++)
-                boardStruct.write(nodes.get(group+i).getBoard(), boardBuffer);
-
-            boardBuffer.rewind();
-            clEnqueueWriteBuffer(env.commandQueue, boardMem, true, 0, groupSize * boardStruct.size, Pointer.to(boardBuffer), 0, null, null);
-
-            Arrays.fill(scoreBuffer, 0);
-            clEnqueueWriteBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
-
-            program.runKernel(new long[]{groupSize * workSize}, new long[]{workSize});
-            clFinish(env.commandQueue);
-
-            clEnqueueReadBuffer(env.commandQueue, scoreMem, true, 0, groupSize * Sizeof.cl_int, Pointer.to(scoreBuffer), 0, null, null);
-
-            for (int i = 0; i < groupSize; i++)
-                nodes.get(group+i).update(BoardGame.floatScore(scoreBuffer[i], workSize), workSize);
-        }
-
-        simCount += nodes.size()*workSize;
-    }
-
     @Override
     public <B extends Board<B>> void play(List<TreeNode<B>> nodes, BoardGame<B> game) {
-        if(gameClass != game.getClass())
-            build(game.getClass());
+        if(kernel.gameClass != game.getClass())
+            throw new IllegalArgumentException("Wrong game class "+game.getClass().getSimpleName()+" for "+kernel.gameClass.getSimpleName());
 
-        runKernel((List)nodes);
+        int workSize = getWorkSize(nodes.size());
+        kernel.run((List)nodes, workSize);
+
+        simCount += nodes.size()*workSize;
         expCount++;
     }
 }

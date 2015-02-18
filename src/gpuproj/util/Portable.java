@@ -1,21 +1,18 @@
 package gpuproj.util;
 
-import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.MethodSymbol;
 import gpuproj.srctree.PrimitiveSymbol;
 import gpuproj.srctree.TypeRef;
 import gpuproj.translator.*;
 import gpuproj.translator.CLSourceLoader.CLDecl;
 import gpuproj.translator.CLSourceLoader.CLImpl;
-import gpuproj.translator.CLProgramBuilder.KernelPreFunc;
 import gpuproj.translator.JavaTranslator.CLTypeSymbol;
 import org.jocl.Sizeof;
-import org.jocl.cl_context;
-import org.jocl.cl_device_id;
 import org.jocl.cl_mem;
 
 import java.lang.reflect.Modifier;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jocl.CL.*;
 
@@ -24,7 +21,7 @@ import static org.jocl.CL.*;
  */
 public class Portable implements CLStaticConverter
 {
-    private static Random rand = new Random();
+    private static Random rand = ThreadLocalRandom.current();
 
     @CLStatic(Portable.class)
     public static int randInt(int max) {
@@ -36,7 +33,7 @@ public class Portable implements CLStaticConverter
         if(randMem != null)
             clReleaseMemObject(randMem);
 
-        randMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, env.maxWorkItems() * Sizeof.cl_uint * 2, null, null);
+        randMem = clCreateBuffer(env.context, CL_MEM_READ_WRITE, KernelEnv.maxWorkItems * Sizeof.cl_uint * 2, null, null);
 
         //run a kernel to seed the random
         CLProgramBuilder program = new CLProgramBuilder(env);
@@ -48,7 +45,7 @@ public class Portable implements CLStaticConverter
         program.writeKernel("MWC64X_SeedStreams(&rand, randStart, 1<<16);");
         program.writeKernel("randMem[get_global_id(0)] = rand;");
         program.build();
-        program.runKernel(new long[]{env.maxWorkItems()}, new long[]{env.maxWorkGroupSize});
+        program.runKernel(new long[]{KernelEnv.maxWorkItems}, new long[]{env.maxWorkGroupSize});
     }
 
     private MethodSymbol convertRandInt(MethodSymbol sym, JavaTranslator t) {

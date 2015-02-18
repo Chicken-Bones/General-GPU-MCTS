@@ -74,7 +74,11 @@ public class TreeNode<B extends Board<B>>
         children = new LinkedList<TreeNode<B>>();
         if(game.checkWinner(board) < 0)//check end condition, report no children
             for(Move<B> b : game.expand(board))
-                children.add(new TreeNode<B>(b, this));
+                children.add(newChild(b));
+    }
+
+    protected TreeNode<B> newChild(Move<B> move) {
+        return new TreeNode<B>(move, this);
     }
 
     /**

@@ -23,11 +23,9 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
         tree = new TreeNode<B>(board, game);
     }
 
-    @Override
-    public Move<B> selectMove(long limit) {
+    protected void mcts(long limit) {
         long start = System.currentTimeMillis();
         do {
-            //selection
             TreeNode<B> node = tree;
             while(!node.isLeaf())
                 node = node.select();
@@ -38,6 +36,11 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
             else
                 simulator.play(node.children, game);
         } while(System.currentTimeMillis() - start < limit);
+    }
+
+    @Override
+    public Move<B> selectMove(long limit) {
+        mcts(limit);
 
         StatDialog.get("Tree Depth").setText(""+tree.getDepth());
 
@@ -47,6 +50,9 @@ public class MCTSPlayer<B extends Board<B>> extends Player<B>
                 tree = c;
                 maxCount = c.sims;
             }
+
+        if(maxCount == 0)
+            throw new IllegalStateException("No simulations performed");
 
         Move<B> move = tree.move;
         tree.makeRoot();//makes tree.move into a complete board

@@ -8,9 +8,9 @@ public class KernelEnv
 {
     /**
      * Sets a maximum buffer size to accomodate all work items.
-     * If there are more nodes than maxWorkGroups, the kernel should be run again
+     * Excess work items should be batched into a seperate kernel
      */
-    public static final int maxWorkGroups = 128;
+    public static final int maxWorkItems = 16384;
 
     public final cl_device_id device;
     public final cl_context context;
@@ -36,9 +36,5 @@ public class KernelEnv
         byte[] buf = new byte[100];
         clGetDeviceInfo(device, CL_DEVICE_VENDOR, buf.length, Pointer.to(buf), null);
         vendor = CLProgramBuilder.cString(buf);
-    }
-
-    public int maxWorkItems() {
-        return maxWorkGroups * maxWorkGroupSize;
     }
 }

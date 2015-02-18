@@ -11,8 +11,10 @@ import java.util.List;
  */
 public class CPUBlockSimulator extends PlayoutSimulator
 {
+    private int simsPerNode;
+
     public CPUBlockSimulator(int simsPerNode) {
-        super(simsPerNode);
+        this.simsPerNode = simsPerNode;
     }
 
     @Override

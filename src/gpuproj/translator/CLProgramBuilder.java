@@ -1,7 +1,6 @@
 package gpuproj.translator;
 
 import gpuproj.StatDialog;
-import gpuproj.simulator.GPUSimulator;
 import gpuproj.srctree.SourceReader;
 import gpuproj.srctree.SourceUtil;
 import gpuproj.srctree.Statement;

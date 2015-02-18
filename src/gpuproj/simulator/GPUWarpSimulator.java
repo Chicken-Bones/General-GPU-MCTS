@@ -1,18 +1,24 @@
 package gpuproj.simulator;
 
+import gpuproj.game.BoardGame;
+import gpuproj.translator.KernelEnv;
+
 public class GPUWarpSimulator extends GPUSimulator
 {
-    public GPUWarpSimulator(int simsPerKernel) {
-        super(simsPerKernel);
+    private int simsPerKernel;
+
+    public GPUWarpSimulator(Class<? extends BoardGame> gameClass, int simsPerKernel) {
+        super(gameClass);
+        this.simsPerKernel = simsPerKernel;
     }
 
     @Override
     public int getWorkSize(int nodes) {
-        return Math.min(simsPerNode/nodes, getMaxWorkGroupSize());
+        return Math.min(Math.min(simsPerKernel, KernelEnv.maxWorkItems)/nodes, getMaxWorkGroupSize());
     }
 
     @Override
     public String toString() {
-        return "GPU "+simsPerNode+"/krnl";
+        return "GPU "+simsPerKernel+"/krnl";
     }
 }
