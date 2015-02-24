@@ -18,6 +18,7 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
     {
         void take() throws InterruptedException;
         boolean full();
+        boolean empty();
         void sim();
         void queueDone();
     }
@@ -36,16 +37,16 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
         }
 
         public void wake() {
-            sleep = false;
             synchronized (sleepingLock) {
+                sleep = false;
                 sleepingLock.notify();//wake this sleeping thread
             }
         }
 
         public void sleep() {
-            sleep = true;
-            interrupt();
             synchronized (sleepingLock) {
+                sleep = true;
+                interrupt();
                 try {
                     sleepingLock.wait();//wait for a notifaction of successful sleep
                 } catch (InterruptedException e) {
@@ -82,10 +83,12 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
                     consumer.take();
                 } catch (InterruptedException e) {
                     if(!sleep)
-                        throw new IllegalStateException("Unknown interrupt reason");
+                        throw new IllegalStateException("What?", e);
 
-                    consumer.queueDone();
-                    return;
+                    if(consumer.empty())
+                        return;
+                    else
+                        break;//finish simulating the remaining nodes in the consumer
                 }
             }
 
@@ -119,6 +122,11 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
         }
 
         @Override
+        public boolean empty() {
+            return node == null;
+        }
+
+        @Override
         public void sim() {
             node.update(BoardGame.floatScore(PlayoutSimulator.playout(node.getBoardCopy(), game), 1), 1);
             PlayoutSimulator.simCount++;
@@ -126,10 +134,8 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
 
         @Override
         public void queueDone() {
-            if(node != null) {
-                synchronized (doneQueue) {
-                    doneQueue.add((MultiTreeNode<B>) node);
-                }
+            synchronized (doneQueue) {
+                doneQueue.add((MultiTreeNode<B>) node);
             }
             node = null;
         }
@@ -154,6 +160,11 @@ public class MCTSMultiPlayer<B extends Board<B>> extends MCTSPlayer<B>
         @Override
         public boolean full() {
             return nodes.size() == GPUBatchSize;
+        }
+
+        @Override
+        public boolean empty() {
+            return nodes.isEmpty();
         }
 
         @Override

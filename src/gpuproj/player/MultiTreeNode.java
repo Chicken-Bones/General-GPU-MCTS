@@ -10,7 +10,7 @@ public class MultiTreeNode<B extends Board<B>> extends TreeNode<B>
      * For a leaf node, 1 if this node is queued for simulation
      * Otherwise, contains the number of children completely queued for simulation
      */
-    public int simulating;
+    public int queued;
 
     public MultiTreeNode(Move<B> move, BoardGame<B> game) {
         super(move, game);
@@ -21,7 +21,7 @@ public class MultiTreeNode<B extends Board<B>> extends TreeNode<B>
     }
 
     public void queue() {
-        simulating++;
+        queued++;
 
         if(isQueued() && !isRoot())
             ((MultiTreeNode)parent).queue();
@@ -31,11 +31,11 @@ public class MultiTreeNode<B extends Board<B>> extends TreeNode<B>
         if(isQueued() && !isRoot())
             ((MultiTreeNode)parent).dequeue();
 
-        simulating--;
+        queued--;
     }
 
     public boolean isQueued() {
-        return simulating == (isLeaf() ? 1 : children.size());
+        return queued == (isLeaf() ? 1 : children.size());
     }
 
     @Override
