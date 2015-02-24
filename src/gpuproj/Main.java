@@ -18,7 +18,7 @@ public class Main
 {
     public static void main(String[] args) {
         loadSourceDir(args);
-        CPU1vsHybrid(new Ataxx());
+        CPUMultivsHybrid(new Ataxx());
     }
 
     private static void loadSourceDir(String[] args) {
@@ -64,6 +64,13 @@ public class Main
     private static <B extends Board<B>> void CPU1vsHybrid(BoardGame<B> game) {
         GameMachine.playGames(game,
                 new MCTSPlayer<B>(game, new CPUBlockSimulator(1)),
+                new MCTSMultiPlayer<B>(game, 4, true),
+                200, 500);
+    }
+
+    private static <B extends Board<B>> void CPUMultivsHybrid(BoardGame<B> game) {
+        GameMachine.playGames(game,
+                new MCTSMultiPlayer<B>(game, 4, false),
                 new MCTSMultiPlayer<B>(game, 4, true),
                 200, 500);
     }

@@ -12,7 +12,6 @@ import org.jocl.cl_mem;
 
 import java.lang.reflect.Modifier;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jocl.CL.*;
 
@@ -21,11 +20,19 @@ import static org.jocl.CL.*;
  */
 public class Portable implements CLStaticConverter
 {
-    private static Random rand = ThreadLocalRandom.current();
+    private static ThreadLocal<Random> rand = new ThreadLocal<Random>();
+
+    public static Random rand() {
+        Random r = rand.get();
+        if(r == null)
+            rand.set(r = new Random());
+
+        return r;
+    }
 
     @CLStatic(Portable.class)
     public static int randInt(int max) {
-        return rand.nextInt(max);
+        return rand().nextInt(max);
     }
 
     private static cl_mem randMem;
@@ -38,7 +45,7 @@ public class Portable implements CLStaticConverter
         //run a kernel to seed the random
         CLProgramBuilder program = new CLProgramBuilder(env);
         new CLSourceLoader(program).load("mwc64x_rng.cl");
-        program.addKernelArg(new TypeRef(PrimitiveSymbol.LONG).modify(TypeRef.UNSIGNED), "randStart").data = rand.nextLong();
+        program.addKernelArg(new TypeRef(PrimitiveSymbol.LONG).modify(TypeRef.UNSIGNED), "randStart").data = rand().nextLong();
         program.addKernelArg(new TypeRef(new CLTypeSymbol("mwc64x_state_t")).point(1).modify(TypeRef.GLOBAL), "randMem").data = randMem;
 
         program.writeKernel("mwc64x_state_t rand = randMem[get_global_id(0)];");
